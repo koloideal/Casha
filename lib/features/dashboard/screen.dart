@@ -415,13 +415,11 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
   @override
   void initState() {
     super.initState();
-    // repeat() — тикает каждый vsync кадр
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
     )..repeat();
 
-    // Акселерометр ТОЛЬКО пишет target — никакого setState/rebuild
     _sub = accelerometerEventStream(
       samplingPeriod: const Duration(milliseconds: 50),
     ).listen((e) {
@@ -449,28 +447,31 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        // ← lerp здесь, вызывается каждый кадр автоматически через AnimatedBuilder
-        _tiltX += (_targetTiltX - _tiltX) * 0.1;
-        _tiltY += (_targetTiltY - _tiltY) * 0.1;
+        _tiltX += (_targetTiltX - _tiltX) * 0.15;
+        _tiltY += (_targetTiltY - _tiltY) * 0.15;
 
         return Transform(
           alignment: Alignment.center,
           transform: Matrix4.identity()
-            ..setEntry(3, 2, 0.001) // перспектива — без неё вращение плоское
-            ..rotateX(_tiltX * 0.12)
-            ..rotateY(_tiltY * 0.12),
+            ..setEntry(3, 2, 0.001)
+            ..rotateX(_tiltX * 0.22)
+            ..rotateY(_tiltY * 0.22),
           child: child,
         );
       },
-      child: Container( // строится ОДИН раз, не пересоздаётся каждый кадр
+      child: Container(
         width: double.infinity,
         height: 180,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: const LinearGradient(
-            begin: Alignment(-0.5, -0.5),
-            end: Alignment(0.5, 0.5),
-            colors: [Color(0xFF6B5DD3), Color(0xFF2A2040), Color(0xFF1A1625)],
+            begin: Alignment(-1.0, -1.0),
+            end: Alignment(1.0, 1.0),
+            colors: [
+              Color(0xFF2A2545),
+              Color(0xFF1A1530),
+              Color(0xFF141228),
+            ],
             stops: [0.0, 0.5, 1.0],
           ),
           boxShadow: [
