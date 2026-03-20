@@ -1191,6 +1191,8 @@ class _FullScreenBlurOverlayState extends State<_FullScreenBlurOverlay> {
                   dash._tempSecondary = hsv.toColor();
                 }
               });
+              // Force OverlayEntry to rebuild so the card inside it gets new preview colors
+              dash._overlayEntry?.markNeedsBuild();
             }
 
             final currentHSV = dash._editingPrimary
@@ -1211,6 +1213,7 @@ class _FullScreenBlurOverlayState extends State<_FullScreenBlurOverlay> {
                       onTap: () {
                         dash.setState(() => dash._editingPrimary = true);
                         setPanelState(() {});
+                        dash._overlayEntry?.markNeedsBuild();
                       },
                     ),
                     const SizedBox(width: 10),
@@ -1221,6 +1224,7 @@ class _FullScreenBlurOverlayState extends State<_FullScreenBlurOverlay> {
                       onTap: () {
                         dash.setState(() => dash._editingPrimary = false);
                         setPanelState(() {});
+                        dash._overlayEntry?.markNeedsBuild();
                       },
                     ),
                     const Spacer(),
@@ -1278,6 +1282,7 @@ class _FullScreenBlurOverlayState extends State<_FullScreenBlurOverlay> {
                       onTap: () {
                         dash.setState(() => dash._editingPrimary = true);
                         setPanelState(() {});
+                        dash._overlayEntry?.markNeedsBuild();
                       },
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -1319,6 +1324,7 @@ class _FullScreenBlurOverlayState extends State<_FullScreenBlurOverlay> {
                       onTap: () {
                         dash.setState(() => dash._editingPrimary = false);
                         setPanelState(() {});
+                        dash._overlayEntry?.markNeedsBuild();
                       },
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
