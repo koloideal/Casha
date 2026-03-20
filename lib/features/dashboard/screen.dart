@@ -362,7 +362,7 @@ class _BalanceCard extends ConsumerWidget {
     return Container(
       width: double.infinity,
       height: 180,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -381,88 +381,81 @@ class _BalanceCard extends ConsumerWidget {
           ),
         ],
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // LEFT: main balance — takes as much space as needed, right side shrinks first
-              Flexible(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'TOTAL BALANCE',
-                      style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 1.2,
-                        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6),
-                      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // LEFT: main balance — takes available space, centered
+          Expanded(
+            flex: 5,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'TOTAL BALANCE',
+                  style: TextStyle(
+                    fontSize: 11,
+                    letterSpacing: 1.5,
+                    color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Text(
+                    _smartBalance(balance, fmt, currencyInfo.symbol),
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onPrimary,
                     ),
-                    const SizedBox(height: 4),
-                    // FittedBox shrinks text to fit available width
-                    FittedBox(
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Only show conversion column if there's a meaningful balance
+          if (balance != 0) ...[
+            const SizedBox(width: 16),
+            Container(
+              width: 1,
+              height: 70,
+              color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
+            ),
+            const SizedBox(width: 16),
+            // RIGHT: conversions — fixed width, doesn't expand
+            SizedBox(
+              width: 110,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: others.map((c) {
+                  final converted = rates.convert(balance, currencyInfo.code, c.$1);
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        _smartBalance(balance, fmt, currencyInfo.symbol),
+                        _smartBalance(converted, fmt, c.$2),
                         style: TextStyle(
-                          fontSize: 36, // max font size
-                          fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.65),
                         ),
                         maxLines: 1,
                       ),
                     ),
-                  ],
-                ),
+                  );
+                }).toList(),
               ),
-              // RIGHT side: use Flexible (not Expanded) so it can shrink
-              // When balance is long, this column gets squeezed first
-              Flexible(
-                flex: 2,
-                child: Row(
-                  children: [
-                    const SizedBox(width: 12),
-                    Container(
-                      width: 1,
-                      height: 60,
-                      color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: others.map((c) {
-                          final converted = rates.convert(balance, currencyInfo.code, c.$1);
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                _smartBalance(converted, fmt, c.$2),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
-                                ),
-                                maxLines: 1,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
+            ),
+          ],
+        ],
       ),
     );
   }

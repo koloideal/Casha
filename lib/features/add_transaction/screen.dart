@@ -282,18 +282,48 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
               const SizedBox(height: 32),
 
-              ElevatedButton(
-                onPressed: state.isSubmitting ? null : _submit,
-                child: state.isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                child: Builder(
+                  builder: (context) {
+                    final selectedType = state.type;
+                    final typeColor = selectedType == TransactionType.income
+                        ? const Color(0xFF4CAF8C)
+                        : const Color(0xFFE05C6B);
+
+                    return SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: state.isSubmitting ? null : _submit,
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: typeColor.withOpacity(0.1),
+                          side: BorderSide(color: typeColor, width: 2),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          foregroundColor: typeColor,
                         ),
-                      )
-                    : Text(state.isEditing ? 'Update Transaction' : 'Save Transaction'),
+                        child: state.isSubmitting
+                            ? SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: typeColor,
+                                ),
+                              )
+                            : Text(
+                                state.isEditing ? 'Save Changes' : 'Add Transaction',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: typeColor,
+                                ),
+                              ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -337,18 +367,18 @@ class _TypeToggle extends StatelessWidget {
       child: Row(
         children: [
           _TypeOption(
-            label: 'Expense',
-            icon: Icons.arrow_upward_rounded,
-            color: AppColors.expense,
-            isSelected: selected == TransactionType.expense,
-            onTap: () => onChanged(TransactionType.expense),
-          ),
-          _TypeOption(
             label: 'Income',
             icon: Icons.arrow_downward_rounded,
             color: AppColors.income,
             isSelected: selected == TransactionType.income,
             onTap: () => onChanged(TransactionType.income),
+          ),
+          _TypeOption(
+            label: 'Expense',
+            icon: Icons.arrow_upward_rounded,
+            color: AppColors.expense,
+            isSelected: selected == TransactionType.expense,
+            onTap: () => onChanged(TransactionType.expense),
           ),
         ],
       ),

@@ -13,8 +13,8 @@ class AddTransactionState {
 
   const AddTransactionState({
     this.amount,
-    this.category = 'Food',
-    this.type = TransactionType.expense,
+    this.category = 'Salary',
+    this.type = TransactionType.income,
     required this.date,
     this.note = '',
     this.isSubmitting = false,
