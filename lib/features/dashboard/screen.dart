@@ -17,6 +17,11 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final _searchController = TextEditingController();
 
+  Border? _themeBorder(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1);
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -63,16 +68,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_rounded),
-            iconSize: 32,
-            color: AppColors.accent,
-            onPressed: () => context.push('/add'),
-            tooltip: 'Add Transaction',
-          ),
-        ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/add'),
+        backgroundColor: const Color(0xFF7C6DED),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Add', style: TextStyle(fontWeight: FontWeight.w600)),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: CustomScrollView(
           cacheExtent: 300,
@@ -129,6 +133,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 ),
               ),
+            const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
           ],
         ),
       ),
@@ -244,6 +249,11 @@ class _BudgetProgress extends StatelessWidget {
   final CurrencyInfo currencyInfo;
   const _BudgetProgress({required this.spent, required this.budget, required this.currencyInfo});
 
+  Border? _themeBorder(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1);
+  }
+
   @override
   Widget build(BuildContext context) {
     final ratio = spent / budget;
@@ -258,7 +268,7 @@ class _BudgetProgress extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: _themeBorder(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -436,6 +446,11 @@ class _SummaryCard extends StatelessWidget {
   final CurrencyInfo currencyInfo;
   const _SummaryCard({required this.label, required this.amount, required this.color, required this.icon, required this.currencyInfo});
 
+  Border? _themeBorder(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -443,7 +458,7 @@ class _SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: _themeBorder(context),
       ),
       child: Row(
         children: [
@@ -483,6 +498,11 @@ class _TransactionTile extends StatelessWidget {
   final Transaction transaction;
   const _TransactionTile({required this.transaction});
 
+  Border? _themeBorder(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isIncome = transaction.type == TransactionType.income;
@@ -497,7 +517,7 @@ class _TransactionTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Theme.of(context).dividerColor),
+          border: _themeBorder(context),
         ),
         child: Row(
           children: [

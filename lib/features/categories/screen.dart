@@ -32,7 +32,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
       ..sort((a, b) => b.value.compareTo(a.value));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,13 +41,13 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
               'Categories',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
             ),
             Text(
               'Expense breakdown',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   ),
             ),
           ],
@@ -94,7 +94,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                         'Ranked by Amount',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                       ),
                       const SizedBox(height: 12),
@@ -134,9 +134,8 @@ class _ChartToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.divider),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -179,7 +178,7 @@ class _ToggleButton extends StatelessWidget {
         ),
         child: Icon(
           icon,
-          color: isSelected ? AppColors.accent : AppColors.textSecondary,
+          color: isSelected ? AppColors.accent : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
           size: 20,
         ),
       ),
@@ -209,9 +208,8 @@ class _PieChartCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider),
       ),
       child: Column(
         children: [
@@ -247,10 +245,10 @@ class _PieChartCard extends StatelessWidget {
                             ? '${(val / total * 100).toStringAsFixed(1)}%'
                             : '',
                         radius: isTouched ? 60 : 50,
-                        titleStyle: const TextStyle(
+                        titleStyle: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                         ),
                       );
                     }),
@@ -262,13 +260,13 @@ class _PieChartCard extends StatelessWidget {
                     Text(
                       'Total',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           ),
                     ),
                     Text(
                       '$currency${total.toStringAsFixed(2)}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppColors.textPrimary,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.w700,
                           ),
                     ),
@@ -296,9 +294,8 @@ class _BarChartCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,7 +303,7 @@ class _BarChartCard extends StatelessWidget {
           Text(
             'Last 6 Months',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -322,8 +319,8 @@ class _BarChartCard extends StatelessWidget {
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
                         '$currency${rod.toY.toStringAsFixed(2)}',
-                        const TextStyle(
-                          color: Colors.white,
+                        TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                         ),
@@ -343,8 +340,8 @@ class _BarChartCard extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
                               DateFormat('MMM').format(month),
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                                 fontSize: 11,
                               ),
                             ),
@@ -369,7 +366,7 @@ class _BarChartCard extends StatelessWidget {
                   drawVerticalLine: false,
                   horizontalInterval: adjustedMaxY > 0 ? adjustedMaxY / 4 : 25,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: AppColors.divider,
+                    color: Theme.of(context).dividerColor,
                     strokeWidth: 1,
                   ),
                 ),
@@ -422,9 +419,8 @@ class _CategoryRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
       ),
       child: Column(
         children: [
@@ -435,13 +431,13 @@ class _CategoryRow extends StatelessWidget {
                 height: 28,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: rank <= 3 ? color.withOpacity(0.2) : AppColors.divider,
+                  color: rank <= 3 ? color.withOpacity(0.2) : Theme.of(context).dividerColor,
                   shape: BoxShape.circle,
                 ),
                 child: Text(
                   '$rank',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: rank <= 3 ? color : AppColors.textSecondary,
+                        color: rank <= 3 ? color : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         fontWeight: FontWeight.w700,
                       ),
                 ),
@@ -461,7 +457,7 @@ class _CategoryRow extends StatelessWidget {
                   category,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                 ),
               ),
@@ -478,7 +474,7 @@ class _CategoryRow extends StatelessWidget {
                   Text(
                     '${(pct * 100).toStringAsFixed(1)}%',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         ),
                   ),
                 ],
@@ -490,7 +486,7 @@ class _CategoryRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: pct,
-              backgroundColor: AppColors.divider,
+              backgroundColor: Theme.of(context).dividerColor,
               valueColor: AlwaysStoppedAnimation<Color>(color),
               minHeight: 6,
             ),
@@ -512,21 +508,21 @@ class _EmptyState extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.pie_chart_outline_rounded,
               size: 48,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             'No expense data',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -534,7 +530,7 @@ class _EmptyState extends StatelessWidget {
           Text(
             'Add some expenses to see the breakdown',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 ),
           ),
         ],

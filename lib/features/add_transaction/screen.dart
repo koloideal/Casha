@@ -87,9 +87,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
+          colorScheme: Theme.of(context).colorScheme.copyWith(
             primary: AppColors.accent,
-            surface: AppColors.surface,
           ),
         ),
         child: child!,
