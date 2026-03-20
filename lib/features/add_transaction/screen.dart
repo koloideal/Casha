@@ -40,7 +40,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       _amountController.text = widget.initial!.amount.toString();
       _noteController.text = widget.initial!.note ?? '';
     } else {
-      // Set default currency from global provider after first frame
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final curr = ref.read(currencyProvider);
         ref.read(addTransactionProvider(null).notifier).setCurrency(curr.symbol, curr.code);
@@ -161,7 +160,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              // Type toggle
               _TypeToggle(
                 selected: state.type,
                 onChanged: (t) =>
@@ -169,7 +167,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Amount
               _SectionLabel('Amount'),
               const SizedBox(height: 8),
               Container(
@@ -231,7 +228,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Currency
               Text(
                 'Currency',
                 style: TextStyle(
@@ -247,7 +243,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Category
               _SectionLabel('Category'),
               const SizedBox(height: 8),
               _CategoryPicker(
@@ -258,7 +253,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Date
               _SectionLabel('Date'),
               const SizedBox(height: 8),
               InkWell(
@@ -288,7 +282,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Note
               _SectionLabel('Note (optional)'),
               const SizedBox(height: 8),
               TextFormField(

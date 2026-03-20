@@ -79,7 +79,6 @@ class AddTransactionNotifier extends StateNotifier<AddTransactionState> {
   void setCategory(String v) => state = state.copyWith(category: v);
   
   void setType(TransactionType v) {
-    // Reset category to first item of new type
     final newCategory = AppCategories.forType(v).first;
     state = state.copyWith(type: v, category: newCategory);
   }
@@ -102,7 +101,6 @@ final addTransactionProvider = StateNotifierProvider.autoDispose
   (ref, initial) => AddTransactionNotifier(initial),
 );
 
-// Reactive categories based on selected type
 final availableCategoriesProvider =
     Provider.autoDispose.family<List<String>, Transaction?>((ref, initial) {
   final type = ref.watch(addTransactionProvider(initial).select((s) => s.type));

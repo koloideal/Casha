@@ -45,12 +45,10 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
 
   void clearAll() {
     state = [];
-    // also clear from SharedPreferences:
     SharedPreferences.getInstance().then((prefs) => prefs.remove('transactions'));
   }
 }
 
-// Search and filter state
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
 enum TransactionFilter { all, income, expense }
@@ -58,7 +56,6 @@ enum TransactionFilter { all, income, expense }
 final transactionFilterProvider =
     StateProvider<TransactionFilter>((ref) => TransactionFilter.all);
 
-// Converted balance providers (convert all transactions to selected currency)
 final totalBalanceProvider = Provider<double>((ref) {
   final txs = ref.watch(transactionsProvider);
   final exchangeService = ref.watch(exchangeRateServiceProvider);
@@ -111,14 +108,12 @@ final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
 
   var filtered = txs;
 
-  // Apply type filter
   if (filter == TransactionFilter.income) {
     filtered = filtered.where((t) => t.type == TransactionType.income).toList();
   } else if (filter == TransactionFilter.expense) {
     filtered = filtered.where((t) => t.type == TransactionType.expense).toList();
   }
 
-  // Apply search query
   if (query.isNotEmpty) {
     filtered = filtered.where((t) {
       final matchesCategory = t.category.toLowerCase().contains(query);
@@ -127,7 +122,6 @@ final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
     }).toList();
   }
 
-  // Sort by date descending
   filtered.sort((a, b) => b.date.compareTo(a.date));
   return filtered;
 });

@@ -29,7 +29,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     final total = data.values.fold(0.0, (a, b) => a + b);
     final currencyInfo = ref.watch(currencyProvider);
 
-    // Sort categories by amount descending
     final sortedEntries = data.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 

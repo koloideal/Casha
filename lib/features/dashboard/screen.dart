@@ -12,7 +12,6 @@ import '../../shared/providers/amount_format_provider.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
 
-// Helper for balance card only - hides .00 decimals
 String _smartBalance(double amount, AmountFormat fmt, String symbol) {
   const spaceAfter = {'Br'};
   final sep = spaceAfter.contains(symbol) ? ' ' : '';
@@ -20,7 +19,6 @@ String _smartBalance(double amount, AmountFormat fmt, String symbol) {
 
   String formatted;
   if (isWhole) {
-    // format the integer, then manually remove .00
     formatted = fmt.format(amount);
     if (formatted.endsWith('.00')) {
       formatted = formatted.substring(0, formatted.length - 3);

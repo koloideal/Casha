@@ -32,7 +32,6 @@ class BudgetNotifier extends StateNotifier<double?> {
   }
 }
 
-// Currency info: symbol and code
 class CurrencyInfo {
   final String symbol;
   final String code;
@@ -95,7 +94,6 @@ final themeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
   (ref) => ThemeModeNotifier(),
 );
 
-// Exchange rate service
 final exchangeRateServiceProvider = Provider<ExchangeRateService>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   return ExchangeRateService(prefs);
@@ -119,11 +117,9 @@ class ExportService {
     final currency = _ref.read(currencyProvider);
     final fmt = _ref.read(amountFormatProvider);
 
-    // CSV header
     final buffer = StringBuffer();
     buffer.writeln('Date,Type,Category,Amount,Currency,Note');
 
-    // CSV rows
     for (final tx in transactions) {
       final date = DateFormat('yyyy-MM-dd').format(tx.date);
       final type = tx.type.name;
@@ -133,7 +129,6 @@ class ExportService {
       buffer.writeln('$date,$type,$category,$amount,${tx.currencyCode},$note');
     }
 
-    // Save to Downloads
     final directory = await getApplicationDocumentsDirectory();
     final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
     final file = File('${directory.path}/transactions_$timestamp.csv');

@@ -13,7 +13,6 @@ final categoryExpenseProvider = Provider<Map<String, double>>((ref) {
   return map;
 });
 
-// Monthly breakdown for last 6 months
 final monthlyBreakdownProvider = Provider<List<MonthlyData>>((ref) {
   final txs = ref.watch(transactionsProvider)
       .where((t) => t.type == TransactionType.expense);

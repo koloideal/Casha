@@ -11,7 +11,6 @@ class App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
     
-    // Trigger exchange rate fetch on app start
     ref.watch(ratesInitProvider);
 
     return MaterialApp.router(

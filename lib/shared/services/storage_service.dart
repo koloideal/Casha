@@ -70,14 +70,13 @@ class StorageService {
   }
 
   bool loadThemeMode() {
-    return _prefs.getBool(_themeKey) ?? true; // default dark
+    return _prefs.getBool(_themeKey) ?? true;
   }
 
   Future<void> saveThemeMode(bool isDark) async {
     await _prefs.setBool(_themeKey, isDark);
   }
 
-  // Process recurring transactions
   Future<void> processRecurringTransactions() async {
     final transactions = loadTransactions();
     final now = DateTime.now();
@@ -115,7 +114,6 @@ class StorageService {
       }
 
       if (shouldCreate) {
-        // Create new occurrence
         final newTx = Transaction(
           id: _uuid.v4(),
           amount: tx.amount,
@@ -128,7 +126,6 @@ class StorageService {
         );
         transactions.add(newTx);
 
-        // Update original transaction's lastOccurrence
         final index = transactions.indexWhere((t) => t.id == tx.id);
         if (index != -1) {
           transactions[index] = tx.copyWith(lastOccurrence: today);

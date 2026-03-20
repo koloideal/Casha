@@ -40,7 +40,6 @@ class ExchangeRateService {
 
   Future<void> fetchRates() async {
     try {
-      // Try primary URL
       final response = await http
           .get(Uri.parse(_primaryUrl))
           .timeout(const Duration(seconds: 10));
@@ -60,11 +59,9 @@ class ExchangeRateService {
         }
       }
     } catch (e) {
-      // Primary failed, try fallback
     }
 
     try {
-      // Try fallback URL
       final response = await http
           .get(Uri.parse(_fallbackUrl))
           .timeout(const Duration(seconds: 10));
@@ -84,10 +81,8 @@ class ExchangeRateService {
         }
       }
     } catch (e) {
-      // Both failed, use cached or fallback
     }
 
-    // If both failed and no cache, use fallback
     if (_rates.isEmpty) {
       _rates = Map.from(_fallbackRates);
     }
@@ -104,7 +99,6 @@ class ExchangeRateService {
     final fromRate = currentRates[from] ?? 1.0;
     final toRate = currentRates[to] ?? 1.0;
 
-    // Convert to USD first, then to target currency
     final amountInUsd = amount / fromRate;
     return amountInUsd * toRate;
   }

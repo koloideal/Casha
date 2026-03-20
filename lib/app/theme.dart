@@ -211,5 +211,4 @@ class AppTheme {
   }
 }
 
-// Keep for backward compatibility
 ThemeData buildAppTheme() => AppTheme.darkTheme;

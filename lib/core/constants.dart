@@ -12,7 +12,6 @@ class AppColors {
   static const divider = Color(0xFF2A2A38);
   static const warning = Color(0xFFFFB74D);
 
-  // Light theme colors
   static const lightBackground = Color(0xFFF5F5F7);
   static const lightSurface = Color(0xFFFFFFFF);
   static const lightTextPrimary = Color(0xFF1A1A24);
@@ -96,7 +95,6 @@ extension AmountFormatExt on AmountFormat {
   String format(double amount) {
     switch (this) {
       case AmountFormat.commasDot:
-        // groups of 3 with commas, dot decimal
         final parts = amount.toStringAsFixed(2).split('.');
         final intPart = parts[0].replaceAllMapped(
           RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');

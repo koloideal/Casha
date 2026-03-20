@@ -52,7 +52,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _confirmClearData(BuildContext context, WidgetRef ref) {
-    // First confirmation
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -66,7 +65,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              // Second confirmation
               showDialog(
                 context: context,
                 builder: (ctx2) => AlertDialog(
@@ -109,7 +107,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final fmt = ref.watch(amountFormatProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Update currency format when it changes
     _currencyFmt = NumberFormat.currency(symbol: currencyInfo.symbol, decimalDigits: 2);
 
     return Scaffold(
@@ -139,7 +136,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           children: [
 
-            // Theme Toggle
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -194,7 +190,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Budget Setting
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -310,7 +305,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Amount Format Selector
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -393,7 +387,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Currency Selector
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -486,7 +479,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Danger Zone
             Text(
               'Danger Zone',
               style: TextStyle(
