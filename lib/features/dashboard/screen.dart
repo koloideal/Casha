@@ -64,14 +64,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   void _scrollToSearch() {
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (!_scrollController.hasClients) return;
-      _scrollController.animateTo(
-        180.0, // approximate height of balance card — puts search bar at top
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
-    });
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      320.0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -141,10 +139,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       _BudgetProgress(spent: monthExpense, budget: budget, currencyInfo: currencyInfo),
                     ],
                     const SizedBox(height: 24),
-                    _SearchBar(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      ref: ref,
+                    GestureDetector(
+                      onTap: _scrollToSearch,
+                      behavior: HitTestBehavior.translucent,
+                      child: _SearchBar(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        ref: ref,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _FilterChips(selected: filter, ref: ref),
