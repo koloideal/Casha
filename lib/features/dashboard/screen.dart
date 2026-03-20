@@ -1102,7 +1102,7 @@ class _FullScreenBlurOverlayState extends State<_FullScreenBlurOverlay> {
     final mq = MediaQuery.of(widget.context);
     final cardTop = mq.padding.top + kToolbarHeight + 16;
     final cardHeight = 180.0;
-    final panelTop = cardTop + cardHeight + 16;
+    final panelTop = cardTop + cardHeight + 78;
     final panelBottom = mq.padding.bottom + 16;
 
     return Material(
@@ -1230,19 +1230,13 @@ class _FullScreenBlurOverlayState extends State<_FullScreenBlurOverlay> {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: Theme.of(widget.context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.08),
+                          color: const Color(0xFFE05C6B).withOpacity(0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.close_rounded,
                           size: 18,
-                          color: Theme.of(widget.context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.6),
+                          color: Color(0xFFE05C6B),
                         ),
                       ),
                     ),
