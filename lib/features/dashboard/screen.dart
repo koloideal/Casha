@@ -9,6 +9,25 @@ import '../../shared/providers/amount_format_provider.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
 
+// Helper for balance card only - hides .00 decimals
+String _formatBalanceAmount(String symbol, double amount, AmountFormat fmt) {
+  const spaceAfter = {'Br', '₽'};
+  final sep = spaceAfter.contains(symbol) ? ' ' : '';
+  
+  // Check if decimal part is zero
+  final hasDecimals = (amount - amount.truncate()) != 0;
+  
+  if (!hasDecimals) {
+    // Format integer part only using the selected format style
+    final intAmount = amount.truncate().toDouble();
+    // Use fmt.format but strip the .00
+    final full = fmt.format(intAmount);
+    final withoutDecimals = full.endsWith('.00') ? full.substring(0, full.length - 3) : full;
+    return '$symbol$sep$withoutDecimals';
+  }
+  return formatAmount(symbol, amount, fmt);  // existing helper
+}
+
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -41,8 +60,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final filter = ref.watch(transactionFilterProvider);
     final currencyInfo = ref.watch(currencyProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final budgetExceeded = budget != null && monthExpense > budget;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -96,10 +113,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     if (budget != null) ...[
                       const SizedBox(height: 16),
                       _BudgetProgress(spent: monthExpense, budget: budget, currencyInfo: currencyInfo),
-                    ],
-                    if (budgetExceeded) ...[
-                      const SizedBox(height: 12),
-                      _BudgetWarning(spent: monthExpense, budget: budget, currencyInfo: currencyInfo),
                     ],
                     const SizedBox(height: 24),
                     _SearchBar(controller: _searchController, ref: ref),
@@ -260,12 +273,9 @@ class _BudgetProgress extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final fmt = ref.watch(amountFormatProvider);
-    final ratio = spent / budget;
-    final color = ratio >= 1.0
-        ? AppColors.expense
-        : ratio >= 0.8
-            ? AppColors.warning
-            : AppColors.income;
+    final progress = budget > 0 ? spent / budget : 0.0;
+    final isOver = progress > 1.0;
+    final displayPercent = (progress * 100).toStringAsFixed(0);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -287,11 +297,12 @@ class _BudgetProgress extends ConsumerWidget {
                     ),
               ),
               Text(
-                '${(ratio * 100).toStringAsFixed(0)}%',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w600,
-                    ),
+                '$displayPercent%',
+                style: TextStyle(
+                  color: isOver ? const Color(0xFFE05C6B) : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  fontWeight: isOver ? FontWeight.w700 : FontWeight.normal,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -299,9 +310,11 @@ class _BudgetProgress extends ConsumerWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: ratio.clamp(0.0, 1.0),
-              backgroundColor: Theme.of(context).dividerColor,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
+              value: isOver ? 1.0 : progress,
+              backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                isOver ? const Color(0xFFE05C6B) : (progress > 0.8 ? Colors.orange : const Color(0xFF4CAF8C)),
+              ),
               minHeight: 8,
             ),
           ),
@@ -329,43 +342,6 @@ class _BudgetProgress extends ConsumerWidget {
   }
 }
 
-class _BudgetWarning extends ConsumerWidget {
-  final double spent;
-  final double budget;
-  final CurrencyInfo currencyInfo;
-  const _BudgetWarning({required this.spent, required this.budget, required this.currencyInfo});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final fmt = ref.watch(amountFormatProvider);
-    final over = spent - budget;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.expense.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: isDark ? null : Border.all(color: AppColors.expense.withOpacity(0.3), width: 1),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_rounded, color: AppColors.expense, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Budget exceeded by ${formatAmount(currencyInfo.symbol, over, fmt)}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.expense,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _BalanceCard extends ConsumerWidget {
   final double balance;
   final CurrencyInfo currencyInfo;
@@ -385,7 +361,7 @@ class _BalanceCard extends ConsumerWidget {
 
     return Container(
       width: double.infinity,
-      height: 140,
+      height: 180,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -431,7 +407,7 @@ class _BalanceCard extends ConsumerWidget {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        formatAmount(currencyInfo.symbol, balance, fmt),
+                        _formatBalanceAmount(currencyInfo.symbol, balance, fmt),
                         style: TextStyle(
                           fontSize: 36, // max font size
                           fontWeight: FontWeight.w700,
@@ -468,7 +444,7 @@ class _BalanceCard extends ConsumerWidget {
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                formatAmount(c.$2, converted, fmt),
+                                _formatBalanceAmount(c.$2, converted, fmt),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
