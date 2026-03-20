@@ -76,7 +76,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final monthExpense = ref.watch(currentMonthExpenseProvider);
     final budget = ref.watch(budgetProvider);
     final recent = ref.watch(recentTransactionsProvider);
-    final filter = ref.watch(transactionFilterProvider);
     final currencyInfo = ref.watch(currencyProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -152,7 +151,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ref: ref,
                     ),
                     const SizedBox(height: 12),
-                    _FilterChips(selected: filter, ref: ref),
+                    const FilterChips(),
                     const SizedBox(height: 20),
                     Text(
                       'Transactions',
@@ -254,36 +253,61 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-class _FilterChips extends StatelessWidget {
-  final TransactionFilter selected;
-  final WidgetRef ref;
-  const _FilterChips({required this.selected, required this.ref});
+class FilterChips extends ConsumerWidget {
+  const FilterChips({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final typeFilter = ref.watch(transactionFilterProvider);
+    final timeFilter = ref.watch(timeFilterProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       children: [
+        // TIME GROUP
+        _FilterChip(
+          label: 'All Time',
+          isSelected: timeFilter == TimeFilter.allTime,
+          onTap: () => ref.read(timeFilterProvider.notifier).state = TimeFilter.allTime,
+        ),
+        const SizedBox(width: 6),
+        _FilterChip(
+          label: 'Month',
+          isSelected: timeFilter == TimeFilter.lastMonth,
+          onTap: () => ref.read(timeFilterProvider.notifier).state = TimeFilter.lastMonth,
+        ),
+
+        // VISUAL DIVIDER
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Container(
+            width: 1,
+            height: 20,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(
+              isDark ? 0.15 : 0.2,
+            ),
+          ),
+        ),
+
+        // TYPE GROUP
         _FilterChip(
           label: 'All',
-          isSelected: selected == TransactionFilter.all,
-          onTap: () => ref.read(transactionFilterProvider.notifier).state =
-              TransactionFilter.all,
+          isSelected: typeFilter == TransactionFilter.all,
+          onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.all,
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         _FilterChip(
           label: 'Income',
-          isSelected: selected == TransactionFilter.income,
+          isSelected: typeFilter == TransactionFilter.income,
           color: AppColors.income,
-          onTap: () => ref.read(transactionFilterProvider.notifier).state =
-              TransactionFilter.income,
+          onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.income,
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         _FilterChip(
           label: 'Expense',
-          isSelected: selected == TransactionFilter.expense,
+          isSelected: typeFilter == TransactionFilter.expense,
           color: AppColors.expense,
-          onTap: () => ref.read(transactionFilterProvider.notifier).state =
-              TransactionFilter.expense,
+          onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.expense,
         ),
       ],
     );
@@ -295,22 +319,24 @@ class _FilterChip extends StatelessWidget {
   final bool isSelected;
   final Color? color;
   final VoidCallback onTap;
+
   const _FilterChip({
     required this.label,
     required this.isSelected,
-    this.color,
     required this.onTap,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     final chipColor = color ?? AppColors.accent;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
               ? chipColor.withOpacity(0.2)
@@ -318,17 +344,19 @@ class _FilterChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: isSelected
               ? Border.all(color: chipColor, width: 1.5)
-              : (isDark
-                    ? null
-                    : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
+              : isDark
+                  ? null
+                  : Border.all(color: const Color(0xFFDDDDEE), width: 1),
         ),
         child: Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: isSelected
-                ? chipColor
-                : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+          style: const TextStyle(fontSize: 12).merge(
+            Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: isSelected
+                  ? chipColor
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            ),
           ),
         ),
       ),

@@ -53,8 +53,12 @@ final searchQueryProvider = StateProvider<String>((ref) => '');
 
 enum TransactionFilter { all, income, expense }
 
+enum TimeFilter { allTime, lastMonth }
+
 final transactionFilterProvider =
     StateProvider<TransactionFilter>((ref) => TransactionFilter.all);
+
+final timeFilterProvider = StateProvider<TimeFilter>((ref) => TimeFilter.lastMonth);
 
 final totalBalanceProvider = Provider<double>((ref) {
   final txs = ref.watch(transactionsProvider);
@@ -104,16 +108,30 @@ final currentMonthExpenseProvider = Provider<double>((ref) {
 final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
   final txs = ref.watch(transactionsProvider);
   final query = ref.watch(searchQueryProvider).toLowerCase();
-  final filter = ref.watch(transactionFilterProvider);
+  final typeFilter = ref.watch(transactionFilterProvider);
+  final timeFilter = ref.watch(timeFilterProvider);
 
   var filtered = txs;
 
-  if (filter == TransactionFilter.income) {
+  // Apply time filter first
+  if (timeFilter == TimeFilter.lastMonth) {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, 1);
+    final end = DateTime(now.year, now.month + 1, 1);
+    filtered = filtered.where((t) =>
+        t.date.isAfter(start.subtract(const Duration(seconds: 1))) &&
+        t.date.isBefore(end)
+    ).toList();
+  }
+
+  // Apply type filter
+  if (typeFilter == TransactionFilter.income) {
     filtered = filtered.where((t) => t.type == TransactionType.income).toList();
-  } else if (filter == TransactionFilter.expense) {
+  } else if (typeFilter == TransactionFilter.expense) {
     filtered = filtered.where((t) => t.type == TransactionType.expense).toList();
   }
 
+  // Apply search query
   if (query.isNotEmpty) {
     filtered = filtered.where((t) {
       final matchesCategory = t.category.toLowerCase().contains(query);
