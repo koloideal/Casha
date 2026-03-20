@@ -38,6 +38,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final recent = ref.watch(recentTransactionsProvider);
     final filter = ref.watch(transactionFilterProvider);
     final currencyInfo = ref.watch(currencyProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final budgetExceeded = budget != null && monthExpense > budget;
 
@@ -218,6 +219,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chipColor = color ?? AppColors.accent;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -226,10 +228,9 @@ class _FilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected ? chipColor.withOpacity(0.2) : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? chipColor : Theme.of(context).dividerColor,
-            width: isSelected ? 1.5 : 1,
-          ),
+          border: isSelected
+              ? Border.all(color: chipColor, width: 1.5)
+              : (isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
         ),
         child: Text(
           label,
@@ -334,12 +335,13 @@ class _BudgetWarning extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final over = spent - budget;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.expense.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.expense.withOpacity(0.3)),
+        border: isDark ? null : Border.all(color: AppColors.expense.withOpacity(0.3), width: 1),
       ),
       child: Row(
         children: [

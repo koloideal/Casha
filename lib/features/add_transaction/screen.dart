@@ -104,6 +104,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     final state = ref.watch(addTransactionProvider(widget.initial));
     final categories = ref.watch(availableCategoriesProvider(widget.initial));
     final currencyInfo = ref.watch(currencyProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -245,7 +246,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Theme.of(context).dividerColor),
+                    border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
                   ),
                   child: Row(
                     children: [
@@ -323,11 +324,12 @@ class _TypeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
       ),
       child: Row(
         children: [
@@ -409,6 +411,7 @@ class _CategoryPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -424,10 +427,9 @@ class _CategoryPicker extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected ? color.withOpacity(0.2) : Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? color : Theme.of(context).dividerColor,
-                width: isSelected ? 1.5 : 1,
-              ),
+              border: isSelected
+                  ? Border.all(color: color, width: 1.5)
+                  : (isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

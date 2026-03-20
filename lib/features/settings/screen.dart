@@ -54,6 +54,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final themeMode = ref.watch(themeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
     final currencyInfo = ref.watch(currencyProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Update currency format when it changes
     _currencyFmt = NumberFormat.currency(symbol: currencyInfo.symbol, decimalDigits: 2);
@@ -100,7 +101,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Theme.of(context).dividerColor),
+                border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
               ),
               child: Row(
                 children: [
@@ -155,7 +156,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Theme.of(context).dividerColor),
+                border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,10 +209,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     ? AppColors.accent.withOpacity(0.2)
                                     : Theme.of(context).scaffoldBackgroundColor,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected ? AppColors.accent : Theme.of(context).dividerColor,
-                                  width: isSelected ? 1.5 : 1,
-                                ),
+                                border: isSelected 
+                                    ? Border.all(color: AppColors.accent, width: 1.5)
+                                    : (isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
                               ),
                               child: Column(
                                 children: [
@@ -249,7 +249,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Theme.of(context).dividerColor),
+                border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,29 +352,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                       ],
                     ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.accent.withOpacity(0.3)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline_rounded, color: AppColors.accent, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Budget tracking shows on the Dashboard with a progress bar and warning when exceeded.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                    ),
-                  ),
                 ],
               ),
             ),
