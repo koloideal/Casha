@@ -53,7 +53,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Color _savedSecondary = CardColorService.defaultSecondary;
   HSVColor _savedPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
   HSVColor _savedSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
-  double _cardBottomY = 300;
 
   HSVColor get _currentHSV => _editingPrimary ? _tempPrimaryHSV : _tempSecondaryHSV;
 
@@ -86,13 +85,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     _tempSecondary = colors.secondary;
     _tempPrimaryHSV = HSVColor.fromColor(colors.primary);
     _tempSecondaryHSV = HSVColor.fromColor(colors.secondary);
-    
-    // Calculate actual card bottom: status bar + appbar + top padding + card height
-    final statusBar = MediaQuery.of(context).padding.top;
-    final appBarHeight = kToolbarHeight;
-    final topPadding = 16.0;
-    final cardHeight = 180.0;
-    _cardBottomY = statusBar + appBarHeight + topPadding + cardHeight;
     
     setState(() => _editingCard = true);
   }
@@ -260,40 +252,62 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildEditOverlay(BuildContext context) {
+    final balance = ref.read(totalBalanceProvider);
+    final currencyInfo = ref.read(currencyProvider);
+    final cardTop = MediaQuery.of(context).padding.top + kToolbarHeight + 16;
+    final panelTop = cardTop + 180 + 16;
+    
     return Stack(
       children: [
-        // Calculate card position to EXCLUDE it from blur
-        // Blur only the area BELOW the card
+        // FULL SCREEN BLUR — covers everything: appbar, card bg, footer
         Positioned.fill(
-          child: Column(
-            children: [
-              // Top portion — card area — NOT blurred, transparent
-              SizedBox(height: _cardBottomY),
-              // Bottom portion — blurred
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _editingCard = false),
-                  child: ClipRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                      child: Container(
-                        color: Colors.black.withOpacity(0.55),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              color: Colors.black.withOpacity(0.6),
+            ),
           ),
         ),
-        // Color editor panel — positioned below the card
+        // CARD HOLE — re-render card on top of blur so it appears unblurred
+        // Position it exactly where the real card is
+        Positioned(
+          top: cardTop,
+          left: 20,
+          right: 20,
+          child: IgnorePointer(
+            ignoring: false,
+            child: _BalanceCard(
+              balance: balance,
+              currencyInfo: currencyInfo,
+              onLongPress: null, // no re-trigger during edit
+              previewPrimary: _tempPrimary,
+              previewSecondary: _tempSecondary,
+            ),
+          ),
+        ),
+        // DISMISS tap — only on the blurred area outside panel and card
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _tempPrimary = _savedPrimary;
+                _tempSecondary = _savedSecondary;
+                _editingCard = false;
+              });
+            },
+            behavior: HitTestBehavior.translucent,
+            child: const SizedBox.expand(),
+          ),
+        ),
+        // COLOR EDITOR PANEL — above blur, below card
         Positioned(
           left: 20,
           right: 20,
-          top: _cardBottomY + 16,
+          top: panelTop,
           bottom: MediaQuery.of(context).padding.bottom + 16,
           child: GestureDetector(
             onTap: () {}, // prevent dismiss
+            behavior: HitTestBehavior.opaque,
             child: _buildColorPanel(context),
           ),
         ),
@@ -302,12 +316,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildColorPanel(BuildContext context) {
-    final maxHeight = MediaQuery.of(context).size.height - _cardBottomY - 32 - MediaQuery.of(context).padding.bottom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: maxHeight,
+      constraints: const BoxConstraints(
+        maxHeight: double.infinity,
       ),
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
