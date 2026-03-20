@@ -47,7 +47,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _editingPrimary = true;
   Color _tempPrimary = CardColorService.defaultPrimary;
   Color _tempSecondary = CardColorService.defaultSecondary;
+  HSVColor _tempPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
+  HSVColor _tempSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
   double _cardBottomY = 300;
+
+  HSVColor get _currentHSV => _editingPrimary ? _tempPrimaryHSV : _tempSecondaryHSV;
+
+  void _onHSVChanged(HSVColor hsv) {
+    setState(() {
+      if (_editingPrimary) {
+        _tempPrimaryHSV = hsv;
+        _tempPrimary = hsv.toColor();
+      } else {
+        _tempSecondaryHSV = hsv;
+        _tempSecondary = hsv.toColor();
+      }
+    });
+  }
 
   Border? _themeBorder(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -58,6 +74,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final colors = ref.read(cardColorsProvider);
     _tempPrimary = colors.primary;
     _tempSecondary = colors.secondary;
+    _tempPrimaryHSV = HSVColor.fromColor(colors.primary);
+    _tempSecondaryHSV = HSVColor.fromColor(colors.secondary);
     
     // Calculate actual card bottom: status bar + appbar + top padding + card height
     final statusBar = MediaQuery.of(context).padding.top;
@@ -261,6 +279,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           left: 20,
           right: 20,
           top: _cardBottomY + 16,
+          bottom: MediaQuery.of(context).padding.bottom + 16,
           child: GestureDetector(
             onTap: () {}, // prevent dismiss
             child: _buildColorPanel(context),
@@ -271,88 +290,161 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildColorPanel(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
+    final maxHeight = MediaQuery.of(context).size.height - _cardBottomY - 32 - MediaQuery.of(context).padding.bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: maxHeight,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Toggle between primary/secondary
-          Row(
-            children: [
-              _PanelTab(
-                label: 'Primary',
-                isSelected: _editingPrimary,
-                color: _tempPrimary,
-                onTap: () => setState(() => _editingPrimary = true),
-              ),
-              const SizedBox(width: 12),
-              _PanelTab(
-                label: 'Secondary',
-                isSelected: !_editingPrimary,
-                color: _tempSecondary,
-                onTap: () => setState(() => _editingPrimary = false),
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // HSV Color Picker
-          SizedBox(
-            height: 200,
-            child: ColorPicker(
-              pickerColor: _editingPrimary ? _tempPrimary : _tempSecondary,
-              onColorChanged: (color) {
-                setState(() {
-                  if (_editingPrimary) {
-                    _tempPrimary = color;
-                  } else {
-                    _tempSecondary = color;
-                  }
-                });
-              },
-              colorPickerWidth: MediaQuery.of(context).size.width - 80,
-              pickerAreaHeightPercent: 0.7,
-              enableAlpha: false,
-              displayThumbColor: true,
-              labelTypes: const [],
-              pickerAreaBorderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Confirm button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                ref.read(cardColorsProvider.notifier).save(_tempPrimary, _tempSecondary);
-                setState(() => _editingCard = false);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7C6DED),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // TOP ROW: tabs + close button
+              Row(
+                children: [
+                  _PanelTab(
+                    label: 'Primary',
+                    isSelected: _editingPrimary,
+                    color: _tempPrimary,
+                    onTap: () => setState(() => _editingPrimary = true),
+                  ),
+                  const SizedBox(width: 10),
+                  _PanelTab(
+                    label: 'Secondary',
+                    isSelected: !_editingPrimary,
+                    color: _tempSecondary,
+                    onTap: () => setState(() => _editingPrimary = false),
+                  ),
+                  const Spacer(),
+                  // CLOSE BUTTON
+                  GestureDetector(
+                    onTap: () => setState(() => _editingCard = false),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // 2D spectrum area — drag to pick saturation + value
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  height: 180,
+                  width: double.infinity,
+                  child: ColorPickerArea(
+                    _currentHSV,
+                    _onHSVChanged,
+                    PaletteType.hsvWithHue,
+                  ),
                 ),
               ),
-              child: const Text(
-                'Apply',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              const SizedBox(height: 12),
+              // Hue rainbow slider — drag to change hue
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: SizedBox(
+                  height: 24,
+                  child: ColorPickerSlider(
+                    TrackType.hue,
+                    _currentHSV,
+                    _onHSVChanged,
+                    displayThumbColor: true,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 12),
+              // Color preview row
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: _tempPrimary,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isDark ? Colors.white24 : Colors.black12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: _tempSecondary,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isDark ? Colors.white24 : Colors.black12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '#${(_editingPrimary ? _tempPrimary : _tempSecondary).value.toRadixString(16).substring(2).toUpperCase()}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // APPLY BUTTON
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    ref.read(cardColorsProvider.notifier).save(_tempPrimary, _tempSecondary);
+                    setState(() => _editingCard = false);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF7C6DED),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Apply',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -373,6 +465,12 @@ class _PanelTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final unselectedBorder = isDark ? Colors.white24 : const Color(0xFFCCCCDD);
+    final unselectedText = isDark
+        ? Colors.white60
+        : Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -382,7 +480,7 @@ class _PanelTab extends StatelessWidget {
           color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? color : Colors.white24,
+            color: isSelected ? color : unselectedBorder,
             width: 1.5,
           ),
         ),
@@ -395,7 +493,10 @@ class _PanelTab extends StatelessWidget {
               decoration: BoxDecoration(
                 color: color,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white30, width: 1),
+                border: Border.all(
+                  color: isDark ? Colors.white30 : Colors.black12,
+                  width: 1,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -404,7 +505,7 @@ class _PanelTab extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? color : Colors.white60,
+                color: isSelected ? color : unselectedText,
               ),
             ),
           ],
