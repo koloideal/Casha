@@ -683,36 +683,45 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
   }
 
   Gradient _buildGradient(Color primary, Color secondary, GradientType type) {
-    final colors = [primary, secondary, Color.lerp(secondary, Colors.black, 0.3)!];
-    const stops = [0.0, 0.5, 1.0];
+    final colorDark = Color.lerp(secondary, Colors.black, 0.3)!;
 
     switch (type) {
       case GradientType.linear:
         return LinearGradient(
-          begin: const Alignment(-0.5, -0.5),
-          end: const Alignment(0.5, 0.5),
-          colors: colors,
-          stops: stops,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [primary, secondary, colorDark],
+          stops: const [0.0, 0.6, 1.0],
         );
       case GradientType.linearReverse:
         return LinearGradient(
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
-          colors: colors,
-          stops: stops,
+          colors: [primary, secondary, colorDark],
+          stops: const [0.0, 0.6, 1.0],
         );
       case GradientType.radial:
+        // Center of the widget, radius covers entire card
         return RadialGradient(
-          center: const Alignment(-0.4, -0.4),
-          radius: 1.2,
-          colors: colors,
-          stops: stops,
+          center: Alignment.center, // true center of the widget
+          radius: 1.4,              // 1.4 = reaches the corners cleanly
+          colors: [primary, secondary, colorDark],
+          stops: const [0.0, 0.6, 1.0],
         );
       case GradientType.sweep:
+        // Smooth clockwise sweep around center — all colors flow around the full circle
         return SweepGradient(
-          center: const Alignment(-0.4, -0.4),
-          colors: colors,
-          stops: stops,
+          center: Alignment.center,
+          startAngle: 0.0,
+          endAngle: 3.14159 * 2, // full 360 degrees
+          colors: [
+            primary,
+            secondary,
+            colorDark,
+            secondary,
+            primary, // close the loop smoothly back to start color
+          ],
+          stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
         );
     }
   }
