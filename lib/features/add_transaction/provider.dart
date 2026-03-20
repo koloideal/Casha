@@ -10,6 +10,8 @@ class AddTransactionState {
   final String note;
   final bool isSubmitting;
   final String? editingId;
+  final String overrideCurrency;
+  final String overrideCurrencyCode;
 
   const AddTransactionState({
     this.amount,
@@ -19,6 +21,8 @@ class AddTransactionState {
     this.note = '',
     this.isSubmitting = false,
     this.editingId,
+    this.overrideCurrency = '\$',
+    this.overrideCurrencyCode = 'USD',
   });
 
   factory AddTransactionState.fromTransaction(Transaction tx) {
@@ -29,6 +33,8 @@ class AddTransactionState {
       date: tx.date,
       note: tx.note ?? '',
       editingId: tx.id,
+      overrideCurrency: tx.currency,
+      overrideCurrencyCode: tx.currencyCode,
     );
   }
 
@@ -44,6 +50,8 @@ class AddTransactionState {
     String? note,
     bool? isSubmitting,
     String? editingId,
+    String? overrideCurrency,
+    String? overrideCurrencyCode,
   }) =>
       AddTransactionState(
         amount: amount ?? this.amount,
@@ -53,6 +61,8 @@ class AddTransactionState {
         note: note ?? this.note,
         isSubmitting: isSubmitting ?? this.isSubmitting,
         editingId: editingId ?? this.editingId,
+        overrideCurrency: overrideCurrency ?? this.overrideCurrency,
+        overrideCurrencyCode: overrideCurrencyCode ?? this.overrideCurrencyCode,
       );
 
   bool get isEditing => editingId != null;
@@ -79,6 +89,10 @@ class AddTransactionNotifier extends StateNotifier<AddTransactionState> {
   void setNote(String v) => state = state.copyWith(note: v);
   
   void setSubmitting(bool v) => state = state.copyWith(isSubmitting: v);
+  
+  void setCurrency(String symbol, String code) {
+    state = state.copyWith(overrideCurrency: symbol, overrideCurrencyCode: code);
+  }
   
   void reset() => state = AddTransactionState.empty();
 }

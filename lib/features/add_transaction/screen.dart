@@ -39,6 +39,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     if (widget.initial != null) {
       _amountController.text = widget.initial!.amount.toString();
       _noteController.text = widget.initial!.note ?? '';
+    } else {
+      // Set default currency from global provider after first frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final curr = ref.read(currencyProvider);
+        ref.read(addTransactionProvider(null).notifier).setCurrency(curr.symbol, curr.code);
+      });
     }
   }
 
@@ -53,7 +59,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final state = ref.read(addTransactionProvider(widget.initial));
-    final currencyInfo = ref.read(currencyProvider);
     ref.read(addTransactionProvider(widget.initial).notifier).setSubmitting(true);
 
     final note = _noteController.text.trim();
@@ -65,8 +70,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       type: state.type,
       date: state.date,
       note: note.isEmpty ? null : note,
-      currency: currencyInfo.symbol,
-      currencyCode: currencyInfo.code,
+      currency: state.overrideCurrency,
+      currencyCode: state.overrideCurrencyCode,
     );
 
     if (state.isEditing) {
@@ -105,7 +110,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(addTransactionProvider(widget.initial));
     final categories = ref.watch(availableCategoriesProvider(widget.initial));
-    final currencyInfo = ref.watch(currencyProvider);
+    final overrideCurrency = state.overrideCurrency;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -181,7 +186,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
-                        currencyInfo.symbol,
+                        overrideCurrency,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
@@ -223,6 +228,22 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 20),
+
+              // Currency
+              Text(
+                'Currency',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _CurrencyPicker(
+                selected: state.overrideCurrencyCode,
+                onChanged: (symbol, code) =>
+                    ref.read(addTransactionProvider(widget.initial).notifier).setCurrency(symbol, code),
               ),
               const SizedBox(height: 20),
 
@@ -477,6 +498,68 @@ class _CategoryPicker extends StatelessWidget {
                       ),
                 ),
               ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _CurrencyPicker extends StatelessWidget {
+  final String selected;
+  final void Function(String symbol, String code) onChanged;
+  const _CurrencyPicker({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final currencies = [
+      ('USD', '\$'),
+      ('EUR', '€'),
+      ('BYN', 'Br'),
+      ('RUB', '₽'),
+    ];
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      children: currencies.map((c) {
+        final isSelected = c.$1 == selected;
+        return Expanded(
+          child: GestureDetector(
+            onTap: () => onChanged(c.$2, c.$1),
+            child: Container(
+              margin: EdgeInsets.only(right: c.$1 == currencies.last.$1 ? 0 : 8),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFF7C6DED).withOpacity(0.15) : Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isSelected ? const Color(0xFF7C6DED) : Colors.transparent,
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    c.$2,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? const Color(0xFF7C6DED) : colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    c.$1,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

@@ -195,6 +195,7 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TextField(
       controller: controller,
       focusNode: focusNode,
@@ -212,6 +213,23 @@ class _SearchBar extends StatelessWidget {
                 },
               )
             : null,
+        filled: true,
+        fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: isDark ? Colors.transparent : const Color(0xFFCCCCDD),
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF7C6DED), width: 1.5),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
       onChanged: (v) => ref.read(searchQueryProvider.notifier).state = v,
