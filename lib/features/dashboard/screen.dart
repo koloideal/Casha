@@ -446,98 +446,104 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
 
     return AnimatedBuilder(
       animation: _controller,
-      builder: (context, child) {
+      builder: (context, _) {
         _tiltX += (_targetTiltX - _tiltX) * 0.15;
         _tiltY += (_targetTiltY - _tiltY) * 0.15;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
 
         return Transform(
           alignment: Alignment.center,
           transform: Matrix4.identity()
             ..setEntry(3, 2, 0.001)
-            ..rotateX(_tiltX * 0.22)
-            ..rotateY(_tiltY * 0.22),
-          child: child,
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        height: 180,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: const LinearGradient(
-            begin: Alignment(-1.0, -1.0),
-            end: Alignment(1.0, 1.0),
-            colors: [
-              Color(0xFF2A2545),
-              Color(0xFF1A1530),
-              Color(0xFF141228),
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 20, offset: const Offset(0, 8)),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text('TOTAL BALANCE', style: TextStyle(fontSize: 11, letterSpacing: 1.5, color: Colors.white.withOpacity(0.6))),
-                      const SizedBox(height: 6),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.center,
-                        child: Text(
-                          _smartBalance(widget.balance, fmt, widget.currencyInfo.symbol),
-                          style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w700, color: Colors.white),
-                          maxLines: 1,
-                        ),
-                      ),
+            ..rotateX(_tiltX * 0.32)
+            ..rotateY(_tiltY * 0.32),
+          child: Container(
+            width: double.infinity,
+            height: 180,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: const Alignment(-1.0, -1.0),
+                end: const Alignment(1.0, 1.0),
+                colors: isDark
+                  ? const [
+                      Color(0xFF7C6DED),
+                      Color(0xFF4A3FA0),
+                      Color(0xFF2A2060),
+                    ]
+                  : const [
+                      Color(0xFF2A2545),
+                      Color(0xFF1A1530),
+                      Color(0xFF141228),
                     ],
-                  ),
-                ),
-                if (widget.balance != 0) ...[
-                  const SizedBox(width: 16),
-                  Container(width: 1, height: 70, color: Colors.white.withOpacity(0.15)),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: 110,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: others.map((c) {
-                        final converted = rates.convert(widget.balance, widget.currencyInfo.code, c.$1);
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 3),
-                          child: FittedBox(
+                stops: const [0.0, 0.5, 1.0],
+              ),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 20, offset: const Offset(0, 8)),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text('TOTAL BALANCE', style: TextStyle(fontSize: 11, letterSpacing: 1.5, color: Colors.white.withOpacity(0.6))),
+                          const SizedBox(height: 6),
+                          FittedBox(
                             fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
+                            alignment: Alignment.center,
                             child: Text(
-                              _smartBalance(converted, fmt, c.$2),
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.65)),
+                              _smartBalance(widget.balance, fmt, widget.currencyInfo.symbol),
+                              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w700, color: Colors.white),
                               maxLines: 1,
                             ),
                           ),
-                        );
-                      }).toList(),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ],
+                    if (widget.balance != 0) ...[
+                      const SizedBox(width: 16),
+                      Container(width: 1, height: 70, color: Colors.white.withOpacity(0.15)),
+                      const SizedBox(width: 16),
+                      SizedBox(
+                        width: 110,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: others.map((c) {
+                            final converted = rates.convert(widget.balance, widget.currencyInfo.code, c.$1);
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 3),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  _smartBalance(converted, fmt, c.$2),
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.65)),
+                                  maxLines: 1,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
