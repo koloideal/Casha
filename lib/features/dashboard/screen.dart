@@ -424,7 +424,7 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
       samplingPeriod: const Duration(milliseconds: 50),
     ).listen((e) {
       _targetTiltY = (e.x / 9.8).clamp(-1.0, 1.0);
-      _targetTiltX = -(e.y / 9.8).clamp(-1.0, 1.0);
+      _targetTiltX = ((e.y / 9.8) - 1.0).clamp(-1.0, 1.0);
     });
   }
 
@@ -451,12 +451,22 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
         _tiltY += (_targetTiltY - _tiltY) * 0.15;
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
+        final tiltBrightness = (_tiltX * 0.15 + _tiltY * 0.1).clamp(-0.15, 0.15);
+        final highlightShift = (tiltBrightness * 40).round();
+
+        final topColor = isDark
+            ? Color.fromARGB(255, (0x7C + highlightShift).clamp(0x60, 0xFF), (0x6D + highlightShift).clamp(0x55, 0xFF), 0xED)
+            : Color.fromARGB(255, (0x2A + highlightShift).clamp(0x20, 0x40), (0x25 + highlightShift).clamp(0x1A, 0x35), (0x45 + highlightShift).clamp(0x35, 0x55));
+        final bottomColor = isDark
+            ? Color.fromARGB(255, (0x2A - highlightShift).clamp(0x18, 0x40), (0x20 - highlightShift).clamp(0x14, 0x30), (0x60 - highlightShift).clamp(0x45, 0x75))
+            : Color.fromARGB(255, (0x14 - highlightShift).clamp(0x0A, 0x20), (0x12 - highlightShift).clamp(0x08, 0x1E), (0x28 - highlightShift).clamp(0x1E, 0x34));
+
         return Transform(
           alignment: Alignment.center,
           transform: Matrix4.identity()
             ..setEntry(3, 2, 0.001)
-            ..rotateX(_tiltX * 0.32)
-            ..rotateY(_tiltY * 0.32),
+            ..rotateX(_tiltX * 0.42)
+            ..rotateY(_tiltY * 0.42),
           child: Container(
             width: double.infinity,
             height: 180,
@@ -465,17 +475,7 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
               gradient: LinearGradient(
                 begin: const Alignment(-1.0, -1.0),
                 end: const Alignment(1.0, 1.0),
-                colors: isDark
-                  ? const [
-                      Color(0xFF7C6DED),
-                      Color(0xFF4A3FA0),
-                      Color(0xFF2A2060),
-                    ]
-                  : const [
-                      Color(0xFF2A2545),
-                      Color(0xFF1A1530),
-                      Color(0xFF141228),
-                    ],
+                colors: [topColor, isDark ? const Color(0xFF4A3FA0) : const Color(0xFF1A1530), bottomColor],
                 stops: const [0.0, 0.5, 1.0],
               ),
               boxShadow: [
