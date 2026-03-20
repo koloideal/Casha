@@ -53,6 +53,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Color _savedSecondary = CardColorService.defaultSecondary;
   HSVColor _savedPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
   HSVColor _savedSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
+  GradientType _tempGradientType = GradientType.linear;
+  GradientType _savedGradientType = GradientType.linear;
   OverlayEntry? _overlayEntry;
 
   HSVColor get _currentHSV => _editingPrimary ? _tempPrimaryHSV : _tempSecondaryHSV;
@@ -80,10 +82,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     _savedSecondary = colors.secondary;
     _savedPrimaryHSV = HSVColor.fromColor(colors.primary);
     _savedSecondaryHSV = HSVColor.fromColor(colors.secondary);
+    _savedGradientType = colors.gradientType;
     _tempPrimary = colors.primary;
     _tempSecondary = colors.secondary;
     _tempPrimaryHSV = HSVColor.fromColor(colors.primary);
     _tempSecondaryHSV = HSVColor.fromColor(colors.secondary);
+    _tempGradientType = colors.gradientType;
     
     setState(() {
       _editingCard = true;
@@ -104,11 +108,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   void _closeOverlay({required bool apply}) {
     if (apply) {
-      ref.read(cardColorsProvider.notifier).save(_tempPrimary, _tempSecondary);
+      ref.read(cardColorsProvider.notifier).save(_tempPrimary, _tempSecondary, _tempGradientType);
     } else {
       setState(() {
         _tempPrimary = _savedPrimary;
         _tempSecondary = _savedSecondary;
+        _tempGradientType = _savedGradientType;
       });
     }
     _overlayEntry?.remove();
@@ -210,6 +215,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       onLongPress: _onCardLongPress,
                       previewPrimary: _editingCard ? _tempPrimary : null,
                       previewSecondary: _editingCard ? _tempSecondary : null,
+                      previewGradientType: _editingCard ? _tempGradientType : null,
                     ),
                     const SizedBox(height: 16),
                     _SummaryRow(
@@ -630,6 +636,7 @@ class _BalanceCard extends ConsumerStatefulWidget {
   final VoidCallback? onLongPress;
   final Color? previewPrimary;
   final Color? previewSecondary;
+  final GradientType? previewGradientType;
   
   const _BalanceCard({
     required this.balance,
@@ -637,6 +644,7 @@ class _BalanceCard extends ConsumerStatefulWidget {
     this.onLongPress,
     this.previewPrimary,
     this.previewSecondary,
+    this.previewGradientType,
   });
 
   @override
@@ -674,6 +682,41 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
     super.dispose();
   }
 
+  Gradient _buildGradient(Color primary, Color secondary, GradientType type) {
+    final colors = [primary, secondary, Color.lerp(secondary, Colors.black, 0.3)!];
+    const stops = [0.0, 0.5, 1.0];
+
+    switch (type) {
+      case GradientType.linear:
+        return LinearGradient(
+          begin: const Alignment(-0.5, -0.5),
+          end: const Alignment(0.5, 0.5),
+          colors: colors,
+          stops: stops,
+        );
+      case GradientType.linearReverse:
+        return LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: colors,
+          stops: stops,
+        );
+      case GradientType.radial:
+        return RadialGradient(
+          center: const Alignment(-0.4, -0.4),
+          radius: 1.2,
+          colors: colors,
+          stops: stops,
+        );
+      case GradientType.sweep:
+        return SweepGradient(
+          center: const Alignment(-0.4, -0.4),
+          colors: colors,
+          stops: stops,
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final rates = ref.read(exchangeRateServiceProvider);
@@ -681,6 +724,7 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
     final savedColors = ref.watch(cardColorsProvider);
     final primary = widget.previewPrimary ?? savedColors.primary;
     final secondary = widget.previewSecondary ?? savedColors.secondary;
+    final gradientType = widget.previewGradientType ?? savedColors.gradientType;
     final allCurrencies = [
       ('USD', r'$'),
       ('EUR', '€'),
@@ -710,16 +754,7 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
               height: 180,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  begin: const Alignment(-0.5, -0.5),
-                  end: const Alignment(0.5, 0.5),
-                  colors: [
-                    primary,
-                    secondary,
-                    Color.lerp(secondary, Colors.black, 0.3)!,
-                  ],
-                  stops: const [0.0, 0.5, 1.0],
-                ),
+                gradient: _buildGradient(primary, secondary, gradientType),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.4),
@@ -1102,7 +1137,7 @@ class _FullScreenBlurOverlayState extends State<_FullScreenBlurOverlay> {
     final mq = MediaQuery.of(widget.context);
     final cardTop = mq.padding.top + kToolbarHeight + 16;
     final cardHeight = 180.0;
-    final panelTop = cardTop + cardHeight + 78;
+    final panelTop = cardTop + cardHeight + 50;
     final panelBottom = mq.padding.bottom + 16;
 
     return Material(
@@ -1140,6 +1175,7 @@ class _FullScreenBlurOverlayState extends State<_FullScreenBlurOverlay> {
                 onLongPress: null,
                 previewPrimary: dash._tempPrimary,
                 previewSecondary: dash._tempSecondary,
+                previewGradientType: dash._tempGradientType,
               ),
             ),
           ),
@@ -1364,25 +1400,144 @@ class _FullScreenBlurOverlayState extends State<_FullScreenBlurOverlay> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                // APPLY BUTTON
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => dash._closeOverlay(apply: true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF7C6DED),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                // GRADIENT TYPE SECTION
+                Text(
+                  'Gradient Style',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: GradientType.values.map((type) {
+                    final isSelected = dash._tempGradientType == type;
+                    final label = switch (type) {
+                      GradientType.linear => 'Linear',
+                      GradientType.linearReverse => 'Reverse',
+                      GradientType.radial => 'Radial',
+                      GradientType.sweep => 'Sweep',
+                    };
+                    final icon = switch (type) {
+                      GradientType.linear => Icons.trending_flat_rounded,
+                      GradientType.linearReverse => Icons.swap_horiz_rounded,
+                      GradientType.radial => Icons.blur_circular_rounded,
+                      GradientType.sweep => Icons.rotate_right_rounded,
+                    };
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onTap: () {
+                            dash.setState(() => dash._tempGradientType = type);
+                            setPanelState(() {});
+                            dash._overlayEntry?.markNeedsBuild();
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? const Color(0xFF7C6DED).withOpacity(0.15)
+                                  : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFF7C6DED)
+                                    : Colors.transparent,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  icon,
+                                  size: 18,
+                                  color: isSelected
+                                      ? const Color(0xFF7C6DED)
+                                      : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.5),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  label,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                    color: isSelected
+                                        ? const Color(0xFF7C6DED)
+                                        : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.5),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                // RESET + APPLY ROW
+                Row(
+                  children: [
+                    // RESET button
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          final isDark = Theme.of(widget.context).brightness == Brightness.dark;
+                          final defPrimary = isDark
+                              ? CardColorService.defaultPrimary
+                              : CardColorService.defaultPrimaryLight;
+                          final defSecondary = isDark
+                              ? CardColorService.defaultSecondary
+                              : CardColorService.defaultSecondaryLight;
+                          dash.setState(() {
+                            dash._tempPrimary = defPrimary;
+                            dash._tempSecondary = defSecondary;
+                            dash._tempPrimaryHSV = HSVColor.fromColor(defPrimary);
+                            dash._tempSecondaryHSV = HSVColor.fromColor(defSecondary);
+                            dash._tempGradientType = GradientType.linear;
+                          });
+                          setPanelState(() {});
+                          dash._overlayEntry?.markNeedsBuild();
+                        },
+                        icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                        label: const Text('Reset'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.7),
+                          side: BorderSide(
+                            color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.2),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
                       ),
                     ),
-                    child: const Text(
-                      'Apply',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    const SizedBox(width: 12),
+                    // APPLY button
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () => dash._closeOverlay(apply: true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7C6DED),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          'Apply',
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             );

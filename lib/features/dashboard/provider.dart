@@ -154,8 +154,9 @@ final recentTransactionsProvider = Provider<List<Transaction>>((ref) {
 class CardColors {
   final Color primary;
   final Color secondary;
+  final GradientType gradientType;
 
-  const CardColors(this.primary, this.secondary);
+  const CardColors(this.primary, this.secondary, [this.gradientType = GradientType.linear]);
 }
 
 final cardColorsProvider = StateNotifierProvider<CardColorsNotifier, CardColors>((ref) {
@@ -167,17 +168,25 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
       : super(const CardColors(
           CardColorService.defaultPrimary,
           CardColorService.defaultSecondary,
+          GradientType.linear,
         )) {
     _load();
   }
 
   Future<void> _load() async {
-    final (c1, c2) = await CardColorService.load();
-    state = CardColors(c1, c2);
+    final (c1, c2, g) = await CardColorService.load();
+    state = CardColors(c1, c2, g);
   }
 
-  Future<void> save(Color primary, Color secondary) async {
-    state = CardColors(primary, secondary);
-    await CardColorService.save(primary, secondary);
+  Future<void> save(Color primary, Color secondary, GradientType gradient) async {
+    state = CardColors(primary, secondary, gradient);
+    await CardColorService.save(primary, secondary, gradient);
+  }
+
+  Future<void> reset(bool isDark) async {
+    final primary = isDark ? CardColorService.defaultPrimary : CardColorService.defaultPrimaryLight;
+    final secondary = isDark ? CardColorService.defaultSecondary : CardColorService.defaultSecondaryLight;
+    state = CardColors(primary, secondary, GradientType.linear);
+    await CardColorService.save(primary, secondary, GradientType.linear);
   }
 }
