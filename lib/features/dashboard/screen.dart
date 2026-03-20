@@ -37,6 +37,8 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
+  final _searchFocusNode = FocusNode();
 
   Border? _themeBorder(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -44,9 +46,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _searchFocusNode.addListener(() {
+      if (_searchFocusNode.hasFocus) {
+        _scrollToSearch();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  void _scrollToSearch() {
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        180.0, // approximate height of balance card — puts search bar at top
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    });
   }
 
   @override
@@ -99,6 +124,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: CustomScrollView(
+          controller: _scrollController,
           cacheExtent: 300,
           slivers: [
             SliverToBoxAdapter(
@@ -115,7 +141,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       _BudgetProgress(spent: monthExpense, budget: budget, currencyInfo: currencyInfo),
                     ],
                     const SizedBox(height: 24),
-                    _SearchBar(controller: _searchController, ref: ref),
+                    _SearchBar(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      ref: ref,
+                    ),
                     const SizedBox(height: 12),
                     _FilterChips(selected: filter, ref: ref),
                     const SizedBox(height: 20),
@@ -159,13 +189,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
 class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
+  final FocusNode focusNode;
   final WidgetRef ref;
-  const _SearchBar({required this.controller, required this.ref});
+  const _SearchBar({
+    required this.controller,
+    required this.focusNode,
+    required this.ref,
+  });
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       decoration: InputDecoration(
         hintText: 'Search transactions...',
         prefixIcon: Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
