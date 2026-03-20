@@ -48,11 +48,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _searchFocusNode.addListener(() {
-      if (_searchFocusNode.hasFocus) {
-        _scrollToSearch();
-      }
-    });
   }
 
   @override
@@ -66,9 +61,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void _scrollToSearch() {
     if (!_scrollController.hasClients) return;
     _scrollController.animateTo(
-      320.0,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
+      400.0,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.fastOutSlowIn,
     );
   }
 
@@ -139,14 +134,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       _BudgetProgress(spent: monthExpense, budget: budget, currencyInfo: currencyInfo),
                     ],
                     const SizedBox(height: 24),
-                    GestureDetector(
+                    _SearchBar(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
                       onTap: _scrollToSearch,
-                      behavior: HitTestBehavior.translucent,
-                      child: _SearchBar(
-                        controller: _searchController,
-                        focusNode: _searchFocusNode,
-                        ref: ref,
-                      ),
+                      ref: ref,
                     ),
                     const SizedBox(height: 12),
                     _FilterChips(selected: filter, ref: ref),
@@ -192,10 +184,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
+  final VoidCallback onTap;
   final WidgetRef ref;
   const _SearchBar({
     required this.controller,
     required this.focusNode,
+    required this.onTap,
     required this.ref,
   });
 
@@ -204,6 +198,7 @@ class _SearchBar extends StatelessWidget {
     return TextField(
       controller: controller,
       focusNode: focusNode,
+      onTap: onTap,
       decoration: InputDecoration(
         hintText: 'Search transactions...',
         prefixIcon: Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
