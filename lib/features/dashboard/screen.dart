@@ -14,10 +14,10 @@ import 'provider.dart';
 
 // Helper for balance card only - hides .00 decimals
 String _smartBalance(double amount, AmountFormat fmt, String symbol) {
-  const spaceAfter = {'Br', '₽'};
+  const spaceAfter = {'Br'};
   final sep = spaceAfter.contains(symbol) ? ' ' : '';
   final isWhole = amount == amount.floorToDouble();
-  
+
   String formatted;
   if (isWhole) {
     // format the integer, then manually remove .00
@@ -94,15 +94,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   Text(
                     'My Finances',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                   Text(
                     DateFormat('MMMM yyyy').format(DateTime.now()),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                        ),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                    ),
                   ),
                 ],
               ),
@@ -131,10 +133,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   children: [
                     _BalanceCard(balance: balance, currencyInfo: currencyInfo),
                     const SizedBox(height: 16),
-                    _SummaryRow(income: income, expense: expense, currencyInfo: currencyInfo),
+                    _SummaryRow(
+                      income: income,
+                      expense: expense,
+                      currencyInfo: currencyInfo,
+                    ),
                     if (budget != null) ...[
                       const SizedBox(height: 16),
-                      _BudgetProgress(spent: monthExpense, budget: budget, currencyInfo: currencyInfo),
+                      _BudgetProgress(
+                        spent: monthExpense,
+                        budget: budget,
+                        currencyInfo: currencyInfo,
+                      ),
                     ],
                     const SizedBox(height: 24),
                     _SearchBar(
@@ -149,9 +159,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     Text(
                       'Transactions',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -205,7 +215,10 @@ class _SearchBar extends StatelessWidget {
       onTap: onTap,
       decoration: InputDecoration(
         hintText: 'Search transactions...',
-        prefixIcon: Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+        prefixIcon: Icon(
+          Icons.search_rounded,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+        ),
         suffixIcon: controller.text.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.clear_rounded, size: 20),
@@ -233,7 +246,10 @@ class _SearchBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
       ),
       onChanged: (v) => ref.read(searchQueryProvider.notifier).state = v,
     );
@@ -252,21 +268,24 @@ class _FilterChips extends StatelessWidget {
         _FilterChip(
           label: 'All',
           isSelected: selected == TransactionFilter.all,
-          onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.all,
+          onTap: () => ref.read(transactionFilterProvider.notifier).state =
+              TransactionFilter.all,
         ),
         const SizedBox(width: 8),
         _FilterChip(
           label: 'Income',
           isSelected: selected == TransactionFilter.income,
           color: AppColors.income,
-          onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.income,
+          onTap: () => ref.read(transactionFilterProvider.notifier).state =
+              TransactionFilter.income,
         ),
         const SizedBox(width: 8),
         _FilterChip(
           label: 'Expense',
           isSelected: selected == TransactionFilter.expense,
           color: AppColors.expense,
-          onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.expense,
+          onTap: () => ref.read(transactionFilterProvider.notifier).state =
+              TransactionFilter.expense,
         ),
       ],
     );
@@ -295,18 +314,24 @@ class _FilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? chipColor.withOpacity(0.2) : Theme.of(context).colorScheme.surface,
+          color: isSelected
+              ? chipColor.withOpacity(0.2)
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: isSelected
               ? Border.all(color: chipColor, width: 1.5)
-              : (isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
+              : (isDark
+                    ? null
+                    : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
         ),
         child: Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isSelected ? chipColor : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
+            color: isSelected
+                ? chipColor
+                : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+          ),
         ),
       ),
     );
@@ -317,7 +342,11 @@ class _BudgetProgress extends ConsumerWidget {
   final double spent;
   final double budget;
   final CurrencyInfo currencyInfo;
-  const _BudgetProgress({required this.spent, required this.budget, required this.currencyInfo});
+  const _BudgetProgress({
+    required this.spent,
+    required this.budget,
+    required this.currencyInfo,
+  });
 
   Border? _themeBorder(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -331,66 +360,92 @@ class _BudgetProgress extends ConsumerWidget {
     final isOver = progress > 1.0;
     final displayPercent = (progress * 100).toStringAsFixed(0);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: _themeBorder(context),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Monthly Budget',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-              ),
-              Text(
-                '$displayPercent%',
-                style: TextStyle(
-                  color: isOver ? const Color(0xFFE05C6B) : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  fontWeight: isOver ? FontWeight.w700 : FontWeight.normal,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: isOver ? 1.0 : progress,
-              backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                isOver ? const Color(0xFFE05C6B) : (progress > 0.8 ? Colors.orange : const Color(0xFF4CAF8C)),
-              ),
-              minHeight: 8,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border(
+            left: BorderSide(
+              color: isOver ? const Color(0xFFE05C6B) : const Color(0xFF7C6DED),
+              width: 3,
             ),
+            top: _themeBorder(context)?.top ?? BorderSide.none,
+            right: _themeBorder(context)?.right ?? BorderSide.none,
+            bottom: _themeBorder(context)?.bottom ?? BorderSide.none,
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Spent: ${formatAmount(currencyInfo.symbol, spent, fmt)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                    ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Monthly Budget',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+                Text(
+                  '$displayPercent%',
+                  style: TextStyle(
+                    color: isOver
+                        ? const Color(0xFFE05C6B)
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
+                    fontWeight: isOver ? FontWeight.w700 : FontWeight.normal,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: isOver ? 1.0 : progress,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withOpacity(0.1),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  isOver
+                      ? const Color(0xFFE05C6B)
+                      : (progress > 0.8
+                            ? Colors.orange
+                            : const Color(0xFF4CAF8C)),
+                ),
+                minHeight: 8,
               ),
-              Text(
-                'Limit: ${formatAmount(currencyInfo.symbol, budget, fmt)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-              ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Spent: ${formatAmount(currencyInfo.symbol, spent, fmt)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+                Text(
+                  'Limit: ${formatAmount(currencyInfo.symbol, budget, fmt)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -420,12 +475,13 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
       duration: const Duration(seconds: 1),
     )..repeat();
 
-    _sub = accelerometerEventStream(
-      samplingPeriod: const Duration(milliseconds: 50),
-    ).listen((e) {
-      _targetTiltY = (e.x / 9.8).clamp(-1.0, 1.0);
-      _targetTiltX = ((e.y / 9.8) - 1.0).clamp(-1.0, 1.0);
-    });
+    _sub =
+        accelerometerEventStream(
+          samplingPeriod: const Duration(milliseconds: 50),
+        ).listen((e) {
+          _targetTiltY = (e.x / 9.8).clamp(-1.0, 1.0);
+          _targetTiltX = ((e.y / 9.8) - 1.0).clamp(-1.0, 1.0);
+        });
   }
 
   @override
@@ -439,7 +495,12 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
   Widget build(BuildContext context) {
     final rates = ref.read(exchangeRateServiceProvider);
     final fmt = ref.watch(amountFormatProvider);
-    final allCurrencies = [('USD', r'$'), ('EUR', '€'), ('BYN', 'Br'), ('RUB', '₽')];
+    final allCurrencies = [
+      ('USD', r'$'),
+      ('EUR', '€'),
+      ('BYN', 'Br'),
+      ('RUB', '₽'),
+    ];
     final others = allCurrencies
         .where((c) => c.$1 != widget.currencyInfo.code)
         .toList();
@@ -451,15 +512,38 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
         _tiltY += (_targetTiltY - _tiltY) * 0.15;
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
-        final tiltBrightness = (_tiltX * 0.15 + _tiltY * 0.1).clamp(-0.15, 0.15);
+        final tiltBrightness = (_tiltX * 0.15 + _tiltY * 0.1).clamp(
+          -0.15,
+          0.15,
+        );
         final highlightShift = (tiltBrightness * 40).round();
 
         final topColor = isDark
-            ? Color.fromARGB(255, (0x7C + highlightShift).clamp(0x60, 0xFF), (0x6D + highlightShift).clamp(0x55, 0xFF), 0xED)
-            : Color.fromARGB(255, (0x2A + highlightShift).clamp(0x20, 0x40), (0x25 + highlightShift).clamp(0x1A, 0x35), (0x45 + highlightShift).clamp(0x35, 0x55));
+            ? Color.fromARGB(
+                255,
+                (0x7C + highlightShift).clamp(0x60, 0xFF),
+                (0x6D + highlightShift).clamp(0x55, 0xFF),
+                0xED,
+              )
+            : Color.fromARGB(
+                255,
+                (0x2A + highlightShift).clamp(0x20, 0x40),
+                (0x25 + highlightShift).clamp(0x1A, 0x35),
+                (0x45 + highlightShift).clamp(0x35, 0x55),
+              );
         final bottomColor = isDark
-            ? Color.fromARGB(255, (0x2A - highlightShift).clamp(0x18, 0x40), (0x20 - highlightShift).clamp(0x14, 0x30), (0x60 - highlightShift).clamp(0x45, 0x75))
-            : Color.fromARGB(255, (0x14 - highlightShift).clamp(0x0A, 0x20), (0x12 - highlightShift).clamp(0x08, 0x1E), (0x28 - highlightShift).clamp(0x1E, 0x34));
+            ? Color.fromARGB(
+                255,
+                (0x2A - highlightShift).clamp(0x18, 0x40),
+                (0x20 - highlightShift).clamp(0x14, 0x30),
+                (0x60 - highlightShift).clamp(0x45, 0x75),
+              )
+            : Color.fromARGB(
+                255,
+                (0x14 - highlightShift).clamp(0x0A, 0x20),
+                (0x12 - highlightShift).clamp(0x08, 0x1E),
+                (0x28 - highlightShift).clamp(0x1E, 0x34),
+              );
 
         return Transform(
           alignment: Alignment.center,
@@ -475,17 +559,28 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
               gradient: LinearGradient(
                 begin: const Alignment(-1.0, -1.0),
                 end: const Alignment(1.0, 1.0),
-                colors: [topColor, isDark ? const Color(0xFF4A3FA0) : const Color(0xFF1A1530), bottomColor],
+                colors: [
+                  topColor,
+                  isDark ? const Color(0xFF4A3FA0) : const Color(0xFF1A1530),
+                  bottomColor,
+                ],
                 stops: const [0.0, 0.5, 1.0],
               ),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 20, offset: const Offset(0, 8)),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
               ],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -496,14 +591,29 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text('TOTAL BALANCE', style: TextStyle(fontSize: 11, letterSpacing: 1.5, color: Colors.white.withOpacity(0.6))),
+                          Text(
+                            'TOTAL BALANCE',
+                            style: TextStyle(
+                              fontSize: 11,
+                              letterSpacing: 1.5,
+                              color: Colors.white.withOpacity(0.6),
+                            ),
+                          ),
                           const SizedBox(height: 6),
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.center,
                             child: Text(
-                              _smartBalance(widget.balance, fmt, widget.currencyInfo.symbol),
-                              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w700, color: Colors.white),
+                              _smartBalance(
+                                widget.balance,
+                                fmt,
+                                widget.currencyInfo.symbol,
+                              ),
+                              style: const TextStyle(
+                                fontSize: 48,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                               maxLines: 1,
                             ),
                           ),
@@ -512,7 +622,11 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
                     ),
                     if (widget.balance != 0) ...[
                       const SizedBox(width: 16),
-                      Container(width: 1, height: 70, color: Colors.white.withOpacity(0.15)),
+                      Container(
+                        width: 1,
+                        height: 70,
+                        color: Colors.white.withOpacity(0.15),
+                      ),
                       const SizedBox(width: 16),
                       SizedBox(
                         width: 110,
@@ -520,7 +634,11 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: others.map((c) {
-                            final converted = rates.convert(widget.balance, widget.currencyInfo.code, c.$1);
+                            final converted = rates.convert(
+                              widget.balance,
+                              widget.currencyInfo.code,
+                              c.$1,
+                            );
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 3),
                               child: FittedBox(
@@ -528,7 +646,11 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
                                 alignment: Alignment.centerLeft,
                                 child: Text(
                                   _smartBalance(converted, fmt, c.$2),
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.65)),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white.withOpacity(0.65),
+                                  ),
                                   maxLines: 1,
                                 ),
                               ),
@@ -552,15 +674,35 @@ class _SummaryRow extends StatelessWidget {
   final double income;
   final double expense;
   final CurrencyInfo currencyInfo;
-  const _SummaryRow({required this.income, required this.expense, required this.currencyInfo});
+  const _SummaryRow({
+    required this.income,
+    required this.expense,
+    required this.currencyInfo,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _SummaryCard(label: 'Income', amount: income, color: AppColors.income, icon: Icons.arrow_downward_rounded, currencyInfo: currencyInfo)),
+        Expanded(
+          child: _SummaryCard(
+            label: 'Income',
+            amount: income,
+            color: AppColors.income,
+            icon: Icons.arrow_downward_rounded,
+            currencyInfo: currencyInfo,
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _SummaryCard(label: 'Expenses', amount: expense, color: AppColors.expense, icon: Icons.arrow_upward_rounded, currencyInfo: currencyInfo)),
+        Expanded(
+          child: _SummaryCard(
+            label: 'Expenses',
+            amount: expense,
+            color: AppColors.expense,
+            icon: Icons.arrow_upward_rounded,
+            currencyInfo: currencyInfo,
+          ),
+        ),
       ],
     );
   }
@@ -572,7 +714,13 @@ class _SummaryCard extends ConsumerWidget {
   final Color color;
   final IconData icon;
   final CurrencyInfo currencyInfo;
-  const _SummaryCard({required this.label, required this.amount, required this.color, required this.icon, required this.currencyInfo});
+  const _SummaryCard({
+    required this.label,
+    required this.amount,
+    required this.color,
+    required this.icon,
+    required this.currencyInfo,
+  });
 
   Border? _themeBorder(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -604,14 +752,21 @@ class _SummaryCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   formatAmount(currencyInfo.symbol, amount, fmt),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -637,8 +792,10 @@ class _TransactionTile extends ConsumerWidget {
     final fmt = ref.watch(amountFormatProvider);
     final isIncome = transaction.type == TransactionType.income;
     final color = isIncome ? AppColors.income : AppColors.expense;
-    final catColor = AppCategories.colors[transaction.category] ?? AppColors.accent;
-    final catIcon = AppCategories.icons[transaction.category] ?? Icons.category_rounded;
+    final catColor =
+        AppCategories.colors[transaction.category] ?? AppColors.accent;
+    final catIcon =
+        AppCategories.icons[transaction.category] ?? Icons.category_rounded;
 
     return GestureDetector(
       onTap: () => context.push('/add', extra: transaction),
@@ -667,34 +824,38 @@ class _TransactionTile extends ConsumerWidget {
                   Text(
                     transaction.category,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                   if (transaction.note != null && transaction.note!.isNotEmpty)
                     Text(
                       transaction.note!,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                          ),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                      ),
                       overflow: TextOverflow.ellipsis,
                     )
                   else
                     Text(
                       DateFormat('MMM d, yyyy').format(transaction.date),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                          ),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                      ),
                     ),
                 ],
               ),
             ),
             Text(
-              '${isIncome ? '+' : '-'}${formatAmount(transaction.currency, transaction.amount, fmt)}',
+              '${isIncome ? '+ ' : '- '}${formatAmount(transaction.currency, transaction.amount, fmt)}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
@@ -728,16 +889,16 @@ class _EmptyState extends StatelessWidget {
           Text(
             'No transactions found',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: Theme.of(context).colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             'Tap + to add your first transaction',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                ),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            ),
           ),
         ],
       ),
