@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../shared/services/exchange_rate_service.dart';
+import '../../shared/utils/currency_utils.dart';
 import '../dashboard/provider.dart';
 
 final budgetProvider = StateNotifierProvider<BudgetNotifier, double?>((ref) {
@@ -124,7 +125,7 @@ class ExportService {
       final date = DateFormat('yyyy-MM-dd').format(tx.date);
       final type = tx.type.name;
       final category = tx.category;
-      final amount = '${tx.currency}${tx.amount.toStringAsFixed(2)}';
+      final amount = formatAmount(tx.currency, tx.amount);
       final note = tx.note?.replaceAll(',', ';') ?? '';
       buffer.writeln('$date,$type,$category,$amount,${tx.currencyCode},$note');
     }

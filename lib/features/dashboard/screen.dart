@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../shared/models/transaction.dart';
+import '../../shared/utils/currency_utils.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
 
@@ -307,13 +308,13 @@ class _BudgetProgress extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Spent: ${currencyInfo.symbol}${spent.toStringAsFixed(2)}',
+                'Spent: ${formatAmount(currencyInfo.symbol, spent)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     ),
               ),
               Text(
-                'Limit: ${currencyInfo.symbol}${budget.toStringAsFixed(2)}',
+                'Limit: ${formatAmount(currencyInfo.symbol, budget)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     ),
@@ -349,7 +350,7 @@ class _BudgetWarning extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Budget exceeded by ${currencyInfo.symbol}${over.toStringAsFixed(2)}',
+              'Budget exceeded by ${formatAmount(currencyInfo.symbol, over)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.expense,
                     fontWeight: FontWeight.w600,
@@ -362,13 +363,22 @@ class _BudgetWarning extends StatelessWidget {
   }
 }
 
-class _BalanceCard extends StatelessWidget {
+class _BalanceCard extends ConsumerWidget {
   final double balance;
   final CurrencyInfo currencyInfo;
   const _BalanceCard({required this.balance, required this.currencyInfo});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rates = ref.read(exchangeRateServiceProvider);
+    final allCurrencies = [
+      ('USD', '\$'),
+      ('EUR', '€'),
+      ('BYN', 'Br'),
+      ('RUB', '₽'),
+    ];
+    final others = allCurrencies.where((c) => c.$1 != currencyInfo.code).toList();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -390,33 +400,88 @@ class _BalanceCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Total Balance',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // LEFT: main balance — takes as much space as needed, right side shrinks first
+              Flexible(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'TOTAL BALANCE',
+                      style: TextStyle(
+                        fontSize: 11,
+                        letterSpacing: 1.2,
+                        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // FittedBox shrinks text to fit available width
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        formatAmount(currencyInfo.symbol, balance),
+                        style: TextStyle(
+                          fontSize: 36, // max font size
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
+                  ],
                 ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${currencyInfo.symbol}${balance.toStringAsFixed(2)}',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.5,
+              ),
+              // RIGHT side: use Flexible (not Expanded) so it can shrink
+              // When balance is long, this column gets squeezed first
+              Flexible(
+                flex: 2,
+                child: Row(
+                  children: [
+                    const SizedBox(width: 12),
+                    Container(
+                      width: 1,
+                      height: 60,
+                      color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: others.map((c) {
+                          final converted = rates.convert(balance, currencyInfo.code, c.$1);
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                formatAmount(c.$2, converted),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
+                                ),
+                                maxLines: 1,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
                 ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Converted to ${currencyInfo.symbol}${currencyInfo.code}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6),
-                  fontSize: 11,
-                ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -480,7 +545,7 @@ class _SummaryCard extends StatelessWidget {
                 Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
                 const SizedBox(height: 2),
                 Text(
-                  '${currencyInfo.symbol}${amount.toStringAsFixed(2)}',
+                  formatAmount(currencyInfo.symbol, amount),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: color,
                         fontWeight: FontWeight.w600,
@@ -562,7 +627,7 @@ class _TransactionTile extends StatelessWidget {
               ),
             ),
             Text(
-              '${isIncome ? '+' : '-'}${transaction.currency}${transaction.amount.toStringAsFixed(2)}',
+              '${isIncome ? '+' : '-'}${formatAmount(transaction.currency, transaction.amount)}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: color,
                     fontWeight: FontWeight.w700,

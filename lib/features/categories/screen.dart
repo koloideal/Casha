@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
+import '../../shared/utils/currency_utils.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
 
@@ -257,7 +258,7 @@ class _PieChartCard extends StatelessWidget {
                           ),
                     ),
                     Text(
-                      '$currency${total.toStringAsFixed(2)}',
+                      formatAmount(currency, total),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.w700,
@@ -311,7 +312,7 @@ class _BarChartCard extends StatelessWidget {
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
-                        '$currency${rod.toY.toStringAsFixed(2)}',
+                        formatAmount(currency, rod.toY),
                         TextStyle(
                           color: Theme.of(context).colorScheme.onPrimary,
                           fontWeight: FontWeight.w600,
@@ -458,7 +459,7 @@ class _CategoryRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '$currency${amount.toStringAsFixed(2)}',
+                    formatAmount(currency, amount),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.expense,
                           fontWeight: FontWeight.w700,

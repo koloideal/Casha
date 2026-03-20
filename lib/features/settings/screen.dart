@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
+import '../../shared/utils/currency_utils.dart';
 import 'provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -196,7 +197,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                           ],
                           decoration: InputDecoration(
-                            prefixText: '${currencyInfo.symbol} ',
+                            prefixText: currencyInfo.symbol == 'Br' || currencyInfo.symbol == '₽'
+                                ? '${currencyInfo.symbol} '
+                                : currencyInfo.symbol,
                             hintText: '0.00',
                             helperText: 'Leave empty to remove budget limit',
                           ),
@@ -232,7 +235,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       children: [
                         Text(
                           budget != null
-                              ? _currencyFmt.format(budget)
+                              ? formatAmount(currencyInfo.symbol, budget)
                               : 'Not set',
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 color: budget != null ? AppColors.accent : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
