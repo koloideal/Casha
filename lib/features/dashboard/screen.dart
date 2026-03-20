@@ -49,6 +49,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Color _tempSecondary = CardColorService.defaultSecondary;
   HSVColor _tempPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
   HSVColor _tempSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
+  Color _savedPrimary = CardColorService.defaultPrimary;
+  Color _savedSecondary = CardColorService.defaultSecondary;
+  HSVColor _savedPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
+  HSVColor _savedSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
   double _cardBottomY = 300;
 
   HSVColor get _currentHSV => _editingPrimary ? _tempPrimaryHSV : _tempSecondaryHSV;
@@ -72,6 +76,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   void _onCardLongPress() {
     final colors = ref.read(cardColorsProvider);
+    // save originals for cancel
+    _savedPrimary = colors.primary;
+    _savedSecondary = colors.secondary;
+    _savedPrimaryHSV = HSVColor.fromColor(colors.primary);
+    _savedSecondaryHSV = HSVColor.fromColor(colors.secondary);
+    // init temp
     _tempPrimary = colors.primary;
     _tempSecondary = colors.secondary;
     _tempPrimaryHSV = HSVColor.fromColor(colors.primary);
@@ -181,6 +191,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           balance: balance,
                           currencyInfo: currencyInfo,
                           onLongPress: _onCardLongPress,
+                          previewPrimary: _editingCard ? _tempPrimary : null,
+                          previewSecondary: _editingCard ? _tempSecondary : null,
                         ),
                         const SizedBox(height: 16),
                         _SummaryRow(
@@ -335,7 +347,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   const Spacer(),
                   // CLOSE BUTTON
                   GestureDetector(
-                    onTap: () => setState(() => _editingCard = false),
+                    onTap: () {
+                      setState(() {
+                        _tempPrimary = _savedPrimary;
+                        _tempSecondary = _savedSecondary;
+                        _editingCard = false;
+                      });
+                    },
                     child: Container(
                       width: 32,
                       height: 32,
@@ -384,37 +402,85 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               // Color preview row
               Row(
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: _tempPrimary,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isDark ? Colors.white24 : Colors.black12,
-                      ),
+                  // PRIMARY — left aligned
+                  GestureDetector(
+                    onTap: () => setState(() => _editingPrimary = true),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: _tempPrimary,
+                            borderRadius: BorderRadius.circular(8),
+                            border: _editingPrimary
+                                ? Border.all(color: Colors.white, width: 2)
+                                : Border.all(color: Colors.transparent, width: 2),
+                            boxShadow: _editingPrimary
+                                ? [
+                                    BoxShadow(
+                                      color: _tempPrimary.withOpacity(0.5),
+                                      blurRadius: 8,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '#${_tempPrimary.value.toRadixString(16).substring(2).toUpperCase()}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: _editingPrimary
+                                ? Theme.of(context).colorScheme.onSurface.withOpacity(0.8)
+                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                            fontWeight: _editingPrimary ? FontWeight.w600 : FontWeight.normal,
+                            fontFamily: 'monospace',
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: _tempSecondary,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isDark ? Colors.white24 : Colors.black12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      '#${(_editingPrimary ? _tempPrimary : _tempSecondary).value.toRadixString(16).substring(2).toUpperCase()}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                        fontFamily: 'monospace',
-                      ),
+                  const Spacer(),
+                  // SECONDARY — right aligned
+                  GestureDetector(
+                    onTap: () => setState(() => _editingPrimary = false),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '#${_tempSecondary.value.toRadixString(16).substring(2).toUpperCase()}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: !_editingPrimary
+                                ? Theme.of(context).colorScheme.onSurface.withOpacity(0.8)
+                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                            fontWeight: !_editingPrimary ? FontWeight.w600 : FontWeight.normal,
+                            fontFamily: 'monospace',
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: _tempSecondary,
+                            borderRadius: BorderRadius.circular(8),
+                            border: !_editingPrimary
+                                ? Border.all(color: Colors.white, width: 2)
+                                : Border.all(color: Colors.transparent, width: 2),
+                            boxShadow: !_editingPrimary
+                                ? [
+                                    BoxShadow(
+                                      color: _tempSecondary.withOpacity(0.5),
+                                      blurRadius: 8,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -805,11 +871,15 @@ class _BalanceCard extends ConsumerStatefulWidget {
   final double balance;
   final CurrencyInfo currencyInfo;
   final VoidCallback? onLongPress;
+  final Color? previewPrimary;
+  final Color? previewSecondary;
   
   const _BalanceCard({
     required this.balance,
     required this.currencyInfo,
     this.onLongPress,
+    this.previewPrimary,
+    this.previewSecondary,
   });
 
   @override
@@ -851,7 +921,9 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
   Widget build(BuildContext context) {
     final rates = ref.read(exchangeRateServiceProvider);
     final fmt = ref.watch(amountFormatProvider);
-    final colors = ref.watch(cardColorsProvider);
+    final savedColors = ref.watch(cardColorsProvider);
+    final primary = widget.previewPrimary ?? savedColors.primary;
+    final secondary = widget.previewSecondary ?? savedColors.secondary;
     final allCurrencies = [
       ('USD', r'$'),
       ('EUR', '€'),
@@ -885,9 +957,9 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
                   begin: const Alignment(-0.5, -0.5),
                   end: const Alignment(0.5, 0.5),
                   colors: [
-                    colors.primary,
-                    colors.secondary,
-                    Color.lerp(colors.secondary, Colors.black, 0.3)!,
+                    primary,
+                    secondary,
+                    Color.lerp(secondary, Colors.black, 0.3)!,
                   ],
                   stops: const [0.0, 0.5, 1.0],
                 ),
