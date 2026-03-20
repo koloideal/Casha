@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../shared/models/transaction.dart';
 import '../../shared/services/storage_service.dart';
+import '../settings/provider.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('Override in main');
@@ -51,37 +52,50 @@ enum TransactionFilter { all, income, expense }
 final transactionFilterProvider =
     StateProvider<TransactionFilter>((ref) => TransactionFilter.all);
 
-// Derived providers
+// Converted balance providers (convert all transactions to selected currency)
 final totalBalanceProvider = Provider<double>((ref) {
   final txs = ref.watch(transactionsProvider);
+  final exchangeService = ref.watch(exchangeRateServiceProvider);
+  final targetCurrency = ref.watch(currencyProvider).code;
+
   return txs.fold(0.0, (sum, t) {
-    return t.type == TransactionType.income ? sum + t.amount : sum - t.amount;
+    final converted = exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
+    return t.type == TransactionType.income ? sum + converted : sum - converted;
   });
 });
 
 final totalIncomeProvider = Provider<double>((ref) {
-  return ref
-      .watch(transactionsProvider)
-      .where((t) => t.type == TransactionType.income)
-      .fold(0.0, (sum, t) => sum + t.amount);
+  final txs = ref.watch(transactionsProvider).where((t) => t.type == TransactionType.income);
+  final exchangeService = ref.watch(exchangeRateServiceProvider);
+  final targetCurrency = ref.watch(currencyProvider).code;
+
+  return txs.fold(0.0, (sum, t) {
+    return sum + exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
+  });
 });
 
 final totalExpenseProvider = Provider<double>((ref) {
-  return ref
-      .watch(transactionsProvider)
-      .where((t) => t.type == TransactionType.expense)
-      .fold(0.0, (sum, t) => sum + t.amount);
+  final txs = ref.watch(transactionsProvider).where((t) => t.type == TransactionType.expense);
+  final exchangeService = ref.watch(exchangeRateServiceProvider);
+  final targetCurrency = ref.watch(currencyProvider).code;
+
+  return txs.fold(0.0, (sum, t) {
+    return sum + exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
+  });
 });
 
 final currentMonthExpenseProvider = Provider<double>((ref) {
   final now = DateTime.now();
-  return ref
-      .watch(transactionsProvider)
-      .where((t) =>
-          t.type == TransactionType.expense &&
-          t.date.year == now.year &&
-          t.date.month == now.month)
-      .fold(0.0, (sum, t) => sum + t.amount);
+  final txs = ref.watch(transactionsProvider).where((t) =>
+      t.type == TransactionType.expense &&
+      t.date.year == now.year &&
+      t.date.month == now.month);
+  final exchangeService = ref.watch(exchangeRateServiceProvider);
+  final targetCurrency = ref.watch(currencyProvider).code;
+
+  return txs.fold(0.0, (sum, t) {
+    return sum + exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
+  });
 });
 
 final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {

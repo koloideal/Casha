@@ -7,8 +7,6 @@ import '../../shared/models/transaction.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
 
-final _currencyFmt = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
-
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -34,44 +32,67 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final budget = ref.watch(budgetProvider);
     final recent = ref.watch(recentTransactionsProvider);
     final filter = ref.watch(transactionFilterProvider);
+    final currencyInfo = ref.watch(currencyProvider);
 
     final budgetExceeded = budget != null && monthExpense > budget;
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'My Finances',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                  ),
+                  Text(
+                    DateFormat('MMMM yyyy').format(DateTime.now()),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_rounded),
+            iconSize: 32,
+            color: AppColors.accent,
+            onPressed: () => context.push('/add'),
+            tooltip: 'Add Transaction',
+          ),
+        ],
+      ),
       body: SafeArea(
         child: CustomScrollView(
+          cacheExtent: 500,
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'My Finances',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                    ),
-                    Text(
-                      DateFormat('MMMM yyyy').format(DateTime.now()),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                    ),
-                    const SizedBox(height: 24),
-                    _BalanceCard(balance: balance),
+                    _BalanceCard(balance: balance, currencyInfo: currencyInfo),
                     const SizedBox(height: 16),
-                    _SummaryRow(income: income, expense: expense),
+                    _SummaryRow(income: income, expense: expense, currencyInfo: currencyInfo),
                     if (budget != null) ...[
                       const SizedBox(height: 16),
-                      _BudgetProgress(spent: monthExpense, budget: budget),
+                      _BudgetProgress(spent: monthExpense, budget: budget, currencyInfo: currencyInfo),
                     ],
                     if (budgetExceeded) ...[
                       const SizedBox(height: 12),
-                      _BudgetWarning(spent: monthExpense, budget: budget),
+                      _BudgetWarning(spent: monthExpense, budget: budget, currencyInfo: currencyInfo),
                     ],
                     const SizedBox(height: 24),
                     _SearchBar(controller: _searchController, ref: ref),
@@ -102,7 +123,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   delegate: SliverChildBuilderDelegate(
                     (context, i) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: _TransactionTile(transaction: recent[i], ref: ref),
+                      child: _TransactionTile(
+                        transaction: recent[i],
+                      ),
                     ),
                     childCount: recent.length,
                   ),
@@ -220,7 +243,8 @@ class _FilterChip extends StatelessWidget {
 class _BudgetProgress extends StatelessWidget {
   final double spent;
   final double budget;
-  const _BudgetProgress({required this.spent, required this.budget});
+  final CurrencyInfo currencyInfo;
+  const _BudgetProgress({required this.spent, required this.budget, required this.currencyInfo});
 
   @override
   Widget build(BuildContext context) {
@@ -274,13 +298,13 @@ class _BudgetProgress extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Spent: ${_currencyFmt.format(spent)}',
+                'Spent: ${currencyInfo.symbol}${spent.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
               ),
               Text(
-                'Limit: ${_currencyFmt.format(budget)}',
+                'Limit: ${currencyInfo.symbol}${budget.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -296,7 +320,8 @@ class _BudgetProgress extends StatelessWidget {
 class _BudgetWarning extends StatelessWidget {
   final double spent;
   final double budget;
-  const _BudgetWarning({required this.spent, required this.budget});
+  final CurrencyInfo currencyInfo;
+  const _BudgetWarning({required this.spent, required this.budget, required this.currencyInfo});
 
   @override
   Widget build(BuildContext context) {
@@ -314,7 +339,7 @@ class _BudgetWarning extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Budget exceeded by ${_currencyFmt.format(over)}',
+              'Budget exceeded by ${currencyInfo.symbol}${over.toStringAsFixed(2)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.expense,
                     fontWeight: FontWeight.w600,
@@ -329,7 +354,8 @@ class _BudgetWarning extends StatelessWidget {
 
 class _BalanceCard extends StatelessWidget {
   final double balance;
-  const _BalanceCard({required this.balance});
+  final CurrencyInfo currencyInfo;
+  const _BalanceCard({required this.balance, required this.currencyInfo});
 
   @override
   Widget build(BuildContext context) {
@@ -362,11 +388,19 @@ class _BalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            _currencyFmt.format(balance),
+            '${currencyInfo.symbol}${balance.toStringAsFixed(2)}',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.5,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Converted to ${currencyInfo.symbol}${currencyInfo.code}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white60,
+                  fontSize: 11,
                 ),
           ),
         ],
@@ -378,15 +412,16 @@ class _BalanceCard extends StatelessWidget {
 class _SummaryRow extends StatelessWidget {
   final double income;
   final double expense;
-  const _SummaryRow({required this.income, required this.expense});
+  final CurrencyInfo currencyInfo;
+  const _SummaryRow({required this.income, required this.expense, required this.currencyInfo});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _SummaryCard(label: 'Income', amount: income, color: AppColors.income, icon: Icons.arrow_downward_rounded)),
+        Expanded(child: _SummaryCard(label: 'Income', amount: income, color: AppColors.income, icon: Icons.arrow_downward_rounded, currencyInfo: currencyInfo)),
         const SizedBox(width: 12),
-        Expanded(child: _SummaryCard(label: 'Expenses', amount: expense, color: AppColors.expense, icon: Icons.arrow_upward_rounded)),
+        Expanded(child: _SummaryCard(label: 'Expenses', amount: expense, color: AppColors.expense, icon: Icons.arrow_upward_rounded, currencyInfo: currencyInfo)),
       ],
     );
   }
@@ -397,7 +432,8 @@ class _SummaryCard extends StatelessWidget {
   final double amount;
   final Color color;
   final IconData icon;
-  const _SummaryCard({required this.label, required this.amount, required this.color, required this.icon});
+  final CurrencyInfo currencyInfo;
+  const _SummaryCard({required this.label, required this.amount, required this.color, required this.icon, required this.currencyInfo});
 
   @override
   Widget build(BuildContext context) {
@@ -426,7 +462,7 @@ class _SummaryCard extends StatelessWidget {
                 Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
                 const SizedBox(height: 2),
                 Text(
-                  _currencyFmt.format(amount),
+                  '${currencyInfo.symbol}${amount.toStringAsFixed(2)}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: color,
                         fontWeight: FontWeight.w600,
@@ -442,12 +478,11 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _TransactionTile extends StatelessWidget {
+class _TransactionTile extends ConsumerWidget {
   final Transaction transaction;
-  final WidgetRef ref;
-  const _TransactionTile({required this.transaction, required this.ref});
+  const _TransactionTile({required this.transaction});
 
-  void _showUndoSnackBar(BuildContext context, Transaction tx) {
+  void _showUndoSnackBar(BuildContext context, WidgetRef ref, Transaction tx) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Transaction deleted'),
@@ -464,7 +499,7 @@ class _TransactionTile extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isIncome = transaction.type == TransactionType.income;
     final color = isIncome ? AppColors.income : AppColors.expense;
     final catColor = AppCategories.colors[transaction.category] ?? AppColors.accent;
@@ -484,7 +519,7 @@ class _TransactionTile extends StatelessWidget {
       ),
       onDismissed: (_) {
         ref.read(transactionsProvider.notifier).delete(transaction.id);
-        _showUndoSnackBar(context, transaction);
+        _showUndoSnackBar(context, ref, transaction);
       },
       child: GestureDetector(
         onTap: () => context.push('/add', extra: transaction),
@@ -536,7 +571,7 @@ class _TransactionTile extends StatelessWidget {
                 ),
               ),
               Text(
-                '${isIncome ? '+' : '-'}${_currencyFmt.format(transaction.amount)}',
+                '${isIncome ? '+' : '-'}${transaction.currency}${transaction.amount.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: color,
                       fontWeight: FontWeight.w700,

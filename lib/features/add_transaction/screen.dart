@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/constants.dart';
 import '../../shared/models/transaction.dart';
 import '../dashboard/provider.dart';
+import '../settings/provider.dart';
 import 'provider.dart';
 
 const _uuid = Uuid();
@@ -30,11 +31,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   void initState() {
     super.initState();
     if (widget.initial != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(addTransactionProvider.notifier).initializeForEdit(widget.initial!);
-        _amountController.text = widget.initial!.amount.toString();
-        _noteController.text = widget.initial!.note ?? '';
-      });
+      _amountController.text = widget.initial!.amount.toString();
+      _noteController.text = widget.initial!.note ?? '';
     }
   }
 
@@ -47,8 +45,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final state = ref.read(addTransactionProvider);
-    ref.read(addTransactionProvider.notifier).setSubmitting(true);
+    final state = ref.read(addTransactionProvider(widget.initial));
+    final currencyInfo = ref.read(currencyProvider);
+    ref.read(addTransactionProvider(widget.initial).notifier).setSubmitting(true);
 
     final tx = Transaction(
       id: state.editingId ?? _uuid.v4(),
@@ -57,6 +56,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       type: state.type,
       date: state.date,
       note: state.note.isEmpty ? null : state.note,
+      currency: currencyInfo.symbol,
+      currencyCode: currencyInfo.code,
     );
 
     if (state.isEditing) {
@@ -65,13 +66,13 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       await ref.read(transactionsProvider.notifier).add(tx);
     }
     
-    ref.read(addTransactionProvider.notifier).setSubmitting(false);
+    ref.read(addTransactionProvider(widget.initial).notifier).setSubmitting(false);
 
     if (mounted) context.pop();
   }
 
   Future<void> _pickDate() async {
-    final state = ref.read(addTransactionProvider);
+    final state = ref.read(addTransactionProvider(widget.initial));
     final picked = await showDatePicker(
       context: context,
       initialDate: state.date,
@@ -88,14 +89,15 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       ),
     );
     if (picked != null) {
-      ref.read(addTransactionProvider.notifier).setDate(picked);
+      ref.read(addTransactionProvider(widget.initial).notifier).setDate(picked);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(addTransactionProvider);
-    final categories = ref.watch(availableCategoriesProvider);
+    final state = ref.watch(addTransactionProvider(widget.initial));
+    final categories = ref.watch(availableCategoriesProvider(widget.initial));
+    final currencyInfo = ref.watch(currencyProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -116,7 +118,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               _TypeToggle(
                 selected: state.type,
                 onChanged: (t) =>
-                    ref.read(addTransactionProvider.notifier).setType(t),
+                    ref.read(addTransactionProvider(widget.initial).notifier).setType(t),
               ),
               const SizedBox(height: 24),
 
@@ -133,10 +135,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
-                decoration: const InputDecoration(
-                  prefixText: '\$ ',
-                  prefixStyle: TextStyle(
-                    color: AppColors.textSecondary,
+                decoration: InputDecoration(
+                  prefixText: '${currencyInfo.symbol} ',
+                  prefixStyle: const TextStyle(
+                    color: AppColors.textPrimary,
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
@@ -144,7 +146,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 ),
                 onChanged: (v) {
                   final parsed = double.tryParse(v);
-                  ref.read(addTransactionProvider.notifier).setAmount(parsed);
+                  ref.read(addTransactionProvider(widget.initial).notifier).setAmount(parsed);
                 },
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Enter an amount';
@@ -162,7 +164,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 categories: categories,
                 selected: state.category,
                 onChanged: (c) =>
-                    ref.read(addTransactionProvider.notifier).setCategory(c),
+                    ref.read(addTransactionProvider(widget.initial).notifier).setCategory(c),
               ),
               const SizedBox(height: 20),
 
@@ -206,7 +208,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   hintText: 'Add a note...',
                 ),
                 onChanged: (v) =>
-                    ref.read(addTransactionProvider.notifier).setNote(v),
+                    ref.read(addTransactionProvider(widget.initial).notifier).setNote(v),
               ),
               const SizedBox(height: 32),
 

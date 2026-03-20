@@ -11,6 +11,13 @@ class AppColors {
   static const textSecondary = Color(0xFF8888A0);
   static const divider = Color(0xFF2A2A38);
   static const warning = Color(0xFFFFB74D);
+
+  // Light theme colors
+  static const lightBackground = Color(0xFFF5F5F7);
+  static const lightSurface = Color(0xFFFFFFFF);
+  static const lightTextPrimary = Color(0xFF1A1A24);
+  static const lightTextSecondary = Color(0xFF6B6B80);
+  static const lightDivider = Color(0xFFE0E0E8);
 }
 
 class AppCategories {
@@ -65,4 +72,34 @@ class AppCategories {
     'Refund': Color(0xFFB4FF69),
     'Other': Color(0xFFB469FF),
   };
+}
+
+class CurrencyOption {
+  final String symbol;
+  final String name;
+  final String code;
+
+  const CurrencyOption({
+    required this.symbol,
+    required this.name,
+    required this.code,
+  });
+}
+
+class AppCurrencies {
+  static const options = [
+    CurrencyOption(symbol: '\$', name: 'US Dollar', code: 'USD'),
+    CurrencyOption(symbol: '€', name: 'Euro', code: 'EUR'),
+    CurrencyOption(symbol: '£', name: 'British Pound', code: 'GBP'),
+    CurrencyOption(symbol: 'Br', name: 'Belarusian Ruble', code: 'BYN'),
+    CurrencyOption(symbol: '₽', name: 'Russian Ruble', code: 'RUB'),
+    CurrencyOption(symbol: '₴', name: 'Ukrainian Hryvnia', code: 'UAH'),
+  ];
+
+  static CurrencyOption findBySymbol(String symbol) {
+    return options.firstWhere(
+      (c) => c.symbol == symbol,
+      orElse: () => options.first,
+    );
+  }
 }

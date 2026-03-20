@@ -21,6 +21,21 @@ class AddTransactionState {
     this.editingId,
   });
 
+  factory AddTransactionState.fromTransaction(Transaction tx) {
+    return AddTransactionState(
+      amount: tx.amount,
+      category: tx.category,
+      type: tx.type,
+      date: tx.date,
+      note: tx.note ?? '',
+      editingId: tx.id,
+    );
+  }
+
+  factory AddTransactionState.empty() {
+    return AddTransactionState(date: DateTime.now());
+  }
+
   AddTransactionState copyWith({
     double? amount,
     String? category,
@@ -44,8 +59,10 @@ class AddTransactionState {
 }
 
 class AddTransactionNotifier extends StateNotifier<AddTransactionState> {
-  AddTransactionNotifier()
-      : super(AddTransactionState(date: DateTime.now()));
+  AddTransactionNotifier(Transaction? initial)
+      : super(initial != null
+            ? AddTransactionState.fromTransaction(initial)
+            : AddTransactionState.empty());
 
   void setAmount(double? v) => state = state.copyWith(amount: v);
   
@@ -63,27 +80,17 @@ class AddTransactionNotifier extends StateNotifier<AddTransactionState> {
   
   void setSubmitting(bool v) => state = state.copyWith(isSubmitting: v);
   
-  void initializeForEdit(Transaction transaction) {
-    state = AddTransactionState(
-      amount: transaction.amount,
-      category: transaction.category,
-      type: transaction.type,
-      date: transaction.date,
-      note: transaction.note ?? '',
-      editingId: transaction.id,
-    );
-  }
-  
-  void reset() => state = AddTransactionState(date: DateTime.now());
+  void reset() => state = AddTransactionState.empty();
 }
 
-final addTransactionProvider =
-    StateNotifierProvider.autoDispose<AddTransactionNotifier, AddTransactionState>(
-  (ref) => AddTransactionNotifier(),
+final addTransactionProvider = StateNotifierProvider.autoDispose
+    .family<AddTransactionNotifier, AddTransactionState, Transaction?>(
+  (ref, initial) => AddTransactionNotifier(initial),
 );
 
 // Reactive categories based on selected type
-final availableCategoriesProvider = Provider.autoDispose<List<String>>((ref) {
-  final type = ref.watch(addTransactionProvider.select((s) => s.type));
+final availableCategoriesProvider =
+    Provider.autoDispose.family<List<String>, Transaction?>((ref, initial) {
+  final type = ref.watch(addTransactionProvider(initial).select((s) => s.type));
   return AppCategories.forType(type);
 });

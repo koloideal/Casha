@@ -1,11 +1,11 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
+import '../settings/provider.dart';
 import 'provider.dart';
-
-final _currencyFmt = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
 
 enum ChartType { pie, bar }
 
@@ -25,6 +25,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     final data = ref.watch(categoryExpenseProvider);
     final monthlyData = ref.watch(monthlyBreakdownProvider);
     final total = data.values.fold(0.0, (a, b) => a + b);
+    final currencyInfo = ref.watch(currencyProvider);
 
     // Sort categories by amount descending
     final sortedEntries = data.entries.toList()
@@ -32,42 +33,46 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Categories',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+            ),
+            Text(
+              'Expense breakdown',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+            ),
+          ],
+        ),
+        actions: [
+          _ChartToggle(
+            selected: _chartType,
+            onChanged: (t) => setState(() => _chartType = t),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.add_circle_rounded),
+            iconSize: 32,
+            color: AppColors.accent,
+            onPressed: () => context.push('/add'),
+            tooltip: 'Add Transaction',
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Categories',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                        ),
-                        Text(
-                          'Expense breakdown',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _ChartToggle(
-                    selected: _chartType,
-                    onChanged: (t) => setState(() => _chartType = t),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
               if (data.isEmpty)
                 const Expanded(child: _EmptyState())
               else
@@ -80,9 +85,10 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                           total: total,
                           touchedIndex: _touchedIndex,
                           onTouch: (i) => setState(() => _touchedIndex = i),
+                          currency: currencyInfo.symbol,
                         )
                       else
-                        _BarChartCard(monthlyData: monthlyData),
+                        _BarChartCard(monthlyData: monthlyData, currency: currencyInfo.symbol),
                       const SizedBox(height: 20),
                       Text(
                         'Ranked by Amount',
@@ -103,6 +109,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                             category: cat,
                             amount: amount,
                             total: total,
+                            currency: currencyInfo.symbol,
                           ),
                         );
                       }),
@@ -185,12 +192,14 @@ class _PieChartCard extends StatelessWidget {
   final double total;
   final int touchedIndex;
   final ValueChanged<int> onTouch;
+  final String currency;
 
   const _PieChartCard({
     required this.data,
     required this.total,
     required this.touchedIndex,
     required this.onTouch,
+    required this.currency,
   });
 
   @override
@@ -257,7 +266,7 @@ class _PieChartCard extends StatelessWidget {
                           ),
                     ),
                     Text(
-                      _currencyFmt.format(total),
+                      '$currency${total.toStringAsFixed(2)}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.w700,
@@ -276,7 +285,8 @@ class _PieChartCard extends StatelessWidget {
 
 class _BarChartCard extends StatelessWidget {
   final List<MonthlyData> monthlyData;
-  const _BarChartCard({required this.monthlyData});
+  final String currency;
+  const _BarChartCard({required this.monthlyData, required this.currency});
 
   @override
   Widget build(BuildContext context) {
@@ -311,7 +321,7 @@ class _BarChartCard extends StatelessWidget {
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
-                        _currencyFmt.format(rod.toY),
+                        '$currency${rod.toY.toStringAsFixed(2)}',
                         const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -394,11 +404,13 @@ class _CategoryRow extends StatelessWidget {
   final String category;
   final double amount;
   final double total;
+  final String currency;
   const _CategoryRow({
     required this.rank,
     required this.category,
     required this.amount,
     required this.total,
+    required this.currency,
   });
 
   @override
@@ -457,7 +469,7 @@ class _CategoryRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    _currencyFmt.format(amount),
+                    '$currency${amount.toStringAsFixed(2)}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.expense,
                           fontWeight: FontWeight.w700,

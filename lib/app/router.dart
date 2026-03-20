@@ -29,7 +29,7 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/settings',
-          pageBuilder: (context, state) => const NoTransitionPage(
+          pageBuilder: (context, state) => NoTransitionPage(
             child: SettingsScreen(),
           ),
         ),
@@ -61,12 +61,6 @@ class AppShell extends StatelessWidget {
     final idx = _locationToIndex(context);
     return Scaffold(
       body: child,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/add'),
-        backgroundColor: const Color(0xFF7C6DED),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: NavigationBar(
         selectedIndex: idx,
         onDestinationSelected: (i) {
