@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 import '../../core/constants.dart';
 import '../../shared/models/transaction.dart';
 import '../../shared/utils/currency_utils.dart';
@@ -393,120 +396,146 @@ class _BudgetProgress extends ConsumerWidget {
   }
 }
 
-class _BalanceCard extends ConsumerWidget {
+class _BalanceCard extends ConsumerStatefulWidget {
   final double balance;
   final CurrencyInfo currencyInfo;
   const _BalanceCard({required this.balance, required this.currencyInfo});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_BalanceCard> createState() => _BalanceCardState();
+}
+
+class _BalanceCardState extends ConsumerState<_BalanceCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  double _tiltX = 0.0, _tiltY = 0.0;
+  double _targetTiltX = 0.0, _targetTiltY = 0.0;
+  StreamSubscription<AccelerometerEvent>? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    // repeat() — тикает каждый vsync кадр
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat();
+
+    // Акселерометр ТОЛЬКО пишет target — никакого setState/rebuild
+    _sub = accelerometerEventStream(
+      samplingPeriod: const Duration(milliseconds: 50),
+    ).listen((e) {
+      _targetTiltY = (e.x / 9.8).clamp(-1.0, 1.0);
+      _targetTiltX = -(e.y / 9.8).clamp(-1.0, 1.0);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final rates = ref.read(exchangeRateServiceProvider);
     final fmt = ref.watch(amountFormatProvider);
-    final allCurrencies = [
-      ('USD', '\$'),
-      ('EUR', '€'),
-      ('BYN', 'Br'),
-      ('RUB', '₽'),
-    ];
-    final others = allCurrencies.where((c) => c.$1 != currencyInfo.code).toList();
+    final allCurrencies = [('USD', r'$'), ('EUR', '€'), ('BYN', 'Br'), ('RUB', '₽')];
+    final others = allCurrencies
+        .where((c) => c.$1 != widget.currencyInfo.code)
+        .toList();
 
-    return Container(
-      width: double.infinity,
-      height: 180,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.primary.withOpacity(0.7),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accent.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        // ← lerp здесь, вызывается каждый кадр автоматически через AnimatedBuilder
+        _tiltX += (_targetTiltX - _tiltX) * 0.1;
+        _tiltY += (_targetTiltY - _tiltY) * 0.1;
+
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001) // перспектива — без неё вращение плоское
+            ..rotateX(_tiltX * 0.12)
+            ..rotateY(_tiltY * 0.12),
+          child: child,
+        );
+      },
+      child: Container( // строится ОДИН раз, не пересоздаётся каждый кадр
+        width: double.infinity,
+        height: 180,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: const LinearGradient(
+            begin: Alignment(-0.5, -0.5),
+            end: Alignment(0.5, 0.5),
+            colors: [Color(0xFF6B5DD3), Color(0xFF2A2040), Color(0xFF1A1625)],
+            stops: [0.0, 0.5, 1.0],
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // LEFT: main balance — takes available space, centered
-          Expanded(
-            flex: 5,
-            child: Column(
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 20, offset: const Offset(0, 8)),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  'TOTAL BALANCE',
-                  style: TextStyle(
-                    fontSize: 11,
-                    letterSpacing: 1.5,
-                    color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6),
+                Expanded(
+                  flex: 5,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text('TOTAL BALANCE', style: TextStyle(fontSize: 11, letterSpacing: 1.5, color: Colors.white.withOpacity(0.6))),
+                      const SizedBox(height: 6),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.center,
+                        child: Text(
+                          _smartBalance(widget.balance, fmt, widget.currencyInfo.symbol),
+                          style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w700, color: Colors.white),
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.center,
-                  child: Text(
-                    _smartBalance(balance, fmt, currencyInfo.symbol),
-                    style: TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.onPrimary,
+                if (widget.balance != 0) ...[
+                  const SizedBox(width: 16),
+                  Container(width: 1, height: 70, color: Colors.white.withOpacity(0.15)),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 110,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: others.map((c) {
+                        final converted = rates.convert(widget.balance, widget.currencyInfo.code, c.$1);
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              _smartBalance(converted, fmt, c.$2),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.65)),
+                              maxLines: 1,
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                    maxLines: 1,
-                    textAlign: TextAlign.center,
                   ),
-                ),
+                ],
               ],
             ),
           ),
-          // Only show conversion column if there's a meaningful balance
-          if (balance != 0) ...[
-            const SizedBox(width: 16),
-            Container(
-              width: 1,
-              height: 70,
-              color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
-            ),
-            const SizedBox(width: 16),
-            // RIGHT: conversions — fixed width, doesn't expand
-            SizedBox(
-              width: 110,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: others.map((c) {
-                  final converted = rates.convert(balance, currencyInfo.code, c.$1);
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        _smartBalance(converted, fmt, c.$2),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.65),
-                        ),
-                        maxLines: 1,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
