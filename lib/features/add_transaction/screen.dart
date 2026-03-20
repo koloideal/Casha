@@ -56,13 +56,15 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     final currencyInfo = ref.read(currencyProvider);
     ref.read(addTransactionProvider(widget.initial).notifier).setSubmitting(true);
 
+    final note = _noteController.text.trim();
+
     final tx = Transaction(
       id: state.editingId ?? _uuid.v4(),
       amount: state.amount!,
       category: state.category,
       type: state.type,
       date: state.date,
-      note: state.note.isEmpty ? null : state.note,
+      note: note.isEmpty ? null : note,
       currency: currencyInfo.symbol,
       currencyCode: currencyInfo.code,
     );
@@ -271,11 +273,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               TextFormField(
                 controller: _noteController,
                 maxLines: 2,
+                maxLength: 20,
                 decoration: const InputDecoration(
                   hintText: 'Add a note...',
                 ),
                 onChanged: (v) =>
-                    ref.read(addTransactionProvider(widget.initial).notifier).setNote(v),
+                    ref.read(addTransactionProvider(widget.initial).notifier).setNote(v.trim()),
               ),
               const SizedBox(height: 32),
 
