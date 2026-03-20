@@ -838,7 +838,7 @@ class _TransactionTile extends ConsumerWidget {
                     )
                   else
                     Text(
-                      DateFormat('MMM d, yyyy').format(transaction.date),
+                      DateFormat('MMM d, yyyy · HH:mm').format(transaction.date),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(
                           context,

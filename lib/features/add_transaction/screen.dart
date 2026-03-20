@@ -30,10 +30,18 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
   late AnimationController _shakeController;
   late Animation<Color?> _borderColorAnimation;
   bool _showError = false;
+  late DateTime _selectedDate;
+  late TimeOfDay _selectedTime;
 
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    _selectedDate = widget.initial?.date ?? now;
+    _selectedTime = widget.initial != null
+        ? TimeOfDay.fromDateTime(widget.initial!.date)
+        : TimeOfDay(hour: now.hour, minute: now.minute);
+    
     _shakeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 5000),
@@ -116,7 +124,18 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     
     final amount = double.parse(parsed);
     final state = ref.read(addTransactionProvider(widget.initial));
+    
+    // Combine date and time
+    final finalDateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+    
     ref.read(addTransactionProvider(widget.initial).notifier).setAmount(amount);
+    ref.read(addTransactionProvider(widget.initial).notifier).setDate(finalDateTime);
     ref.read(addTransactionProvider(widget.initial).notifier).setSubmitting(true);
 
     final note = _noteController.text.trim().isEmpty ? null : _noteController.text.trim();
@@ -126,7 +145,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
       amount: amount,
       category: state.category,
       type: state.type,
-      date: state.date,
+      date: finalDateTime,
       note: note,
       currency: state.overrideCurrency,
       currencyCode: state.overrideCurrencyCode,
@@ -144,10 +163,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
   }
 
   Future<void> _pickDate() async {
-    final state = ref.read(addTransactionProvider(widget.initial));
     final picked = await showDatePicker(
       context: context,
-      initialDate: state.date,
+      initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
@@ -160,7 +178,34 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
       ),
     );
     if (picked != null) {
-      ref.read(addTransactionProvider(widget.initial).notifier).setDate(picked);
+      setState(() => _selectedDate = picked);
+    }
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          timePickerTheme: TimePickerThemeData(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            hourMinuteShape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            dayPeriodShape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          colorScheme: Theme.of(context).colorScheme.copyWith(
+            primary: const Color(0xFF7C6DED),
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() => _selectedTime = picked);
     }
   }
 
@@ -315,26 +360,61 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
 
               _SectionLabel('Date'),
               const SizedBox(height: 8),
-              InkWell(
+              GestureDetector(
                 onTap: _pickDate,
-                borderRadius: BorderRadius.circular(12),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
+                    border: isDark ? null : Border.all(color: const Color(0xFFCCCCDD), width: 1),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today_rounded,
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: 18),
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      ),
                       const SizedBox(width: 10),
                       Text(
-                        DateFormat('MMMM d, yyyy').format(state.date),
+                        DateFormat('MMMM d, yyyy').format(_selectedDate),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              _SectionLabel('Time'),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _pickTime,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: isDark ? null : Border.all(color: const Color(0xFFCCCCDD), width: 1),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        _selectedTime.format(context),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
