@@ -1,4 +1,4 @@
-package com.example.casha
+package com.kolo.casha
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
