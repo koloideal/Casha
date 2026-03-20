@@ -90,7 +90,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'My Finances',
+                    'Casha',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: Theme.of(context).colorScheme.onSurface,

@@ -22,19 +22,33 @@ class AddTransactionScreen extends ConsumerStatefulWidget {
       _AddTransactionScreenState();
 }
 
-class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
+class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
-  late FocusNode _amountFocusNode;
-  bool _amountFocused = false;
+  late AnimationController _shakeController;
+  late Animation<Color?> _borderColorAnimation;
+  bool _showError = false;
 
   @override
   void initState() {
     super.initState();
-    _amountFocusNode = FocusNode();
-    _amountFocusNode.addListener(() {
-      setState(() => _amountFocused = _amountFocusNode.hasFocus);
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 5000),
+    );
+    _borderColorAnimation = ColorTween(
+      begin: const Color(0xFFE05C6B),
+      end: Colors.transparent,
+    ).animate(CurvedAnimation(
+      parent: _shakeController,
+      curve: Curves.easeOut,
+    ));
+    _shakeController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        if (mounted) setState(() => _showError = false);
+      }
     });
     if (widget.initial != null) {
       _amountController.text = widget.initial!.amount.toString();
@@ -51,24 +65,69 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   void dispose() {
     _amountController.dispose();
     _noteController.dispose();
-    _amountFocusNode.dispose();
+    _shakeController.dispose();
     super.dispose();
   }
 
+  String? _validateAndParseAmount(String raw) {
+    // trim whitespace
+    final trimmed = raw.trim();
+    
+    // empty check
+    if (trimmed.isEmpty) return null; // returns null = invalid, show dialog
+    
+    // replace comma with dot for European locale input
+    final normalized = trimmed.replaceAll(',', '.');
+    
+    // only digits and one dot allowed
+    final validPattern = RegExp(r'^\d+\.?\d*$');
+    if (!validPattern.hasMatch(normalized)) return null;
+    
+    // parse
+    final value = double.tryParse(normalized);
+    if (value == null) return null;
+    
+    // must be greater than zero
+    if (value <= 0) return null;
+    
+    // must not exceed reasonable max (prevent overflow)
+    if (value > 999_999_999) return null;
+    
+    // must not have more than 2 decimal places
+    final parts = normalized.split('.');
+    if (parts.length == 2 && parts[1].length > 2) return null;
+    
+    return normalized; // valid, return normalized string
+  }
+
+  void _triggerError() {
+    setState(() => _showError = true);
+    _shakeController.forward(from: 0);
+  }
+
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    final raw = _amountController.text;
+    final parsed = _validateAndParseAmount(raw);
+    
+    if (parsed == null) {
+      _triggerError();
+      return;
+    }
+    
+    final amount = double.parse(parsed);
     final state = ref.read(addTransactionProvider(widget.initial));
+    ref.read(addTransactionProvider(widget.initial).notifier).setAmount(amount);
     ref.read(addTransactionProvider(widget.initial).notifier).setSubmitting(true);
 
-    final note = _noteController.text.trim();
+    final note = _noteController.text.trim().isEmpty ? null : _noteController.text.trim();
 
     final tx = Transaction(
       id: state.editingId ?? _uuid.v4(),
-      amount: state.amount!,
+      amount: amount,
       category: state.category,
       type: state.type,
       date: state.date,
-      note: note.isEmpty ? null : note,
+      note: note,
       currency: state.overrideCurrency,
       currencyCode: state.overrideCurrencyCode,
     );
@@ -169,62 +228,63 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
               _SectionLabel('Amount'),
               const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).inputDecorationTheme.fillColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _amountFocused ? Theme.of(context).colorScheme.primary : Colors.transparent,
-                    width: 1.5,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        overrideCurrency,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
+              AnimatedBuilder(
+                animation: _borderColorAnimation,
+                builder: (context, child) {
+                  final isError = _showError;
+                  final normalBorder = isDark
+                      ? Colors.transparent
+                      : const Color(0xFFCCCCDD);
+                  final borderColor = isError
+                      ? (_borderColorAnimation.value ?? const Color(0xFFE05C6B))
+                      : normalBorder;
+
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: borderColor, width: isError ? 1.5 : 1),
                     ),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _amountController,
-                        focusNode: _amountFocusNode,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                        ],
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          child: Text(
+                            overrideCurrency,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            controller: _amountController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               color: Theme.of(context).colorScheme.onSurface,
                               fontWeight: FontWeight.w600,
                             ),
-                        decoration: const InputDecoration(
-                          hintText: '0.00',
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          filled: false,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 16),
+                            decoration: const InputDecoration(
+                              hintText: '0.00',
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              filled: false,
+                              contentPadding: EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            onChanged: (v) {
+                              final parsed = double.tryParse(v);
+                              ref.read(addTransactionProvider(widget.initial).notifier).setAmount(parsed);
+                            },
+                          ),
                         ),
-                        onChanged: (v) {
-                          final parsed = double.tryParse(v);
-                          ref.read(addTransactionProvider(widget.initial).notifier).setAmount(parsed);
-                        },
-                        validator: (v) {
-                          if (v == null || v.isEmpty) return 'Enter an amount';
-                          if (double.tryParse(v) == null) return 'Invalid amount';
-                          if (double.parse(v) <= 0) return 'Amount must be > 0';
-                          return null;
-                        },
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
               const SizedBox(height: 20),
 
@@ -288,8 +348,27 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 controller: _noteController,
                 maxLines: 2,
                 maxLength: 20,
-                decoration: const InputDecoration(
+                maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                buildCounter: (context, {required currentLength, required isFocused, maxLength}) =>
+                    Text(
+                      '$currentLength/$maxLength',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                        fontSize: 11,
+                      ),
+                    ),
+                decoration: InputDecoration(
                   hintText: 'Add a note...',
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: isDark
+                        ? BorderSide.none
+                        : const BorderSide(color: Color(0xFFCCCCDD), width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF7C6DED), width: 1.5),
+                  ),
                 ),
                 onChanged: (v) =>
                     ref.read(addTransactionProvider(widget.initial).notifier).setNote(v.trim()),
