@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../shared/utils/currency_utils.dart';
+import '../../shared/providers/amount_format_provider.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
 
@@ -180,7 +181,7 @@ class _ToggleButton extends StatelessWidget {
   }
 }
 
-class _PieChartCard extends StatelessWidget {
+class _PieChartCard extends ConsumerWidget {
   final Map<String, double> data;
   final double total;
   final int touchedIndex;
@@ -196,7 +197,8 @@ class _PieChartCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fmt = ref.watch(amountFormatProvider);
     final entries = data.entries.toList();
 
     return Container(
@@ -258,7 +260,7 @@ class _PieChartCard extends StatelessWidget {
                           ),
                     ),
                     Text(
-                      formatAmount(currency, total),
+                      formatAmount(currency, total, fmt),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.w700,
@@ -275,13 +277,14 @@ class _PieChartCard extends StatelessWidget {
   }
 }
 
-class _BarChartCard extends StatelessWidget {
+class _BarChartCard extends ConsumerWidget {
   final List<MonthlyData> monthlyData;
   final String currency;
   const _BarChartCard({required this.monthlyData, required this.currency});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fmt = ref.watch(amountFormatProvider);
     final maxY = monthlyData.map((e) => e.amount).reduce((a, b) => a > b ? a : b);
     final adjustedMaxY = maxY * 1.2;
 
@@ -312,7 +315,7 @@ class _BarChartCard extends StatelessWidget {
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
-                        formatAmount(currency, rod.toY),
+                        formatAmount(currency, rod.toY, fmt),
                         TextStyle(
                           color: Theme.of(context).colorScheme.onPrimary,
                           fontWeight: FontWeight.w600,
@@ -390,7 +393,7 @@ class _BarChartCard extends StatelessWidget {
   }
 }
 
-class _CategoryRow extends StatelessWidget {
+class _CategoryRow extends ConsumerWidget {
   final int rank;
   final String category;
   final double amount;
@@ -405,7 +408,8 @@ class _CategoryRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fmt = ref.watch(amountFormatProvider);
     final color = AppCategories.colors[category] ?? AppColors.accent;
     final icon = AppCategories.icons[category] ?? Icons.category_rounded;
     final pct = total > 0 ? amount / total : 0.0;
@@ -459,7 +463,7 @@ class _CategoryRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    formatAmount(currency, amount),
+                    formatAmount(currency, amount, fmt),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.expense,
                           fontWeight: FontWeight.w700,

@@ -74,6 +74,44 @@ class AppCategories {
   };
 }
 
+enum AmountFormat { commasDot, spacesDot, plain }
+
+extension AmountFormatExt on AmountFormat {
+  String get label {
+    switch (this) {
+      case AmountFormat.commasDot: return '1,234,567.89';
+      case AmountFormat.spacesDot: return '1 234 567.89';
+      case AmountFormat.plain:     return '1234567.89';
+    }
+  }
+
+  String get example {
+    switch (this) {
+      case AmountFormat.commasDot: return 'SYM 1,234.56';
+      case AmountFormat.spacesDot: return 'SYM 1 234.56';
+      case AmountFormat.plain:     return 'SYM 1234.56';
+    }
+  }
+
+  String format(double amount) {
+    switch (this) {
+      case AmountFormat.commasDot:
+        // groups of 3 with commas, dot decimal
+        final parts = amount.toStringAsFixed(2).split('.');
+        final intPart = parts[0].replaceAllMapped(
+          RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
+        return '$intPart.${parts[1]}';
+      case AmountFormat.spacesDot:
+        final parts = amount.toStringAsFixed(2).split('.');
+        final intPart = parts[0].replaceAllMapped(
+          RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]} ');
+        return '$intPart.${parts[1]}';
+      case AmountFormat.plain:
+        return amount.toStringAsFixed(2);
+    }
+  }
+}
+
 class CurrencyOption {
   final String symbol;
   final String name;

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../shared/models/transaction.dart';
 import '../../shared/utils/currency_utils.dart';
+import '../../shared/providers/amount_format_provider.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
 
@@ -245,7 +246,7 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _BudgetProgress extends StatelessWidget {
+class _BudgetProgress extends ConsumerWidget {
   final double spent;
   final double budget;
   final CurrencyInfo currencyInfo;
@@ -257,7 +258,8 @@ class _BudgetProgress extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fmt = ref.watch(amountFormatProvider);
     final ratio = spent / budget;
     final color = ratio >= 1.0
         ? AppColors.expense
@@ -308,13 +310,13 @@ class _BudgetProgress extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Spent: ${formatAmount(currencyInfo.symbol, spent)}',
+                'Spent: ${formatAmount(currencyInfo.symbol, spent, fmt)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     ),
               ),
               Text(
-                'Limit: ${formatAmount(currencyInfo.symbol, budget)}',
+                'Limit: ${formatAmount(currencyInfo.symbol, budget, fmt)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     ),
@@ -327,14 +329,15 @@ class _BudgetProgress extends StatelessWidget {
   }
 }
 
-class _BudgetWarning extends StatelessWidget {
+class _BudgetWarning extends ConsumerWidget {
   final double spent;
   final double budget;
   final CurrencyInfo currencyInfo;
   const _BudgetWarning({required this.spent, required this.budget, required this.currencyInfo});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fmt = ref.watch(amountFormatProvider);
     final over = spent - budget;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -350,7 +353,7 @@ class _BudgetWarning extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Budget exceeded by ${formatAmount(currencyInfo.symbol, over)}',
+              'Budget exceeded by ${formatAmount(currencyInfo.symbol, over, fmt)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.expense,
                     fontWeight: FontWeight.w600,
@@ -371,6 +374,7 @@ class _BalanceCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rates = ref.read(exchangeRateServiceProvider);
+    final fmt = ref.watch(amountFormatProvider);
     final allCurrencies = [
       ('USD', '\$'),
       ('EUR', '€'),
@@ -381,7 +385,8 @@ class _BalanceCard extends ConsumerWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      height: 140,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -426,7 +431,7 @@ class _BalanceCard extends ConsumerWidget {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        formatAmount(currencyInfo.symbol, balance),
+                        formatAmount(currencyInfo.symbol, balance, fmt),
                         style: TextStyle(
                           fontSize: 36, // max font size
                           fontWeight: FontWeight.w700,
@@ -463,7 +468,7 @@ class _BalanceCard extends ConsumerWidget {
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                formatAmount(c.$2, converted),
+                                formatAmount(c.$2, converted, fmt),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -505,7 +510,7 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
+class _SummaryCard extends ConsumerWidget {
   final String label;
   final double amount;
   final Color color;
@@ -519,7 +524,8 @@ class _SummaryCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fmt = ref.watch(amountFormatProvider);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -545,7 +551,7 @@ class _SummaryCard extends StatelessWidget {
                 Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
                 const SizedBox(height: 2),
                 Text(
-                  formatAmount(currencyInfo.symbol, amount),
+                  formatAmount(currencyInfo.symbol, amount, fmt),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: color,
                         fontWeight: FontWeight.w600,
@@ -561,7 +567,7 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _TransactionTile extends StatelessWidget {
+class _TransactionTile extends ConsumerWidget {
   final Transaction transaction;
   const _TransactionTile({required this.transaction});
 
@@ -571,7 +577,8 @@ class _TransactionTile extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fmt = ref.watch(amountFormatProvider);
     final isIncome = transaction.type == TransactionType.income;
     final color = isIncome ? AppColors.income : AppColors.expense;
     final catColor = AppCategories.colors[transaction.category] ?? AppColors.accent;
@@ -627,7 +634,7 @@ class _TransactionTile extends StatelessWidget {
               ),
             ),
             Text(
-              '${isIncome ? '+' : '-'}${formatAmount(transaction.currency, transaction.amount)}',
+              '${isIncome ? '+' : '-'}${formatAmount(transaction.currency, transaction.amount, fmt)}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: color,
                     fontWeight: FontWeight.w700,

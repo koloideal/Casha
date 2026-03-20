@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants.dart';
 import '../../shared/services/exchange_rate_service.dart';
 import '../../shared/utils/currency_utils.dart';
+import '../../shared/providers/amount_format_provider.dart';
 import '../dashboard/provider.dart';
 
 final budgetProvider = StateNotifierProvider<BudgetNotifier, double?>((ref) {
@@ -115,6 +117,7 @@ class ExportService {
   Future<String> exportToCSV() async {
     final transactions = _ref.read(transactionsProvider);
     final currency = _ref.read(currencyProvider);
+    final fmt = _ref.read(amountFormatProvider);
 
     // CSV header
     final buffer = StringBuffer();
@@ -125,7 +128,7 @@ class ExportService {
       final date = DateFormat('yyyy-MM-dd').format(tx.date);
       final type = tx.type.name;
       final category = tx.category;
-      final amount = formatAmount(tx.currency, tx.amount);
+      final amount = formatAmount(tx.currency, tx.amount, fmt);
       final note = tx.note?.replaceAll(',', ';') ?? '';
       buffer.writeln('$date,$type,$category,$amount,${tx.currencyCode},$note');
     }
