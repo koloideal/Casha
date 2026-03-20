@@ -37,7 +37,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final budgetExceeded = budget != null && monthExpense > budget;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Row(
           children: [
@@ -49,13 +49,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     'My Finances',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                   ),
                   Text(
                     DateFormat('MMMM yyyy').format(DateTime.now()),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         ),
                   ),
                 ],
@@ -75,7 +75,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
       body: SafeArea(
         child: CustomScrollView(
-          cacheExtent: 500,
+          cacheExtent: 300,
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
@@ -103,7 +103,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       'Transactions',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                     ),
                     const SizedBox(height: 12),
@@ -119,15 +119,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             else
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, i) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _TransactionTile(
-                        transaction: recent[i],
-                      ),
+                sliver: SliverList.builder(
+                  itemCount: recent.length,
+                  itemBuilder: (context, i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: RepaintBoundary(
+                      child: _TransactionTile(transaction: recent[i]),
                     ),
-                    childCount: recent.length,
                   ),
                 ),
               ),
@@ -149,11 +147,11 @@ class _SearchBar extends StatelessWidget {
       controller: controller,
       decoration: InputDecoration(
         hintText: 'Search transactions...',
-        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textSecondary),
+        prefixIcon: Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
         suffixIcon: controller.text.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.clear_rounded, size: 20),
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 onPressed: () {
                   controller.clear();
                   ref.read(searchQueryProvider.notifier).state = '';
@@ -221,17 +219,17 @@ class _FilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? chipColor.withOpacity(0.2) : AppColors.surface,
+          color: isSelected ? chipColor.withOpacity(0.2) : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? chipColor : AppColors.divider,
+            color: isSelected ? chipColor : Theme.of(context).dividerColor,
             width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isSelected ? chipColor : AppColors.textSecondary,
+                color: isSelected ? chipColor : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
         ),
@@ -258,9 +256,9 @@ class _BudgetProgress extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,7 +269,7 @@ class _BudgetProgress extends StatelessWidget {
               Text(
                 'Monthly Budget',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     ),
               ),
               Text(
@@ -288,7 +286,7 @@ class _BudgetProgress extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: ratio.clamp(0.0, 1.0),
-              backgroundColor: AppColors.divider,
+              backgroundColor: Theme.of(context).dividerColor,
               valueColor: AlwaysStoppedAnimation<Color>(color),
               minHeight: 8,
             ),
@@ -300,13 +298,13 @@ class _BudgetProgress extends StatelessWidget {
               Text(
                 'Spent: ${currencyInfo.symbol}${spent.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     ),
               ),
               Text(
                 'Limit: ${currencyInfo.symbol}${budget.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     ),
               ),
             ],
@@ -363,8 +361,11 @@ class _BalanceCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF7C6DED), Color(0xFF5A4FBF)],
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.primary.withOpacity(0.7),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -383,14 +384,14 @@ class _BalanceCard extends StatelessWidget {
           Text(
             'Total Balance',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white70,
+                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
                 ),
           ),
           const SizedBox(height: 8),
           Text(
             '${currencyInfo.symbol}${balance.toStringAsFixed(2)}',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onPrimary,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.5,
                 ),
@@ -399,7 +400,7 @@ class _BalanceCard extends StatelessWidget {
           Text(
             'Converted to ${currencyInfo.symbol}${currencyInfo.code}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white60,
+                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6),
                   fontSize: 11,
                 ),
           ),
@@ -440,9 +441,9 @@ class _SummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         children: [
@@ -459,7 +460,7 @@ class _SummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
+                Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
                 const SizedBox(height: 2),
                 Text(
                   '${currencyInfo.symbol}${amount.toStringAsFixed(2)}',
@@ -478,107 +479,74 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _TransactionTile extends ConsumerWidget {
+class _TransactionTile extends StatelessWidget {
   final Transaction transaction;
   const _TransactionTile({required this.transaction});
 
-  void _showUndoSnackBar(BuildContext context, WidgetRef ref, Transaction tx) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Transaction deleted'),
-        duration: const Duration(seconds: 5),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () {
-            ref.read(transactionsProvider.notifier).restore(tx);
-          },
-        ),
-        backgroundColor: AppColors.surface,
-      ),
-    );
-  }
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isIncome = transaction.type == TransactionType.income;
     final color = isIncome ? AppColors.income : AppColors.expense;
     final catColor = AppCategories.colors[transaction.category] ?? AppColors.accent;
     final catIcon = AppCategories.icons[transaction.category] ?? Icons.category_rounded;
 
-    return Dismissible(
-      key: Key(transaction.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
+    return GestureDetector(
+      onTap: () => context.push('/add', extra: transaction),
+      child: Container(
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.expense.withOpacity(0.15),
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
-        child: const Icon(Icons.delete_outline_rounded, color: AppColors.expense),
-      ),
-      onDismissed: (_) {
-        ref.read(transactionsProvider.notifier).delete(transaction.id);
-        _showUndoSnackBar(context, ref, transaction);
-      },
-      child: GestureDetector(
-        onTap: () => context.push('/add', extra: transaction),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.divider),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: catColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(catIcon, color: catColor, size: 20),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: catColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: Icon(catIcon, color: catColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    transaction.category,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                  ),
+                  if (transaction.note != null && transaction.note!.isNotEmpty)
                     Text(
-                      transaction.category,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                      transaction.note!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  else
+                    Text(
+                      DateFormat('MMM d, yyyy').format(transaction.date),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           ),
                     ),
-                    if (transaction.note != null && transaction.note!.isNotEmpty)
-                      Text(
-                        transaction.note!,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                        overflow: TextOverflow.ellipsis,
-                      )
-                    else
-                      Text(
-                        DateFormat('MMM d, yyyy').format(transaction.date),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                      ),
-                  ],
-                ),
+                ],
               ),
-              Text(
-                '${isIncome ? '+' : '-'}${transaction.currency}${transaction.amount.toStringAsFixed(2)}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-            ],
-          ),
+            ),
+            Text(
+              '${isIncome ? '+' : '-'}${transaction.currency}${transaction.amount.toStringAsFixed(2)}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ],
         ),
       ),
     );
@@ -596,21 +564,21 @@ class _EmptyState extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.receipt_long_rounded,
               size: 48,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             'No transactions found',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -618,7 +586,7 @@ class _EmptyState extends StatelessWidget {
           Text(
             'Tap + to add your first transaction',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 ),
           ),
         ],

@@ -26,10 +26,16 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
+  late FocusNode _amountFocusNode;
+  bool _amountFocused = false;
 
   @override
   void initState() {
     super.initState();
+    _amountFocusNode = FocusNode();
+    _amountFocusNode.addListener(() {
+      setState(() => _amountFocused = _amountFocusNode.hasFocus);
+    });
     if (widget.initial != null) {
       _amountController.text = widget.initial!.amount.toString();
       _noteController.text = widget.initial!.note ?? '';
@@ -40,6 +46,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   void dispose() {
     _amountController.dispose();
     _noteController.dispose();
+    _amountFocusNode.dispose();
     super.dispose();
   }
 
@@ -100,13 +107,46 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     final currencyInfo = ref.watch(currencyProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(state.isEditing ? 'Edit Transaction' : 'Add Transaction'),
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          if (state.isEditing)
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded),
+              color: const Color(0xFFE05C6B),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Delete transaction?'),
+                    content: const Text('This action cannot be undone.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          ref.read(transactionsProvider.notifier).delete(widget.initial!.id);
+                          Navigator.pop(ctx);
+                          context.pop();
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFE05C6B),
+                        ),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: SafeArea(
         child: Form(
@@ -125,35 +165,62 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               // Amount
               _SectionLabel('Amount'),
               const SizedBox(height: 8),
-              TextFormField(
-                controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                ],
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                decoration: InputDecoration(
-                  prefixText: '${currencyInfo.symbol} ',
-                  prefixStyle: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).inputDecorationTheme.fillColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _amountFocused ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                    width: 1.5,
                   ),
-                  hintText: '0.00',
                 ),
-                onChanged: (v) {
-                  final parsed = double.tryParse(v);
-                  ref.read(addTransactionProvider(widget.initial).notifier).setAmount(parsed);
-                },
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Enter an amount';
-                  if (double.tryParse(v) == null) return 'Invalid amount';
-                  if (double.parse(v) <= 0) return 'Amount must be > 0';
-                  return null;
-                },
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        currencyInfo.symbol,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _amountController,
+                        focusNode: _amountFocusNode,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                        ],
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                        decoration: const InputDecoration(
+                          hintText: '0.00',
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          filled: false,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 16),
+                        ),
+                        onChanged: (v) {
+                          final parsed = double.tryParse(v);
+                          ref.read(addTransactionProvider(widget.initial).notifier).setAmount(parsed);
+                        },
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Enter an amount';
+                          if (double.tryParse(v) == null) return 'Invalid amount';
+                          if (double.parse(v) <= 0) return 'Amount must be > 0';
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
 
@@ -177,19 +244,19 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.divider),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_today_rounded,
-                          color: AppColors.textSecondary, size: 18),
+                      Icon(Icons.calendar_today_rounded,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: 18),
                       const SizedBox(width: 10),
                       Text(
                         DateFormat('MMMM d, yyyy').format(state.date),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textPrimary,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                       ),
                     ],
@@ -242,7 +309,7 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
           ),
@@ -259,9 +326,9 @@ class _TypeToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         children: [
@@ -314,12 +381,12 @@ class _TypeOption extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isSelected ? color : AppColors.textSecondary, size: 18),
+              Icon(icon, color: isSelected ? color : Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: 18),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: isSelected ? color : AppColors.textSecondary,
+                      color: isSelected ? color : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),
               ),
@@ -356,22 +423,22 @@ class _CategoryPicker extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? color.withOpacity(0.2) : AppColors.surface,
+              color: isSelected ? color.withOpacity(0.2) : Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? color : AppColors.divider,
+                color: isSelected ? color : Theme.of(context).dividerColor,
                 width: isSelected ? 1.5 : 1,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: isSelected ? color : AppColors.textSecondary, size: 16),
+                Icon(icon, color: isSelected ? color : Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: 16),
                 const SizedBox(width: 6),
                 Text(
                   cat,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: isSelected ? color : AppColors.textSecondary,
+                        color: isSelected ? color : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                       ),
                 ),

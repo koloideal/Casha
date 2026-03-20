@@ -59,7 +59,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _currencyFmt = NumberFormat.currency(symbol: currencyInfo.symbol, decimalDigits: 2);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,13 +68,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               'Settings',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
             ),
             Text(
               'Manage your preferences',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   ),
             ),
           ],
@@ -98,9 +98,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.divider),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Row(
                 children: [
@@ -125,13 +125,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           'Dark Mode',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                         ),
                         Text(
                           isDarkMode ? 'Enabled' : 'Disabled',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                               ),
                         ),
                       ],
@@ -153,9 +153,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.divider),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +180,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           'Currency',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                         ),
                       ),
@@ -196,6 +196,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           padding: const EdgeInsets.only(right: 8),
                           child: GestureDetector(
                             onTap: () {
+                              final oldCode = ref.read(currencyProvider).code;
+                              final rates = ref.read(exchangeRateServiceProvider);
+                              ref.read(budgetProvider.notifier).onCurrencyChanged(oldCode, code, rates);
                               ref.read(currencyProvider.notifier).setCurrency(code);
                             },
                             child: Container(
@@ -203,10 +206,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? AppColors.accent.withOpacity(0.2)
-                                    : AppColors.background,
+                                    : Theme.of(context).scaffoldBackgroundColor,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: isSelected ? AppColors.accent : AppColors.divider,
+                                  color: isSelected ? AppColors.accent : Theme.of(context).dividerColor,
                                   width: isSelected ? 1.5 : 1,
                                 ),
                               ),
@@ -215,7 +218,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   Text(
                                     info.symbol,
                                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                          color: isSelected ? AppColors.accent : AppColors.textSecondary,
+                                          color: isSelected ? AppColors.accent : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                                           fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
                                         ),
                                   ),
@@ -223,7 +226,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   Text(
                                     code,
                                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: isSelected ? AppColors.accent : AppColors.textSecondary,
+                                          color: isSelected ? AppColors.accent : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                                         ),
                                   ),
@@ -244,9 +247,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.divider),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,14 +274,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           'Monthly Budget',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                         ),
                       ),
                       if (!_isEditing)
                         IconButton(
                           icon: const Icon(Icons.edit_rounded, size: 20),
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           onPressed: () => setState(() => _isEditing = true),
                         ),
                     ],
@@ -334,7 +337,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               ? _currencyFmt.format(budget)
                               : 'Not set',
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: budget != null ? AppColors.accent : AppColors.textSecondary,
+                                color: budget != null ? AppColors.accent : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                                 fontWeight: FontWeight.w700,
                               ),
                         ),
@@ -344,7 +347,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               ? 'Your monthly spending limit'
                               : 'Set a monthly spending limit to track your budget',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                               ),
                         ),
                       ],
@@ -368,7 +371,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Text(
                       'Budget tracking shows on the Dashboard with a progress bar and warning when exceeded.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textPrimary,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                     ),
                   ),

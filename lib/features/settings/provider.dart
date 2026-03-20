@@ -21,6 +21,12 @@ class BudgetNotifier extends StateNotifier<double?> {
     await _storage.saveBudget(budget);
     state = budget;
   }
+
+  void onCurrencyChanged(String oldCode, String newCode, ExchangeRateService rates) {
+    if (state == null) return;
+    final converted = rates.convert(state!, oldCode, newCode);
+    setBudget(converted);
+  }
 }
 
 // Currency info: symbol and code

@@ -104,38 +104,41 @@ class AppTheme {
   static ThemeData get lightTheme {
     final base = ThemeData.light(useMaterial3: true);
     final textTheme = GoogleFonts.poppinsTextTheme(base.textTheme).apply(
-      bodyColor: const Color(0xFF1A1A24),
-      displayColor: const Color(0xFF1A1A24),
+      bodyColor: const Color(0xFF1A1A2E),
+      displayColor: const Color(0xFF1A1A2E),
     );
 
     return base.copyWith(
       textTheme: textTheme,
-      scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+      scaffoldBackgroundColor: const Color(0xFFF0F0F7),
       colorScheme: const ColorScheme.light(
         surface: Colors.white,
         primary: AppColors.accent,
         secondary: AppColors.accent,
         onPrimary: Colors.white,
-        onSurface: Color(0xFF1A1A24),
+        onSurface: Color(0xFF1A1A2E),
+        onBackground: Color(0xFF1A1A2E),
+        background: Color(0xFFF0F0F7),
       ),
       cardTheme: CardThemeData(
         color: Colors.white,
-        elevation: 0,
+        elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         margin: EdgeInsets.zero,
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: const Color(0xFFF5F5F5),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1A1A2E),
         elevation: 0,
         centerTitle: false,
         titleTextStyle: GoogleFonts.poppins(
-          color: const Color(0xFF1A1A24),
+          color: const Color(0xFF1A1A2E),
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
-        iconTheme: const IconThemeData(color: Color(0xFF1A1A24)),
+        iconTheme: const IconThemeData(color: AppColors.accent),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.white,
@@ -149,7 +152,7 @@ class AppTheme {
             );
           }
           return GoogleFonts.poppins(
-            color: const Color(0xFF666666),
+            color: const Color(0xFF9999BB),
             fontSize: 12,
           );
         }),
@@ -157,26 +160,26 @@ class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return const IconThemeData(color: AppColors.accent);
           }
-          return const IconThemeData(color: Color(0xFF666666));
+          return const IconThemeData(color: Color(0xFF9999BB));
         }),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: const Color(0xFFEEEEF8),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
         ),
-        labelStyle: const TextStyle(color: Color(0xFF666666)),
-        hintStyle: const TextStyle(color: Color(0xFF999999)),
+        labelStyle: const TextStyle(color: Color(0xFF9999BB)),
+        hintStyle: const TextStyle(color: Color(0xFF9999BB)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -193,8 +196,16 @@ class AppTheme {
         ),
       ),
       dividerTheme: const DividerThemeData(
-        color: Color(0xFFE0E0E0),
+        color: Color(0xFFDDDDEE),
         thickness: 1,
+      ),
+      iconTheme: const IconThemeData(color: AppColors.accent),
+      chipTheme: ChipThemeData(
+        backgroundColor: const Color(0xFFEEEEF8),
+        selectedColor: AppColors.accent,
+        labelStyle: GoogleFonts.poppins(
+          color: const Color(0xFF1A1A2E),
+        ),
       ),
     );
   }
