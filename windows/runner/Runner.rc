@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "first_attempt" "\0"
+            VALUE "FileDescription", "casha" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "first_attempt" "\0"
+            VALUE "InternalName", "casha" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "first_attempt.exe" "\0"
-            VALUE "ProductName", "first_attempt" "\0"
+            VALUE "OriginalFilename", "casha.exe" "\0"
+            VALUE "ProductName", "casha" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

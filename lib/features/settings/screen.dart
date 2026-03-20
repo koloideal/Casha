@@ -514,6 +514,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 32),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Center(
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: const TextSpan(
+                    style: TextStyle(fontSize: 13, color: Colors.white30),
+                    children: [
+                      TextSpan(
+                        text: 'casha',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white38,
+                        ),
+                      ),
+                      TextSpan(
+                        text: '  powered with ❤️ by  ',
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      ),
+                      TextSpan(
+                        text: 'kolo',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white38,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

@@ -4,13 +4,18 @@ import '../features/dashboard/screen.dart';
 import '../features/add_transaction/screen.dart';
 import '../features/categories/screen.dart';
 import '../features/settings/screen.dart';
+import '../features/splash/screen.dart';
 import '../shared/models/transaction.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
-  initialLocation: '/dashboard',
+  initialLocation: '/splash',
   routes: [
+    GoRoute(
+      path: '/splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
     ShellRoute(
       navigatorKey: _shellKey,
       builder: (context, state, child) => AppShell(child: child),
