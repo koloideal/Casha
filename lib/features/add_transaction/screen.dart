@@ -12,7 +12,9 @@ import 'provider.dart';
 const _uuid = Uuid();
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
-  const AddTransactionScreen({super.key});
+  final Transaction? initial;
+  
+  const AddTransactionScreen({super.key, this.initial});
 
   @override
   ConsumerState<AddTransactionScreen> createState() =>
@@ -23,6 +25,18 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initial != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(addTransactionProvider.notifier).initializeForEdit(widget.initial!);
+        _amountController.text = widget.initial!.amount.toString();
+        _noteController.text = widget.initial!.note ?? '';
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -37,7 +51,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     ref.read(addTransactionProvider.notifier).setSubmitting(true);
 
     final tx = Transaction(
-      id: _uuid.v4(),
+      id: state.editingId ?? _uuid.v4(),
       amount: state.amount!,
       category: state.category,
       type: state.type,
@@ -45,7 +59,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       note: state.note.isEmpty ? null : state.note,
     );
 
-    await ref.read(transactionsProvider.notifier).add(tx);
+    if (state.isEditing) {
+      await ref.read(transactionsProvider.notifier).update(tx);
+    } else {
+      await ref.read(transactionsProvider.notifier).add(tx);
+    }
+    
     ref.read(addTransactionProvider.notifier).setSubmitting(false);
 
     if (mounted) context.pop();
@@ -76,11 +95,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(addTransactionProvider);
+    final categories = ref.watch(availableCategoriesProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Add Transaction'),
+        title: Text(state.isEditing ? 'Edit Transaction' : 'Add Transaction'),
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
           onPressed: () => context.pop(),
@@ -139,6 +159,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               _SectionLabel('Category'),
               const SizedBox(height: 8),
               _CategoryPicker(
+                categories: categories,
                 selected: state.category,
                 onChanged: (c) =>
                     ref.read(addTransactionProvider.notifier).setCategory(c),
@@ -200,7 +221,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Save Transaction'),
+                    : Text(state.isEditing ? 'Update Transaction' : 'Save Transaction'),
               ),
             ],
           ),
@@ -309,16 +330,21 @@ class _TypeOption extends StatelessWidget {
 }
 
 class _CategoryPicker extends StatelessWidget {
+  final List<String> categories;
   final String selected;
   final ValueChanged<String> onChanged;
-  const _CategoryPicker({required this.selected, required this.onChanged});
+  const _CategoryPicker({
+    required this.categories,
+    required this.selected,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: AppCategories.all.map((cat) {
+      children: categories.map((cat) {
         final isSelected = cat == selected;
         final color = AppCategories.colors[cat] ?? AppColors.accent;
         final icon = AppCategories.icons[cat] ?? Icons.category_rounded;

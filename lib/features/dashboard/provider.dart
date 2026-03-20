@@ -27,11 +27,29 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
     state = _storage.loadTransactions();
   }
 
+  Future<void> update(Transaction transaction) async {
+    await _storage.updateTransaction(transaction);
+    state = _storage.loadTransactions();
+  }
+
   Future<void> delete(String id) async {
     await _storage.deleteTransaction(id);
     state = _storage.loadTransactions();
   }
+
+  void restore(Transaction transaction) {
+    state = [...state, transaction];
+    _storage.addTransaction(transaction);
+  }
 }
+
+// Search and filter state
+final searchQueryProvider = StateProvider<String>((ref) => '');
+
+enum TransactionFilter { all, income, expense }
+
+final transactionFilterProvider =
+    StateProvider<TransactionFilter>((ref) => TransactionFilter.all);
 
 // Derived providers
 final totalBalanceProvider = Provider<double>((ref) {
@@ -55,8 +73,45 @@ final totalExpenseProvider = Provider<double>((ref) {
       .fold(0.0, (sum, t) => sum + t.amount);
 });
 
+final currentMonthExpenseProvider = Provider<double>((ref) {
+  final now = DateTime.now();
+  return ref
+      .watch(transactionsProvider)
+      .where((t) =>
+          t.type == TransactionType.expense &&
+          t.date.year == now.year &&
+          t.date.month == now.month)
+      .fold(0.0, (sum, t) => sum + t.amount);
+});
+
+final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
+  final txs = ref.watch(transactionsProvider);
+  final query = ref.watch(searchQueryProvider).toLowerCase();
+  final filter = ref.watch(transactionFilterProvider);
+
+  var filtered = txs;
+
+  // Apply type filter
+  if (filter == TransactionFilter.income) {
+    filtered = filtered.where((t) => t.type == TransactionType.income).toList();
+  } else if (filter == TransactionFilter.expense) {
+    filtered = filtered.where((t) => t.type == TransactionType.expense).toList();
+  }
+
+  // Apply search query
+  if (query.isNotEmpty) {
+    filtered = filtered.where((t) {
+      final matchesCategory = t.category.toLowerCase().contains(query);
+      final matchesNote = t.note?.toLowerCase().contains(query) ?? false;
+      return matchesCategory || matchesNote;
+    }).toList();
+  }
+
+  // Sort by date descending
+  filtered.sort((a, b) => b.date.compareTo(a.date));
+  return filtered;
+});
+
 final recentTransactionsProvider = Provider<List<Transaction>>((ref) {
-  final txs = List<Transaction>.from(ref.watch(transactionsProvider));
-  txs.sort((a, b) => b.date.compareTo(a.date));
-  return txs.take(20).toList();
+  return ref.watch(filteredTransactionsProvider).take(20).toList();
 });

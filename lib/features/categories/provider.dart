@@ -12,3 +12,29 @@ final categoryExpenseProvider = Provider<Map<String, double>>((ref) {
   }
   return map;
 });
+
+// Monthly breakdown for last 6 months
+final monthlyBreakdownProvider = Provider<List<MonthlyData>>((ref) {
+  final txs = ref.watch(transactionsProvider)
+      .where((t) => t.type == TransactionType.expense);
+
+  final now = DateTime.now();
+  final months = <MonthlyData>[];
+
+  for (var i = 5; i >= 0; i--) {
+    final month = DateTime(now.year, now.month - i, 1);
+    final total = txs
+        .where((t) => t.date.year == month.year && t.date.month == month.month)
+        .fold(0.0, (sum, t) => sum + t.amount);
+    months.add(MonthlyData(month: month, amount: total));
+  }
+
+  return months;
+});
+
+class MonthlyData {
+  final DateTime month;
+  final double amount;
+
+  MonthlyData({required this.month, required this.amount});
+}
