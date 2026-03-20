@@ -58,13 +58,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
             onChanged: (t) => setState(() => _chartType = t),
           ),
           const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.add_circle_rounded),
-            iconSize: 32,
-            color: AppColors.accent,
-            onPressed: () => context.push('/add'),
-            tooltip: 'Add Transaction',
-          ),
         ],
       ),
       body: SafeArea(

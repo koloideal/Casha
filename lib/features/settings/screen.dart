@@ -80,15 +80,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_rounded),
-            iconSize: 32,
-            color: AppColors.accent,
-            onPressed: () => context.push('/add'),
-            tooltip: 'Add Transaction',
-          ),
-        ],
       ),
       body: SafeArea(
         child: ListView(
