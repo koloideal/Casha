@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/services/card_color_service.dart';
 import '../../shared/models/transaction.dart';
 import '../../shared/services/storage_service.dart';
 import '../settings/provider.dart';
@@ -147,3 +149,35 @@ final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
 final recentTransactionsProvider = Provider<List<Transaction>>((ref) {
   return ref.watch(filteredTransactionsProvider).take(20).toList();
 });
+
+// Loaded card colors state
+class CardColors {
+  final Color primary;
+  final Color secondary;
+
+  const CardColors(this.primary, this.secondary);
+}
+
+final cardColorsProvider = StateNotifierProvider<CardColorsNotifier, CardColors>((ref) {
+  return CardColorsNotifier();
+});
+
+class CardColorsNotifier extends StateNotifier<CardColors> {
+  CardColorsNotifier()
+      : super(const CardColors(
+          CardColorService.defaultPrimary,
+          CardColorService.defaultSecondary,
+        )) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final (c1, c2) = await CardColorService.load();
+    state = CardColors(c1, c2);
+  }
+
+  Future<void> save(Color primary, Color secondary) async {
+    state = CardColors(primary, secondary);
+    await CardColorService.save(primary, secondary);
+  }
+}

@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import '../../core/constants.dart';
+import '../../core/services/card_color_service.dart';
 import '../../shared/models/transaction.dart';
 import '../../shared/utils/currency_utils.dart';
 import '../../shared/providers/amount_format_provider.dart';
@@ -40,15 +43,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   final _searchFocusNode = FocusNode();
+  bool _editingCard = false;
+  bool _editingPrimary = true;
+  Color _tempPrimary = CardColorService.defaultPrimary;
+  Color _tempSecondary = CardColorService.defaultSecondary;
+  double _cardBottomY = 300;
 
   Border? _themeBorder(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1);
   }
 
+  void _onCardLongPress() {
+    final colors = ref.read(cardColorsProvider);
+    _tempPrimary = colors.primary;
+    _tempSecondary = colors.secondary;
+    
+    // Calculate actual card bottom: status bar + appbar + top padding + card height
+    final statusBar = MediaQuery.of(context).padding.top;
+    final appBarHeight = kToolbarHeight;
+    final topPadding = 16.0;
+    final cardHeight = 180.0;
+    _cardBottomY = statusBar + appBarHeight + topPadding + cardHeight;
+    
+    setState(() => _editingCard = true);
+  }
+
   @override
   void initState() {
     super.initState();
+    Future.microtask(() async {
+      final colors = ref.read(cardColorsProvider);
+      _tempPrimary = colors.primary;
+      _tempSecondary = colors.secondary;
+    });
   }
 
   @override
@@ -79,111 +107,306 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final currencyInfo = ref.watch(currencyProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        titleSpacing: 20,
-        title: Text(
-          'Casha',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: Theme.of(context).colorScheme.onSurface,
-            letterSpacing: -0.5,
+    return Stack(
+      children: [
+        // NORMAL SCAFFOLD — always rendered, card is real and animated
+        Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            titleSpacing: 20,
+            title: Text(
+              'Casha',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).colorScheme.onSurface,
+                letterSpacing: -0.5,
+              ),
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 20),
+                child: Center(
+                  child: Text(
+                    DateFormat('MMMM yyyy').format(DateTime.now()),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => context.push('/add'),
+            backgroundColor: const Color(0xFF7C6DED),
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add),
+            label: const Text('Add', style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          body: SafeArea(
+            child: CustomScrollView(
+              controller: _scrollController,
+              cacheExtent: 300,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _BalanceCard(
+                          balance: balance,
+                          currencyInfo: currencyInfo,
+                          onLongPress: _onCardLongPress,
+                        ),
+                        const SizedBox(height: 16),
+                        _SummaryRow(
+                          income: income,
+                          expense: expense,
+                          currencyInfo: currencyInfo,
+                        ),
+                        if (budget != null) ...[
+                          const SizedBox(height: 16),
+                          _BudgetProgress(
+                            spent: monthExpense,
+                            budget: budget,
+                            currencyInfo: currencyInfo,
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                        _SearchBar(
+                          controller: _searchController,
+                          focusNode: _searchFocusNode,
+                          onTap: _scrollToSearch,
+                          ref: ref,
+                        ),
+                        const SizedBox(height: 12),
+                        const FilterChips(),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Transactions',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+                  ),
+                ),
+                if (recent.isEmpty)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _EmptyState(),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                    sliver: SliverList.builder(
+                      itemCount: recent.length,
+                      itemBuilder: (context, i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: RepaintBoundary(
+                          child: _TransactionTile(transaction: recent[i]),
+                        ),
+                      ),
+                    ),
+                  ),
+                const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+              ],
+            ),
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: Center(
-              child: Text(
-                DateFormat('MMMM yyyy').format(DateTime.now()),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                  fontWeight: FontWeight.w500,
+        // EDIT OVERLAY — only when editing
+        if (_editingCard) _buildEditOverlay(context),
+      ],
+    );
+  }
+
+  Widget _buildEditOverlay(BuildContext context) {
+    return Stack(
+      children: [
+        // Calculate card position to EXCLUDE it from blur
+        // Blur only the area BELOW the card
+        Positioned.fill(
+          child: Column(
+            children: [
+              // Top portion — card area — NOT blurred, transparent
+              SizedBox(height: _cardBottomY),
+              // Bottom portion — blurred
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _editingCard = false),
+                  child: ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                      child: Container(
+                        color: Colors.black.withOpacity(0.55),
+                      ),
+                    ),
+                  ),
                 ),
+              ),
+            ],
+          ),
+        ),
+        // Color editor panel — positioned below the card
+        Positioned(
+          left: 20,
+          right: 20,
+          top: _cardBottomY + 16,
+          child: GestureDetector(
+            onTap: () {}, // prevent dismiss
+            child: _buildColorPanel(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildColorPanel(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Toggle between primary/secondary
+          Row(
+            children: [
+              _PanelTab(
+                label: 'Primary',
+                isSelected: _editingPrimary,
+                color: _tempPrimary,
+                onTap: () => setState(() => _editingPrimary = true),
+              ),
+              const SizedBox(width: 12),
+              _PanelTab(
+                label: 'Secondary',
+                isSelected: !_editingPrimary,
+                color: _tempSecondary,
+                onTap: () => setState(() => _editingPrimary = false),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // HSV Color Picker
+          SizedBox(
+            height: 200,
+            child: ColorPicker(
+              pickerColor: _editingPrimary ? _tempPrimary : _tempSecondary,
+              onColorChanged: (color) {
+                setState(() {
+                  if (_editingPrimary) {
+                    _tempPrimary = color;
+                  } else {
+                    _tempSecondary = color;
+                  }
+                });
+              },
+              colorPickerWidth: MediaQuery.of(context).size.width - 80,
+              pickerAreaHeightPercent: 0.7,
+              enableAlpha: false,
+              displayThumbColor: true,
+              labelTypes: const [],
+              pickerAreaBorderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Confirm button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                ref.read(cardColorsProvider.notifier).save(_tempPrimary, _tempSecondary);
+                setState(() => _editingCard = false);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF7C6DED),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Text(
+                'Apply',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
               ),
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/add'),
-        backgroundColor: const Color(0xFF7C6DED),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Add', style: TextStyle(fontWeight: FontWeight.w600)),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: SafeArea(
-        child: CustomScrollView(
-          controller: _scrollController,
-          cacheExtent: 300,
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _BalanceCard(balance: balance, currencyInfo: currencyInfo),
-                    const SizedBox(height: 16),
-                    _SummaryRow(
-                      income: income,
-                      expense: expense,
-                      currencyInfo: currencyInfo,
-                    ),
-                    if (budget != null) ...[
-                      const SizedBox(height: 16),
-                      _BudgetProgress(
-                        spent: monthExpense,
-                        budget: budget,
-                        currencyInfo: currencyInfo,
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    _SearchBar(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      onTap: _scrollToSearch,
-                      ref: ref,
-                    ),
-                    const SizedBox(height: 12),
-                    const FilterChips(),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Transactions',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                ),
+    );
+  }
+}
+
+class _PanelTab extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _PanelTab({
+    required this.label,
+    required this.isSelected,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? color : Colors.white24,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white30, width: 1),
               ),
             ),
-            if (recent.isEmpty)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: _EmptyState(),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                sliver: SliverList.builder(
-                  itemCount: recent.length,
-                  itemBuilder: (context, i) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: RepaintBoundary(
-                      child: _TransactionTile(transaction: recent[i]),
-                    ),
-                  ),
-                ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? color : Colors.white60,
               ),
-            const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+            ),
           ],
         ),
       ),
@@ -480,7 +703,13 @@ class _BudgetProgress extends ConsumerWidget {
 class _BalanceCard extends ConsumerStatefulWidget {
   final double balance;
   final CurrencyInfo currencyInfo;
-  const _BalanceCard({required this.balance, required this.currencyInfo});
+  final VoidCallback? onLongPress;
+  
+  const _BalanceCard({
+    required this.balance,
+    required this.currencyInfo,
+    this.onLongPress,
+  });
 
   @override
   ConsumerState<_BalanceCard> createState() => _BalanceCardState();
@@ -521,6 +750,7 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
   Widget build(BuildContext context) {
     final rates = ref.read(exchangeRateServiceProvider);
     final fmt = ref.watch(amountFormatProvider);
+    final colors = ref.watch(cardColorsProvider);
     final allCurrencies = [
       ('USD', r'$'),
       ('EUR', '€'),
@@ -531,167 +761,156 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
         .where((c) => c.$1 != widget.currencyInfo.code)
         .toList();
 
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        _tiltX += (_targetTiltX - _tiltX) * 0.15;
-        _tiltY += (_targetTiltY - _tiltY) * 0.15;
-        final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onLongPress: widget.onLongPress,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          _tiltX += (_targetTiltX - _tiltX) * 0.15;
+          _tiltY += (_targetTiltY - _tiltY) * 0.15;
 
-        final tiltBrightness = (_tiltX * 0.15 + _tiltY * 0.1).clamp(
-          -0.15,
-          0.15,
-        );
-        final highlightShift = (tiltBrightness * 40).round();
-
-        final topColor = isDark
-            ? Color.fromARGB(
-                255,
-                (0x7C + highlightShift).clamp(0x60, 0xFF),
-                (0x6D + highlightShift).clamp(0x55, 0xFF),
-                0xED,
-              )
-            : Color.fromARGB(
-                255,
-                (0x2A + highlightShift).clamp(0x20, 0x40),
-                (0x25 + highlightShift).clamp(0x1A, 0x35),
-                (0x45 + highlightShift).clamp(0x35, 0x55),
-              );
-        final bottomColor = isDark
-            ? Color.fromARGB(
-                255,
-                (0x2A - highlightShift).clamp(0x18, 0x40),
-                (0x20 - highlightShift).clamp(0x14, 0x30),
-                (0x60 - highlightShift).clamp(0x45, 0x75),
-              )
-            : Color.fromARGB(
-                255,
-                (0x14 - highlightShift).clamp(0x0A, 0x20),
-                (0x12 - highlightShift).clamp(0x08, 0x1E),
-                (0x28 - highlightShift).clamp(0x1E, 0x34),
-              );
-
-        return Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity()
-            ..setEntry(3, 2, 0.001)
-            ..rotateX(_tiltX * 0.42)
-            ..rotateY(_tiltY * 0.42),
-          child: Container(
-            width: double.infinity,
-            height: 180,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: const Alignment(-1.0, -1.0),
-                end: const Alignment(1.0, 1.0),
-                colors: [
-                  topColor,
-                  isDark ? const Color(0xFF4A3FA0) : const Color(0xFF1A1530),
-                  bottomColor,
+          return Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateX(_tiltX * 0.42)
+              ..rotateY(_tiltY * 0.42),
+            child: Container(
+              width: double.infinity,
+              height: 180,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: const Alignment(-0.5, -0.5),
+                  end: const Alignment(0.5, 0.5),
+                  colors: [
+                    colors.primary,
+                    colors.secondary,
+                    Color.lerp(colors.secondary, Colors.black, 0.3)!,
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
                 ],
-                stops: const [0.0, 0.5, 1.0],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 20,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Stack(
                   children: [
-                    Expanded(
-                      flex: 5,
-                      child: Column(
+                    // existing card content
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 20,
+                      ),
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(
-                            'TOTAL BALANCE',
-                            style: TextStyle(
-                              fontSize: 11,
-                              letterSpacing: 1.5,
-                              color: Colors.white.withOpacity(0.6),
+                          Expanded(
+                            flex: 5,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'TOTAL BALANCE',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    letterSpacing: 1.5,
+                                    color: Colors.white.withOpacity(0.6),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    _smartBalance(
+                                      widget.balance,
+                                      fmt,
+                                      widget.currencyInfo.symbol,
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 48,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.center,
-                            child: Text(
-                              _smartBalance(
-                                widget.balance,
-                                fmt,
-                                widget.currencyInfo.symbol,
-                              ),
-                              style: const TextStyle(
-                                fontSize: 48,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                              maxLines: 1,
+                          if (widget.balance != 0) ...[
+                            const SizedBox(width: 16),
+                            Container(
+                              width: 1,
+                              height: 70,
+                              color: Colors.white.withOpacity(0.15),
                             ),
-                          ),
+                            const SizedBox(width: 16),
+                            SizedBox(
+                              width: 110,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: others.map((c) {
+                                  final converted = rates.convert(
+                                    widget.balance,
+                                    widget.currencyInfo.code,
+                                    c.$1,
+                                  );
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 3),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        _smartBalance(converted, fmt, c.$2),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white.withOpacity(0.65),
+                                        ),
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
-                    if (widget.balance != 0) ...[
-                      const SizedBox(width: 16),
-                      Container(
-                        width: 1,
-                        height: 70,
-                        color: Colors.white.withOpacity(0.15),
-                      ),
-                      const SizedBox(width: 16),
-                      SizedBox(
-                        width: 110,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: others.map((c) {
-                            final converted = rates.convert(
-                              widget.balance,
-                              widget.currencyInfo.code,
-                              c.$1,
-                            );
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 3),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  _smartBalance(converted, fmt, c.$2),
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white.withOpacity(0.65),
-                                  ),
-                                  maxLines: 1,
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                    // hint text — absolute position, bottom center, no layout impact
+                    Positioned(
+                      bottom: 8,
+                      left: 0,
+                      right: 0,
+                      child: Text(
+                        'tap and hold to edit',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: Colors.white.withOpacity(0.18),
+                          letterSpacing: 0.6,
                         ),
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
