@@ -42,6 +42,12 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
     state = [...state, transaction];
     _storage.addTransaction(transaction);
   }
+
+  void clearAll() {
+    state = [];
+    // also clear from SharedPreferences:
+    SharedPreferences.getInstance().then((prefs) => prefs.remove('transactions'));
+  }
 }
 
 // Search and filter state

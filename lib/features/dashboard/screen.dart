@@ -10,22 +10,22 @@ import '../settings/provider.dart';
 import 'provider.dart';
 
 // Helper for balance card only - hides .00 decimals
-String _formatBalanceAmount(String symbol, double amount, AmountFormat fmt) {
+String _smartBalance(double amount, AmountFormat fmt, String symbol) {
   const spaceAfter = {'Br', '₽'};
   final sep = spaceAfter.contains(symbol) ? ' ' : '';
+  final isWhole = amount == amount.floorToDouble();
   
-  // Check if decimal part is zero
-  final hasDecimals = (amount - amount.truncate()) != 0;
-  
-  if (!hasDecimals) {
-    // Format integer part only using the selected format style
-    final intAmount = amount.truncate().toDouble();
-    // Use fmt.format but strip the .00
-    final full = fmt.format(intAmount);
-    final withoutDecimals = full.endsWith('.00') ? full.substring(0, full.length - 3) : full;
-    return '$symbol$sep$withoutDecimals';
+  String formatted;
+  if (isWhole) {
+    // format the integer, then manually remove .00
+    formatted = fmt.format(amount);
+    if (formatted.endsWith('.00')) {
+      formatted = formatted.substring(0, formatted.length - 3);
+    }
+  } else {
+    formatted = fmt.format(amount);
   }
-  return formatAmount(symbol, amount, fmt);  // existing helper
+  return '$symbol$sep$formatted';
 }
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -407,7 +407,7 @@ class _BalanceCard extends ConsumerWidget {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        _formatBalanceAmount(currencyInfo.symbol, balance, fmt),
+                        _smartBalance(balance, fmt, currencyInfo.symbol),
                         style: TextStyle(
                           fontSize: 36, // max font size
                           fontWeight: FontWeight.w700,
@@ -444,7 +444,7 @@ class _BalanceCard extends ConsumerWidget {
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                _formatBalanceAmount(c.$2, converted, fmt),
+                                _smartBalance(converted, fmt, c.$2),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,

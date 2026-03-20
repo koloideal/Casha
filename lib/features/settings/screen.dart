@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../shared/utils/currency_utils.dart';
 import '../../shared/providers/amount_format_provider.dart';
+import '../dashboard/provider.dart';
 import 'provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -48,6 +49,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     }
     setState(() => _isEditing = false);
+  }
+
+  void _confirmClearData(BuildContext context, WidgetRef ref) {
+    // First confirmation
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Clear all transactions?'),
+        content: const Text('This will permanently delete all your transaction history. This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              // Second confirmation
+              showDialog(
+                context: context,
+                builder: (ctx2) => AlertDialog(
+                  title: const Text('Are you absolutely sure?'),
+                  content: const Text('All transactions will be deleted forever. There is no way to recover them.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx2),
+                      child: const Text('No, keep them'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        ref.read(transactionsProvider.notifier).clearAll();
+                        Navigator.pop(ctx2);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('All transactions deleted')),
+                        );
+                      },
+                      style: TextButton.styleFrom(foregroundColor: const Color(0xFFE05C6B)),
+                      child: const Text('Yes, delete everything'),
+                    ),
+                  ],
+                ),
+              );
+            },
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFE05C6B)),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -434,6 +484,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 24),
+
+            // Danger Zone
+            Text(
+              'Danger Zone',
+              style: TextStyle(
+                fontSize: 12,
+                letterSpacing: 1.2,
+                color: const Color(0xFFE05C6B).withOpacity(0.8),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _confirmClearData(context, ref),
+                icon: const Icon(Icons.delete_forever, color: Color(0xFFE05C6B)),
+                label: const Text(
+                  'Clear All Transactions',
+                  style: TextStyle(color: Color(0xFFE05C6B)),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: const Color(0xFFE05C6B).withOpacity(0.5)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
           ],
         ),
       ),
