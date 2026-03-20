@@ -53,6 +53,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Color _savedSecondary = CardColorService.defaultSecondary;
   HSVColor _savedPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
   HSVColor _savedSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
+  OverlayEntry? _overlayEntry;
 
   HSVColor get _currentHSV => _editingPrimary ? _tempPrimaryHSV : _tempSecondaryHSV;
 
@@ -75,18 +76,44 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   void _onCardLongPress() {
     final colors = ref.read(cardColorsProvider);
-    // save originals for cancel
     _savedPrimary = colors.primary;
     _savedSecondary = colors.secondary;
     _savedPrimaryHSV = HSVColor.fromColor(colors.primary);
     _savedSecondaryHSV = HSVColor.fromColor(colors.secondary);
-    // init temp
     _tempPrimary = colors.primary;
     _tempSecondary = colors.secondary;
     _tempPrimaryHSV = HSVColor.fromColor(colors.primary);
     _tempSecondaryHSV = HSVColor.fromColor(colors.secondary);
     
-    setState(() => _editingCard = true);
+    setState(() {
+      _editingCard = true;
+      _editingPrimary = true;
+    });
+    _showOverlay();
+  }
+
+  void _showOverlay() {
+    _overlayEntry = OverlayEntry(
+      builder: (overlayContext) => _FullScreenBlurOverlay(
+        dashboardState: this,
+        context: context,
+      ),
+    );
+    Overlay.of(context, rootOverlay: true).insert(_overlayEntry!);
+  }
+
+  void _closeOverlay({required bool apply}) {
+    if (apply) {
+      ref.read(cardColorsProvider.notifier).save(_tempPrimary, _tempSecondary);
+    } else {
+      setState(() {
+        _tempPrimary = _savedPrimary;
+        _tempSecondary = _savedSecondary;
+      });
+    }
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    setState(() => _editingCard = false);
   }
 
   @override
@@ -101,6 +128,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   void dispose() {
+    _overlayEntry?.remove();
     _searchController.dispose();
     _scrollController.dispose();
     _searchFocusNode.dispose();
@@ -127,402 +155,118 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final currencyInfo = ref.watch(currencyProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Stack(
-      children: [
-        // NORMAL SCAFFOLD — always rendered, card is real and animated
-        Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            titleSpacing: 20,
-            title: Text(
-              'Casha',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: Theme.of(context).colorScheme.onSurface,
-                letterSpacing: -0.5,
-              ),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 20),
-                child: Center(
-                  child: Text(
-                    DateFormat('MMMM yyyy').format(DateTime.now()),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleSpacing: 20,
+        title: Text(
+          'Casha',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: Theme.of(context).colorScheme.onSurface,
+            letterSpacing: -0.5,
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 20),
+            child: Center(
+              child: Text(
+                DateFormat('MMMM yyyy').format(DateTime.now()),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => context.push('/add'),
-            backgroundColor: const Color(0xFF7C6DED),
-            foregroundColor: Colors.white,
-            icon: const Icon(Icons.add),
-            label: const Text('Add', style: TextStyle(fontWeight: FontWeight.w600)),
-          ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-          body: SafeArea(
-            child: CustomScrollView(
-              controller: _scrollController,
-              cacheExtent: 300,
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _BalanceCard(
-                          balance: balance,
-                          currencyInfo: currencyInfo,
-                          onLongPress: _onCardLongPress,
-                          previewPrimary: _editingCard ? _tempPrimary : null,
-                          previewSecondary: _editingCard ? _tempSecondary : null,
-                        ),
-                        const SizedBox(height: 16),
-                        _SummaryRow(
-                          income: income,
-                          expense: expense,
-                          currencyInfo: currencyInfo,
-                        ),
-                        if (budget != null) ...[
-                          const SizedBox(height: 16),
-                          _BudgetProgress(
-                            spent: monthExpense,
-                            budget: budget,
-                            currencyInfo: currencyInfo,
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                        _SearchBar(
-                          controller: _searchController,
-                          focusNode: _searchFocusNode,
-                          onTap: _scrollToSearch,
-                          ref: ref,
-                        ),
-                        const SizedBox(height: 12),
-                        const FilterChips(),
-                        const SizedBox(height: 20),
-                        Text(
-                          'Transactions',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    ),
-                  ),
-                ),
-                if (recent.isEmpty)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _EmptyState(),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                    sliver: SliverList.builder(
-                      itemCount: recent.length,
-                      itemBuilder: (context, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: RepaintBoundary(
-                          child: _TransactionTile(transaction: recent[i]),
-                        ),
-                      ),
-                    ),
-                  ),
-                const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
-              ],
             ),
           ),
-        ),
-        // EDIT OVERLAY — only when editing
-        if (_editingCard) _buildEditOverlay(context),
-      ],
-    );
-  }
-
-  Widget _buildEditOverlay(BuildContext context) {
-    final balance = ref.read(totalBalanceProvider);
-    final currencyInfo = ref.read(currencyProvider);
-    final cardTop = MediaQuery.of(context).padding.top + kToolbarHeight + 16;
-    final panelTop = cardTop + 180 + 16;
-    
-    return Stack(
-      children: [
-        // FULL SCREEN BLUR — covers everything: appbar, card bg, footer
-        Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              color: Colors.black.withOpacity(0.6),
-            ),
-          ),
-        ),
-        // CARD HOLE — re-render card on top of blur so it appears unblurred
-        // Position it exactly where the real card is
-        Positioned(
-          top: cardTop,
-          left: 20,
-          right: 20,
-          child: IgnorePointer(
-            ignoring: false,
-            child: _BalanceCard(
-              balance: balance,
-              currencyInfo: currencyInfo,
-              onLongPress: null, // no re-trigger during edit
-              previewPrimary: _tempPrimary,
-              previewSecondary: _tempSecondary,
-            ),
-          ),
-        ),
-        // DISMISS tap — only on the blurred area outside panel and card
-        Positioned.fill(
-          child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _tempPrimary = _savedPrimary;
-                _tempSecondary = _savedSecondary;
-                _editingCard = false;
-              });
-            },
-            behavior: HitTestBehavior.translucent,
-            child: const SizedBox.expand(),
-          ),
-        ),
-        // COLOR EDITOR PANEL — above blur, below card
-        Positioned(
-          left: 20,
-          right: 20,
-          top: panelTop,
-          bottom: MediaQuery.of(context).padding.bottom + 16,
-          child: GestureDetector(
-            onTap: () {}, // prevent dismiss
-            behavior: HitTestBehavior.opaque,
-            child: _buildColorPanel(context),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildColorPanel(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return ConstrainedBox(
-      constraints: const BoxConstraints(
-        maxHeight: double.infinity,
+        ],
       ),
-      child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // TOP ROW: tabs + close button
-              Row(
-                children: [
-                  _PanelTab(
-                    label: 'Primary',
-                    isSelected: _editingPrimary,
-                    color: _tempPrimary,
-                    onTap: () => setState(() => _editingPrimary = true),
-                  ),
-                  const SizedBox(width: 10),
-                  _PanelTab(
-                    label: 'Secondary',
-                    isSelected: !_editingPrimary,
-                    color: _tempSecondary,
-                    onTap: () => setState(() => _editingPrimary = false),
-                  ),
-                  const Spacer(),
-                  // CLOSE BUTTON
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _tempPrimary = _savedPrimary;
-                        _tempSecondary = _savedSecondary;
-                        _editingCard = false;
-                      });
-                    },
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
-                        shape: BoxShape.circle,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/add'),
+        backgroundColor: const Color(0xFF7C6DED),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Add', style: TextStyle(fontWeight: FontWeight.w600)),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      body: SafeArea(
+        child: CustomScrollView(
+          controller: _scrollController,
+          cacheExtent: 300,
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _BalanceCard(
+                      balance: balance,
+                      currencyInfo: currencyInfo,
+                      onLongPress: _onCardLongPress,
+                      previewPrimary: _editingCard ? _tempPrimary : null,
+                      previewSecondary: _editingCard ? _tempSecondary : null,
+                    ),
+                    const SizedBox(height: 16),
+                    _SummaryRow(
+                      income: income,
+                      expense: expense,
+                      currencyInfo: currencyInfo,
+                    ),
+                    if (budget != null) ...[
+                      const SizedBox(height: 16),
+                      _BudgetProgress(
+                        spent: monthExpense,
+                        budget: budget,
+                        currencyInfo: currencyInfo,
                       ),
-                      child: Icon(
-                        Icons.close_rounded,
-                        size: 18,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ],
+                    const SizedBox(height: 24),
+                    _SearchBar(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      onTap: _scrollToSearch,
+                      ref: ref,
+                    ),
+                    const SizedBox(height: 12),
+                    const FilterChips(),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Transactions',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              // 2D spectrum area — drag to pick saturation + value
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
-                  height: 180,
-                  width: double.infinity,
-                  child: ColorPickerArea(
-                    _currentHSV,
-                    _onHSVChanged,
-                    PaletteType.hsvWithHue,
+            ),
+            if (recent.isEmpty)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: _EmptyState(),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                sliver: SliverList.builder(
+                  itemCount: recent.length,
+                  itemBuilder: (context, i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: RepaintBoundary(
+                      child: _TransactionTile(transaction: recent[i]),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              // Hue rainbow slider — drag to change hue
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: SizedBox(
-                  height: 24,
-                  child: ColorPickerSlider(
-                    TrackType.hue,
-                    _currentHSV,
-                    _onHSVChanged,
-                    displayThumbColor: true,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Color preview row
-              Row(
-                children: [
-                  // PRIMARY — left aligned
-                  GestureDetector(
-                    onTap: () => setState(() => _editingPrimary = true),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: _tempPrimary,
-                            borderRadius: BorderRadius.circular(8),
-                            border: _editingPrimary
-                                ? Border.all(color: Colors.white, width: 2)
-                                : Border.all(color: Colors.transparent, width: 2),
-                            boxShadow: _editingPrimary
-                                ? [
-                                    BoxShadow(
-                                      color: _tempPrimary.withOpacity(0.5),
-                                      blurRadius: 8,
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '#${_tempPrimary.value.toRadixString(16).substring(2).toUpperCase()}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: _editingPrimary
-                                ? Theme.of(context).colorScheme.onSurface.withOpacity(0.8)
-                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                            fontWeight: _editingPrimary ? FontWeight.w600 : FontWeight.normal,
-                            fontFamily: 'monospace',
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  // SECONDARY — right aligned
-                  GestureDetector(
-                    onTap: () => setState(() => _editingPrimary = false),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '#${_tempSecondary.value.toRadixString(16).substring(2).toUpperCase()}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: !_editingPrimary
-                                ? Theme.of(context).colorScheme.onSurface.withOpacity(0.8)
-                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                            fontWeight: !_editingPrimary ? FontWeight.w600 : FontWeight.normal,
-                            fontFamily: 'monospace',
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: _tempSecondary,
-                            borderRadius: BorderRadius.circular(8),
-                            border: !_editingPrimary
-                                ? Border.all(color: Colors.white, width: 2)
-                                : Border.all(color: Colors.transparent, width: 2),
-                            boxShadow: !_editingPrimary
-                                ? [
-                                    BoxShadow(
-                                      color: _tempSecondary.withOpacity(0.5),
-                                      blurRadius: 8,
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // APPLY BUTTON
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ref.read(cardColorsProvider.notifier).save(_tempPrimary, _tempSecondary);
-                    setState(() => _editingCard = false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF7C6DED),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text(
-                    'Apply',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+          ],
         ),
       ),
     );
@@ -1332,6 +1076,318 @@ class _EmptyState extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FullScreenBlurOverlay extends StatefulWidget {
+  final _DashboardScreenState dashboardState;
+  final BuildContext context;
+
+  const _FullScreenBlurOverlay({
+    required this.dashboardState,
+    required this.context,
+  });
+
+  @override
+  State<_FullScreenBlurOverlay> createState() => _FullScreenBlurOverlayState();
+}
+
+class _FullScreenBlurOverlayState extends State<_FullScreenBlurOverlay> {
+  _DashboardScreenState get dash => widget.dashboardState;
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.of(widget.context);
+    final cardTop = mq.padding.top + kToolbarHeight + 16;
+    final cardHeight = 180.0;
+    final panelTop = cardTop + cardHeight + 16;
+    final panelBottom = mq.padding.bottom + 16;
+
+    return Material(
+      color: Colors.transparent,
+      child: Stack(
+        children: [
+          // FULL SCREEN BLUR — covers navigator, appbar, footer, everything
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                color: Colors.black.withOpacity(0.6),
+              ),
+            ),
+          ),
+          // DISMISS tap area
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                dash._closeOverlay(apply: false);
+              },
+              behavior: HitTestBehavior.translucent,
+              child: const SizedBox.expand(),
+            ),
+          ),
+          // CARD re-rendered sharp on top of blur, with live preview colors
+          Positioned(
+            top: cardTop,
+            left: 20,
+            right: 20,
+            child: Consumer(
+              builder: (ctx, ref, _) => _BalanceCard(
+                balance: ref.read(totalBalanceProvider),
+                currencyInfo: ref.read(currencyProvider),
+                onLongPress: null,
+                previewPrimary: dash._tempPrimary,
+                previewSecondary: dash._tempSecondary,
+              ),
+            ),
+          ),
+          // COLOR PANEL
+          Positioned(
+            top: panelTop,
+            left: 20,
+            right: 20,
+            bottom: panelBottom,
+            child: GestureDetector(
+              onTap: () {},
+              behavior: HitTestBehavior.opaque,
+              child: _buildPanel(context, mq),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPanel(BuildContext context, MediaQueryData mq) {
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        decoration: BoxDecoration(
+          color: Theme.of(widget.context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: StatefulBuilder(
+          builder: (ctx, setPanelState) {
+            final isDark = Theme.of(widget.context).brightness == Brightness.dark;
+
+            void onHSVChanged(HSVColor hsv) {
+              setPanelState(() {});
+              dash.setState(() {
+                if (dash._editingPrimary) {
+                  dash._tempPrimaryHSV = hsv;
+                  dash._tempPrimary = hsv.toColor();
+                } else {
+                  dash._tempSecondaryHSV = hsv;
+                  dash._tempSecondary = hsv.toColor();
+                }
+              });
+            }
+
+            final currentHSV = dash._editingPrimary
+                ? dash._tempPrimaryHSV
+                : dash._tempSecondaryHSV;
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // TOP ROW: tabs + X
+                Row(
+                  children: [
+                    _PanelTab(
+                      label: 'Primary',
+                      isSelected: dash._editingPrimary,
+                      color: dash._tempPrimary,
+                      onTap: () {
+                        dash.setState(() => dash._editingPrimary = true);
+                        setPanelState(() {});
+                      },
+                    ),
+                    const SizedBox(width: 10),
+                    _PanelTab(
+                      label: 'Secondary',
+                      isSelected: !dash._editingPrimary,
+                      color: dash._tempSecondary,
+                      onTap: () {
+                        dash.setState(() => dash._editingPrimary = false);
+                        setPanelState(() {});
+                      },
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => dash._closeOverlay(apply: false),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Theme.of(widget.context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 18,
+                          color: Theme.of(widget.context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.6),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // 2D SPECTRUM AREA
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    height: 160,
+                    width: double.infinity,
+                    child: ColorPickerArea(
+                      currentHSV,
+                      onHSVChanged,
+                      PaletteType.hsvWithHue,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // HUE SLIDER
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: SizedBox(
+                    height: 22,
+                    child: ColorPickerSlider(
+                      TrackType.hue,
+                      currentHSV,
+                      onHSVChanged,
+                      displayThumbColor: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // COLOR PREVIEW ROW
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        dash.setState(() => dash._editingPrimary = true);
+                        setPanelState(() {});
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: dash._tempPrimary,
+                              borderRadius: BorderRadius.circular(8),
+                              border: dash._editingPrimary
+                                  ? Border.all(color: Colors.white, width: 2)
+                                  : Border.all(
+                                      color: Colors.transparent, width: 2),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '#${dash._tempPrimary.value.toRadixString(16).substring(2).toUpperCase()}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontFamily: 'monospace',
+                              fontWeight: dash._editingPrimary
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                              color: Theme.of(widget.context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withOpacity(
+                                    dash._editingPrimary ? 0.8 : 0.4,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () {
+                        dash.setState(() => dash._editingPrimary = false);
+                        setPanelState(() {});
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '#${dash._tempSecondary.value.toRadixString(16).substring(2).toUpperCase()}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontFamily: 'monospace',
+                              fontWeight: !dash._editingPrimary
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                              color: Theme.of(widget.context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withOpacity(
+                                    !dash._editingPrimary ? 0.8 : 0.4,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: dash._tempSecondary,
+                              borderRadius: BorderRadius.circular(8),
+                              border: !dash._editingPrimary
+                                  ? Border.all(color: Colors.white, width: 2)
+                                  : Border.all(
+                                      color: Colors.transparent, width: 2),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // APPLY BUTTON
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => dash._closeOverlay(apply: true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF7C6DED),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Apply',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
