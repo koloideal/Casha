@@ -19,12 +19,8 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: '/dashboard',
-          pageBuilder: (context, state) => CustomTransitionPage(
-            key: state.pageKey,
-            child: const DashboardScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
-            transitionDuration: const Duration(milliseconds: 350),
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: DashboardScreen(),
           ),
         ),
         GoRoute(
