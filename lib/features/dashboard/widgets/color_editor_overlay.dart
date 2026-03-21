@@ -30,10 +30,8 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
     final mq = MediaQuery.of(widget.context);
     final cardTop = mq.padding.top + kToolbarHeight + 16;
     const cardHeight = 220.0;
-    final panelTop = cardTop + cardHeight + 16;
-
-    // Fixed panel height — smaller than before, no bottom stretching
-    const panelHeight = 310.0;
+    final panelTop = cardTop + cardHeight + 32;
+    const panelHeight = 460.0;
 
     return Material(
       color: Colors.transparent,
@@ -71,7 +69,6 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
             top: panelTop,
             left: 20,
             right: 20,
-            // No bottom — height is explicit, panel won't stretch to screen bottom
             child: GestureDetector(
               onTap: () {},
               behavior: HitTestBehavior.opaque,
@@ -113,7 +110,6 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
             dash.overlayEntry?.markNeedsBuild();
           }
 
-          // In solid mode, editing is always "primary" (the solid color)
           final currentHSV = dash.editingPrimary
               ? dash.tempPrimaryHSV
               : dash.tempSecondaryHSV;
@@ -125,18 +121,19 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
               mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                // ── Row 1: [──Primary──] [──Secondary──] | [Solid] [X] ──
                 Row(
                   children: [
-                    // Expanded tabs fill available width equally
                     Expanded(
                       child: PanelTab(
                         label: 'Primary',
-                        isSelected: dash.editingPrimary && !isSolid,
+                        isSelected: dash.editingPrimary,
                         color: dash.tempPrimary,
-                        onTap: isSolid ? null : () {
-                          dash.setState(() => dash.editingPrimary = true);
+                        isDimmed: isSolid,
+                        onTap: () {
+                          dash.setState(() {
+                            if (isSolid) dash.tempGradientType = GradientType.linear;
+                            dash.editingPrimary = true;
+                          });
                           setPanelState(() {});
                           dash.overlayEntry?.markNeedsBuild();
                         },
@@ -146,10 +143,14 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                     Expanded(
                       child: PanelTab(
                         label: 'Secondary',
-                        isSelected: !dash.editingPrimary && !isSolid,
+                        isSelected: !dash.editingPrimary,
                         color: dash.tempSecondary,
-                        onTap: isSolid ? null : () {
-                          dash.setState(() => dash.editingPrimary = false);
+                        isDimmed: isSolid,
+                        onTap: () {
+                          dash.setState(() {
+                            if (isSolid) dash.tempGradientType = GradientType.linear;
+                            dash.editingPrimary = false;
+                          });
                           setPanelState(() {});
                           dash.overlayEntry?.markNeedsBuild();
                         },
@@ -166,7 +167,6 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                             .withOpacity(0.15),
                       ),
                     ),
-                    // Solid toggle
                     GestureDetector(
                       onTap: () {
                         dash.setState(() {
@@ -214,7 +214,6 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Close button
                     GestureDetector(
                       onTap: () => dash.closeOverlay(apply: false),
                       child: Container(
@@ -230,17 +229,10 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 10),
-
-                // ── Spectrum + hue + preview ──
-                // LayoutBuilder captures finite height from Expanded.
-                // Spectrum alone is wrapped in IgnorePointer when solid.
-                // Hue slider is ALWAYS active (used to pick the solid color too).
                 Expanded(
                   child: LayoutBuilder(
                     builder: (lbCtx, constraints) {
-                      // Reserve space for: hue(20) + gap(8) + preview(26) + 2×gap(8) = 62
                       const reservedBelow = 62.0;
                       final spectrumH =
                           (constraints.maxHeight - reservedBelow).clamp(
@@ -250,41 +242,45 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Spectrum — dimmed & blocked in Solid mode
-                          IgnorePointer(
-                            ignoring: isSolid,
-                            child: AnimatedOpacity(
-                              duration: const Duration(milliseconds: 200),
-                              opacity: isSolid ? 0.3 : 1.0,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: SizedBox(
-                                  height: spectrumH,
-                                  child: ColorPickerArea(
-                                    currentHSV,
-                                    onHSVChanged,
-                                    PaletteType.hsvWithHue,
-                                  ),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: SizedBox(
+                              height: spectrumH,
+                              child: ColorPickerArea(
+                                currentHSV,
+                                onHSVChanged,
+                                PaletteType.hsvWithHue,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Theme(
+                            data: Theme.of(widget.context).copyWith(
+                              sliderTheme: const SliderThemeData(
+                                thumbShape: RoundSliderThumbShape(
+                                  enabledThumbRadius: 8,
+                                  elevation: 0,
+                                  pressedElevation: 0,
+                                ),
+                                overlayShape: RoundSliderOverlayShape(
+                                  overlayRadius: 0,
+                                ),
+                              ),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: SizedBox(
+                                height: 20,
+                                child: ColorPickerSlider(
+                                  TrackType.hue,
+                                  currentHSV,
+                                  onHSVChanged,
+                                  displayThumbColor: true,
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(height: 8),
-                          // Hue slider — ALWAYS active (works for both gradient & solid)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: SizedBox(
-                              height: 20,
-                              child: ColorPickerSlider(
-                                TrackType.hue,
-                                currentHSV,
-                                onHSVChanged,
-                                displayThumbColor: true,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          // Color hex preview row
                           IgnorePointer(
                             ignoring: isSolid,
                             child: AnimatedOpacity(
@@ -401,10 +397,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                     },
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
-                // ── Gradient type row (dimmed when Solid) ──
                 IgnorePointer(
                   ignoring: isSolid,
                   child: AnimatedOpacity(
@@ -497,10 +490,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
-                // ── Reset + Apply ──
                 Row(
                   children: [
                     Expanded(
@@ -577,14 +567,16 @@ class PanelTab extends StatelessWidget {
   final String label;
   final bool isSelected;
   final Color color;
-  final VoidCallback? onTap;
+  final bool isDimmed;
+  final VoidCallback onTap;
 
   const PanelTab({
     super.key,
     required this.label,
     required this.isSelected,
     required this.color,
-    this.onTap,
+    required this.isDimmed,
+    required this.onTap,
   });
 
   @override
@@ -598,51 +590,54 @@ class PanelTab extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        // Fill full width of Expanded slot (no padding-based width)
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected ? color : unselectedBorder,
-            width: 1.5,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: isDimmed ? 0.5 : 1.0,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? color : unselectedBorder,
+              width: 1.5,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark ? Colors.white30 : Colors.black12,
-                  width: 1,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark ? Colors.white30 : Colors.black12,
+                    width: 1,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? color : unselectedText,
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.normal,
+                    color: isSelected ? color : unselectedText,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
