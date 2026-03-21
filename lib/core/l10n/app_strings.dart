@@ -98,6 +98,8 @@ class AppStrings {
   String get noCategoriesYet => _ru ? 'Нет категорий' : 'No categories yet';
   String get noExpenseData => _ru ? 'Нет данных о расходах' : 'No expense data';
   String get addExpensesToSeeBreakdown => _ru ? 'Добавьте расходы, чтобы увидеть разбивку' : 'Add some expenses to see the breakdown';
+  String get noIncomeData => _ru ? 'Нет данных о доходах' : 'No income data';
+  String get addIncomeToSeeBreakdown => _ru ? 'Добавьте доходы, чтобы увидеть разбивку' : 'Add some income to see the breakdown';
   String get total => _ru ? 'Всего' : 'Total';
   String get lastSixMonths => _ru ? 'Последние 6 месяцев' : 'Last 6 Months';
 

@@ -13,6 +13,17 @@ final categoryExpenseProvider = Provider<Map<String, double>>((ref) {
   return map;
 });
 
+final categoryIncomeProvider = Provider<Map<String, double>>((ref) {
+  final txs = ref.watch(transactionsProvider)
+      .where((t) => t.type == TransactionType.income);
+
+  final map = <String, double>{};
+  for (final t in txs) {
+    map[t.category] = (map[t.category] ?? 0) + t.amount;
+  }
+  return map;
+});
+
 final monthlyBreakdownProvider = Provider<List<MonthlyData>>((ref) {
   final txs = ref.watch(transactionsProvider)
       .where((t) => t.type == TransactionType.expense);

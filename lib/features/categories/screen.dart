@@ -21,11 +21,14 @@ class CategoriesScreen extends ConsumerStatefulWidget {
 class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   int _touchedIndex = -1;
   ChartType _chartType = ChartType.pie;
+  bool _showIncome = false;
 
   @override
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
-    final data = ref.watch(categoryExpenseProvider);
+    final data = _showIncome
+        ? ref.watch(categoryIncomeProvider)
+        : ref.watch(categoryExpenseProvider);
     final monthlyData = ref.watch(monthlyBreakdownProvider);
     final total = data.values.fold(0.0, (a, b) => a + b);
     final currencyInfo = ref.watch(currencyProvider);
@@ -57,8 +60,82 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() {
+                        _showIncome = false;
+                        _touchedIndex = -1;
+                      }),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: !_showIncome
+                              ? AppColors.accent
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: !_showIncome
+                                ? AppColors.accent
+                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text(
+                          s.expenses,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: !_showIncome
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() {
+                        _showIncome = true;
+                        _touchedIndex = -1;
+                      }),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: _showIncome
+                              ? AppColors.accent
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: _showIncome
+                                ? AppColors.accent
+                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text(
+                          s.income,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: _showIncome
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               if (data.isEmpty)
-                const Expanded(child: _EmptyState())
+                Expanded(child: _EmptyState(isIncome: _showIncome))
               else
                 Expanded(
                   child: ListView(
@@ -94,6 +171,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                             amount: amount,
                             total: total,
                             currency: currencyInfo.symbol,
+                            isIncome: _showIncome,
                           ),
                         );
                       }),
@@ -390,12 +468,14 @@ class _CategoryRow extends ConsumerWidget {
   final double amount;
   final double total;
   final String currency;
+  final bool isIncome;
   const _CategoryRow({
     required this.rank,
     required this.category,
     required this.amount,
     required this.total,
     required this.currency,
+    required this.isIncome,
   });
 
   @override
@@ -457,7 +537,7 @@ class _CategoryRow extends ConsumerWidget {
                   Text(
                     formatAmount(currency, amount, fmt),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.expense,
+                          color: isIncome ? AppColors.income : AppColors.expense,
                           fontWeight: FontWeight.w700,
                         ),
                   ),
@@ -488,7 +568,8 @@ class _CategoryRow extends ConsumerWidget {
 }
 
 class _EmptyState extends ConsumerWidget {
-  const _EmptyState();
+  final bool isIncome;
+  const _EmptyState({required this.isIncome});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -511,7 +592,7 @@ class _EmptyState extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            s.noExpenseData,
+            isIncome ? s.noIncomeData : s.noExpenseData,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
@@ -519,7 +600,7 @@ class _EmptyState extends ConsumerWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            s.addExpensesToSeeBreakdown,
+            isIncome ? s.addIncomeToSeeBreakdown : s.addExpensesToSeeBreakdown,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 ),
