@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
+import '../../core/l10n/app_strings.dart';
+import '../../core/l10n/locale_provider.dart';
 import '../../core/services/biometric_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../shared/utils/currency_utils.dart';
@@ -54,15 +56,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _confirmClearData(BuildContext context, WidgetRef ref) {
+    final s = ref.read(stringsProvider);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Clear all transactions?'),
-        content: const Text('This will permanently delete all your transaction history. This cannot be undone.'),
+        title: Text(s.clearDataConfirm),
+        content: Text(s.clearDataWarning),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(s.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -70,30 +73,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               showDialog(
                 context: context,
                 builder: (ctx2) => AlertDialog(
-                  title: const Text('Are you absolutely sure?'),
-                  content: const Text('All transactions will be deleted forever. There is no way to recover them.'),
+                  title: Text(s.areYouSure),
+                  content: Text(s.allTransactionsWillBeDeleted),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx2),
-                      child: const Text('No, keep them'),
+                      child: Text(s.noKeepThem),
                     ),
                     TextButton(
                       onPressed: () {
                         ref.read(transactionsProvider.notifier).clearAll();
                         Navigator.pop(ctx2);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('All transactions deleted')),
+                          SnackBar(content: Text(s.allTransactionsDeleted)),
                         );
                       },
                       style: TextButton.styleFrom(foregroundColor: const Color(0xFFE05C6B)),
-                      child: const Text('Yes, delete everything'),
+                      child: Text(s.yesDeleteEverything),
                     ),
                   ],
                 ),
               );
             },
             style: TextButton.styleFrom(foregroundColor: const Color(0xFFE05C6B)),
-            child: const Text('Delete'),
+            child: Text(s.delete),
           ),
         ],
       ),
@@ -102,6 +105,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
     final budget = ref.watch(budgetProvider);
     final themeMode = ref.watch(themeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
@@ -118,14 +122,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Settings',
+              s.settings,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
             ),
             Text(
-              'Manage your preferences',
+              s.managePreferences,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   ),
@@ -165,14 +169,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Dark Mode',
+                          s.darkMode,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
                         ),
                         Text(
-                          isDarkMode ? 'Enabled' : 'Disabled',
+                          isDarkMode ? s.enabled : s.disabled,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                               ),
@@ -223,14 +227,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Haptic Feedback',
+                              s.hapticFeedback,
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: Theme.of(context).colorScheme.onSurface,
                                   ),
                             ),
                             Text(
-                              'Vibration on interactions',
+                              s.vibrationOnInteractions,
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                                   ),
@@ -271,6 +275,112 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
+                          Icons.language_rounded,
+                          color: AppColors.accent,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          s.language,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final currentLocale = ref.watch(localeProvider);
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => ref.read(localeProvider.notifier).setLocale(AppLocale.en),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: currentLocale == AppLocale.en
+                                      ? AppColors.accent.withOpacity(0.2)
+                                      : Theme.of(context).scaffoldBackgroundColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: currentLocale == AppLocale.en
+                                      ? Border.all(color: AppColors.accent, width: 1.5)
+                                      : (isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
+                                ),
+                                child: Text(
+                                  s.langEn,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: currentLocale == AppLocale.en
+                                        ? AppColors.accent
+                                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                    fontWeight: currentLocale == AppLocale.en ? FontWeight.w600 : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => ref.read(localeProvider.notifier).setLocale(AppLocale.ru),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: currentLocale == AppLocale.ru
+                                      ? AppColors.accent.withOpacity(0.2)
+                                      : Theme.of(context).scaffoldBackgroundColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: currentLocale == AppLocale.ru
+                                      ? Border.all(color: AppColors.accent, width: 1.5)
+                                      : (isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
+                                ),
+                                child: Text(
+                                  s.langRu,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: currentLocale == AppLocale.ru
+                                        ? AppColors.accent
+                                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                    fontWeight: currentLocale == AppLocale.ru ? FontWeight.w600 : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
                           Icons.attach_money_rounded,
                           color: AppColors.accent,
                           size: 20,
@@ -279,7 +389,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Currency',
+                          s.currency,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: Theme.of(context).colorScheme.onSurface,
@@ -372,7 +482,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Amount Format',
+                          s.amountFormat,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: Theme.of(context).colorScheme.onSurface,
@@ -455,7 +565,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Monthly Budget',
+                          s.monthlyBudgetSetting,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: Theme.of(context).colorScheme.onSurface,
@@ -486,7 +596,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 ? '${currencyInfo.symbol} '
                                 : currencyInfo.symbol,
                             hintText: '0.00',
-                            helperText: 'Leave empty to remove budget limit',
+                            helperText: s.leaveEmptyToRemove,
                           ),
                           autofocus: true,
                         ),
@@ -500,7 +610,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 _budgetController.text = budget?.toStringAsFixed(2) ?? '';
                                 setState(() => _isEditing = false);
                               },
-                              child: const Text('Cancel'),
+                              child: Text(s.cancel),
                             ),
                             const SizedBox(width: 8),
                             ElevatedButton(
@@ -508,7 +618,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               style: ElevatedButton.styleFrom(
                                 minimumSize: const Size(80, 40),
                               ),
-                              child: const Text('Save'),
+                              child: Text(s.save),
                             ),
                           ],
                         ),
@@ -521,7 +631,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         Text(
                           budget != null
                               ? formatAmount(currencyInfo.symbol, budget, fmt)
-                              : 'Not set',
+                              : s.budgetNone,
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 color: budget != null ? AppColors.accent : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                                 fontWeight: FontWeight.w700,
@@ -530,8 +640,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         const SizedBox(height: 8),
                         Text(
                           budget != null
-                              ? 'Your monthly spending limit'
-                              : 'Set a monthly spending limit to track your budget',
+                              ? s.yourMonthlySpendingLimit
+                              : s.setMonthlySpendingLimit,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                               ),
@@ -545,7 +655,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 24),
 
             Text(
-              'Danger Zone',
+              s.dangerZone,
               style: TextStyle(
                 fontSize: 12,
                 letterSpacing: 1.2,
@@ -559,9 +669,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: OutlinedButton.icon(
                 onPressed: () => _confirmClearData(context, ref),
                 icon: const Icon(Icons.delete_forever, color: Color(0xFFE05C6B)),
-                label: const Text(
-                  'Clear All Transactions',
-                  style: TextStyle(color: Color(0xFFE05C6B)),
+                label: Text(
+                  s.clearAllTransactions,
+                  style: const TextStyle(color: Color(0xFFE05C6B)),
                 ),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: const Color(0xFFE05C6B).withOpacity(0.5)),
@@ -621,14 +731,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-class _BiometricSection extends StatefulWidget {
+class _BiometricSection extends ConsumerStatefulWidget {
   const _BiometricSection();
 
   @override
-  State<_BiometricSection> createState() => _BiometricSectionState();
+  ConsumerState<_BiometricSection> createState() => _BiometricSectionState();
 }
 
-class _BiometricSectionState extends State<_BiometricSection> {
+class _BiometricSectionState extends ConsumerState<_BiometricSection> {
   bool _available = false;
   bool _enabled = false;
   bool _loading = true;
@@ -667,60 +777,66 @@ class _BiometricSectionState extends State<_BiometricSection> {
     
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.fingerprint,
-                  color: AppColors.accent,
-                  size: 20,
-                ),
+    return Consumer(
+      builder: (context, ref, _) {
+        final s = ref.watch(stringsProvider);
+        
+        return Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Biometric Lock',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    Text(
-                      'Require fingerprint on app launch',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                          ),
+                    child: const Icon(
+                      Icons.fingerprint,
+                      color: AppColors.accent,
+                      size: 20,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          s.biometricLock,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                        ),
+                        Text(
+                          s.requireFingerprint,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: _enabled,
+                    onChanged: _onToggle,
+                    activeColor: const Color(0xFF7C6DED),
+                  ),
+                ],
               ),
-              Switch(
-                value: _enabled,
-                onChanged: _onToggle,
-                activeColor: const Color(0xFF7C6DED),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        );
+      },
     );
   }
 }

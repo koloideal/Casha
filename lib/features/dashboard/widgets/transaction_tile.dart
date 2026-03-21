@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants.dart';
+import '../../../core/l10n/app_strings.dart';
+import '../../../core/l10n/locale_provider.dart';
 import '../../../shared/models/transaction.dart';
 import '../../../shared/providers/amount_format_provider.dart';
 import '../../../shared/utils/currency_utils.dart';
@@ -18,6 +20,7 @@ class TransactionTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
     final fmt = ref.watch(amountFormatProvider);
     final isIncome = transaction.type == TransactionType.income;
     final color = isIncome ? AppColors.income : AppColors.expense;
@@ -51,7 +54,7 @@ class TransactionTile extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    transaction.category,
+                    s.categoryLabel(transaction.category),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.onSurface,
@@ -69,7 +72,7 @@ class TransactionTile extends ConsumerWidget {
                     )
                   else
                     Text(
-                      DateFormat('MMM d, yyyy · HH:mm').format(transaction.date),
+                      DateFormat('d MMM yyyy · HH:mm', s.dateLocale).format(transaction.date),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(
                           context,
@@ -94,7 +97,8 @@ class TransactionTile extends ConsumerWidget {
 }
 
 class EmptyState extends StatelessWidget {
-  const EmptyState({super.key});
+  final AppStrings strings;
+  const EmptyState({super.key, required this.strings});
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +120,7 @@ class EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No transactions found',
+            strings.noTransactions,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w600,
@@ -124,7 +128,7 @@ class EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Tap + to add your first transaction',
+            strings.addFirstTx,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),

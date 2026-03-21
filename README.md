@@ -19,7 +19,7 @@ Casha is the **"Simplest"**, **"Most Elegant"**, and **"Most Focused"** way to t
 
 ## 📱 Screenshots
 
-> _Add your screenshots here_
+![screenshot](https://i.ibb.co/Fq06nxKM/screenshot.png)
 
 ## 🚀 Getting Started
 

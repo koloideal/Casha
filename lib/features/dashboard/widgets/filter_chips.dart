@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
+import '../../../core/l10n/app_strings.dart';
 import '../../../core/services/haptic_service.dart';
 import '../provider.dart';
 
 class FilterChips extends ConsumerWidget {
-  const FilterChips({super.key});
+  final AppStrings strings;
+  const FilterChips({super.key, required this.strings});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -16,13 +18,13 @@ class FilterChips extends ConsumerWidget {
     return Row(
       children: [
         _FilterChip(
-          label: 'All Time',
+          label: strings.filterAllTime,
           isSelected: timeFilter == TimeFilter.allTime,
           onTap: () => ref.read(timeFilterProvider.notifier).state = TimeFilter.allTime,
         ),
         const SizedBox(width: 6),
         _FilterChip(
-          label: 'Month',
+          label: strings.filterMonth,
           isSelected: timeFilter == TimeFilter.lastMonth,
           onTap: () => ref.read(timeFilterProvider.notifier).state = TimeFilter.lastMonth,
         ),
@@ -37,20 +39,20 @@ class FilterChips extends ConsumerWidget {
           ),
         ),
         _FilterChip(
-          label: 'All',
+          label: strings.filterAll,
           isSelected: typeFilter == TransactionFilter.all,
           onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.all,
         ),
         const SizedBox(width: 6),
         _FilterChip(
-          label: 'Income',
+          label: strings.filterIncome,
           isSelected: typeFilter == TransactionFilter.income,
           color: AppColors.income,
           onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.income,
         ),
         const SizedBox(width: 6),
         _FilterChip(
-          label: 'Expense',
+          label: strings.filterExpense,
           isSelected: typeFilter == TransactionFilter.expense,
           color: AppColors.expense,
           onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.expense,

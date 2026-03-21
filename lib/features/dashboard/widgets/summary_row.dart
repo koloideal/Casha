@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
+import '../../../core/l10n/app_strings.dart';
 import '../../../shared/providers/amount_format_provider.dart';
 import '../../../shared/utils/currency_utils.dart';
 import '../../settings/provider.dart';
@@ -10,11 +11,13 @@ class SummaryRow extends StatelessWidget {
   final double income;
   final double expense;
   final CurrencyInfo currencyInfo;
+  final AppStrings strings;
   const SummaryRow({
     super.key,
     required this.income,
     required this.expense,
     required this.currencyInfo,
+    required this.strings,
   });
 
   @override
@@ -23,7 +26,7 @@ class SummaryRow extends StatelessWidget {
       children: [
         Expanded(
           child: SummaryCard(
-            label: 'Income',
+            label: strings.income,
             amount: income,
             color: AppColors.income,
             icon: Icons.arrow_downward_rounded,
@@ -33,7 +36,7 @@ class SummaryRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: SummaryCard(
-            label: 'Expenses',
+            label: strings.expenses,
             amount: expense,
             color: AppColors.expense,
             icon: Icons.arrow_upward_rounded,

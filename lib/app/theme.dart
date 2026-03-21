@@ -8,9 +8,11 @@ class AppTheme {
     final textTheme = GoogleFonts.poppinsTextTheme(base.textTheme).apply(
       bodyColor: AppColors.textPrimary,
       displayColor: AppColors.textPrimary,
+      fontFamilyFallback: ['Roboto'], // Ensures Cyrillic renders with same visual style
     );
 
     return base.copyWith(
+      fontFamily: GoogleFonts.poppins().fontFamily, // Explicit font family for Cyrillic support
       textTheme: textTheme,
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: const ColorScheme.dark(
@@ -106,9 +108,11 @@ class AppTheme {
     final textTheme = GoogleFonts.poppinsTextTheme(base.textTheme).apply(
       bodyColor: const Color(0xFF1A1A2E),
       displayColor: const Color(0xFF1A1A2E),
+      fontFamilyFallback: ['Roboto'], // Ensures Cyrillic renders with same visual style
     );
 
     return base.copyWith(
+      fontFamily: GoogleFonts.poppins().fontFamily, // Explicit font family for Cyrillic support
       textTheme: textTheme,
       scaffoldBackgroundColor: const Color(0xFFF0F0F7),
       colorScheme: const ColorScheme.light(

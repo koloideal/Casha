@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../core/l10n/locale_provider.dart';
 import '../../core/services/card_color_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../settings/provider.dart';
@@ -115,6 +116,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
     final balance = ref.watch(totalBalanceProvider);
     final income = ref.watch(totalIncomeProvider);
     final expense = ref.watch(totalExpenseProvider);
@@ -131,7 +133,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         scrolledUnderElevation: 0,
         titleSpacing: 20,
         title: Text(
-          'Casha',
+          s.appTitle,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.w800,
             color: Theme.of(context).colorScheme.onSurface,
@@ -143,7 +145,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             padding: const EdgeInsets.only(right: 20),
             child: Center(
               child: Text(
-                DateFormat('MMMM yyyy').format(DateTime.now()),
+                DateFormat('MMMM yyyy', s.dateLocale).format(DateTime.now()),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                   fontWeight: FontWeight.w500,
@@ -161,7 +163,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         backgroundColor: const Color(0xFF7C6DED),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text('Add', style: TextStyle(fontWeight: FontWeight.w600)),
+        label: Text(s.add, style: const TextStyle(fontWeight: FontWeight.w600)),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
@@ -188,6 +190,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       income: income,
                       expense: expense,
                       currencyInfo: currencyInfo,
+                      strings: s,
                     ),
                     if (budget != null) ...[
                       const SizedBox(height: 16),
@@ -195,6 +198,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         spent: monthExpense,
                         budget: budget,
                         currencyInfo: currencyInfo,
+                        strings: s,
                       ),
                     ],
                     const SizedBox(height: 24),
@@ -203,12 +207,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       focusNode: _searchFocusNode,
                       onTap: _scrollToSearch,
                       ref: ref,
+                      strings: s,
                     ),
                     const SizedBox(height: 12),
-                    const FilterChips(),
+                    FilterChips(strings: s),
                     const SizedBox(height: 20),
                     Text(
-                      'Transactions',
+                      s.transactions,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: Theme.of(context).colorScheme.onSurface,
@@ -220,9 +225,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ),
             if (recent.isEmpty)
-              const SliverFillRemaining(
+              SliverFillRemaining(
                 hasScrollBody: false,
-                child: EmptyState(),
+                child: EmptyState(strings: s),
               )
             else
               SliverPadding(

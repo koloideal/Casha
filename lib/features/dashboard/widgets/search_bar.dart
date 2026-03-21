@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/l10n/app_strings.dart';
 import '../provider.dart';
 
 class SearchBar extends StatelessWidget {
@@ -7,12 +8,14 @@ class SearchBar extends StatelessWidget {
   final FocusNode focusNode;
   final VoidCallback onTap;
   final WidgetRef ref;
+  final AppStrings strings;
   const SearchBar({
     super.key,
     required this.controller,
     required this.focusNode,
     required this.onTap,
     required this.ref,
+    required this.strings,
   });
 
   @override
@@ -23,7 +26,7 @@ class SearchBar extends StatelessWidget {
       focusNode: focusNode,
       onTap: onTap,
       decoration: InputDecoration(
-        hintText: 'Search transactions...',
+        hintText: strings.searchHint,
         prefixIcon: Icon(
           Icons.search_rounded,
           color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),

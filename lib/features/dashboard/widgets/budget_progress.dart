@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/l10n/app_strings.dart';
 import '../../../shared/providers/amount_format_provider.dart';
 import '../../../shared/utils/currency_utils.dart';
 import '../../settings/provider.dart';
@@ -9,11 +10,13 @@ class BudgetProgress extends ConsumerWidget {
   final double spent;
   final double budget;
   final CurrencyInfo currencyInfo;
+  final AppStrings strings;
   const BudgetProgress({
     super.key,
     required this.spent,
     required this.budget,
     required this.currencyInfo,
+    required this.strings,
   });
 
   Border? _themeBorder(BuildContext context) {
@@ -51,7 +54,7 @@ class BudgetProgress extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Monthly Budget',
+                  strings.monthlyBudget,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(
                       context,
@@ -95,7 +98,7 @@ class BudgetProgress extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Spent: ${formatAmount(currencyInfo.symbol, spent, fmt)}',
+                  '${strings.spent}: ${formatAmount(currencyInfo.symbol, spent, fmt)}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(
                       context,
@@ -103,7 +106,7 @@ class BudgetProgress extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  'Limit: ${formatAmount(currencyInfo.symbol, budget, fmt)}',
+                  '${strings.limit}: ${formatAmount(currencyInfo.symbol, budget, fmt)}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(
                       context,

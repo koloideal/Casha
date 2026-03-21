@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/l10n/app_strings.dart';
+import '../../../core/l10n/locale_provider.dart';
 import '../../../core/services/card_color_service.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../settings/provider.dart';
@@ -96,6 +98,10 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
       ),
       child: StatefulBuilder(
         builder: (ctx, setPanelState) {
+          final s = AppStrings(
+            ProviderScope.containerOf(widget.context).read(localeProvider),
+          );
+          
           void onHSVChanged(HSVColor hsv) {
             setPanelState(() {});
             dash.setState(() {
@@ -125,7 +131,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                   children: [
                     Expanded(
                       child: PanelTab(
-                        label: 'Primary',
+                        label: s.colorPrimary,
                         isSelected: dash.editingPrimary,
                         color: dash.tempPrimary,
                         isDimmed: isSolid,
@@ -142,7 +148,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                     const SizedBox(width: 6),
                     Expanded(
                       child: PanelTab(
-                        label: 'Secondary',
+                        label: s.colorSecondary,
                         isSelected: !dash.editingPrimary,
                         color: dash.tempSecondary,
                         isDimmed: isSolid,
@@ -196,7 +202,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           ),
                         ),
                         child: Text(
-                          'Solid',
+                          s.colorSolid,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: isSolid
@@ -391,10 +397,10 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           .map((type) {
                         final isSelected = dash.tempGradientType == type;
                         final label = switch (type) {
-                          GradientType.linear => 'Linear',
-                          GradientType.linearReverse => 'Reverse',
-                          GradientType.radial => 'Radial',
-                          GradientType.sweep => 'Sweep',
+                          GradientType.linear => s.gradientLinear,
+                          GradientType.linearReverse => s.gradientReverse,
+                          GradientType.radial => s.gradientRadial,
+                          GradientType.sweep => s.gradientSweep,
                           GradientType.solid => '',
                         };
                         final icon = switch (type) {
@@ -498,8 +504,8 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           dash.overlayEntry?.markNeedsBuild();
                         },
                         icon: const Icon(Icons.restart_alt_rounded, size: 15),
-                        label: const Text('Reset',
-                            style: TextStyle(fontSize: 13)),
+                        label: Text(s.reset,
+                            style: const TextStyle(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Theme.of(widget.context)
                               .colorScheme
@@ -529,8 +535,8 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text('Apply',
-                            style: TextStyle(
+                        child: Text(s.apply,
+                            style: const TextStyle(
                                 fontWeight: FontWeight.w700, fontSize: 14)),
                       ),
                     ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
+import '../../core/l10n/locale_provider.dart';
 import '../../shared/utils/currency_utils.dart';
 import '../../shared/providers/amount_format_provider.dart';
 import '../settings/provider.dart';
@@ -24,6 +25,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
     final data = ref.watch(categoryExpenseProvider);
     final monthlyData = ref.watch(monthlyBreakdownProvider);
     final total = data.values.fold(0.0, (a, b) => a + b);
@@ -39,14 +41,14 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Categories',
+              s.categories,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
             ),
             Text(
-              'Expense breakdown',
+              s.expenses,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   ),
@@ -85,7 +87,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                         _BarChartCard(monthlyData: monthlyData, currency: currencyInfo.symbol),
                       const SizedBox(height: 20),
                       Text(
-                        'Ranked by Amount',
+                        s.rankedByAmount,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: Theme.of(context).colorScheme.onSurface,
@@ -408,6 +410,7 @@ class _CategoryRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
     final fmt = ref.watch(amountFormatProvider);
     final color = AppCategories.colors[category] ?? AppColors.accent;
     final icon = AppCategories.icons[category] ?? Icons.category_rounded;
@@ -451,7 +454,7 @@ class _CategoryRow extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  category,
+                  s.categoryLabel(category),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: Theme.of(context).colorScheme.onSurface,

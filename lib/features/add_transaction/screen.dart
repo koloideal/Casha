@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/constants.dart';
+import '../../core/l10n/app_strings.dart';
+import '../../core/l10n/locale_provider.dart';
 import '../../core/services/haptic_service.dart';
 import '../../shared/models/transaction.dart';
 import '../dashboard/provider.dart';
@@ -216,6 +218,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
     final state = ref.watch(addTransactionProvider(widget.initial));
     final categories = ref.watch(availableCategoriesProvider(widget.initial));
     final overrideCurrency = state.overrideCurrency;
@@ -224,7 +227,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(state.isEditing ? 'Edit Transaction' : 'Add Transaction'),
+        title: Text(state.isEditing ? s.editTransaction : s.addTransaction),
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
           onPressed: () => context.pop(),
@@ -238,12 +241,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Delete transaction?'),
-                    content: const Text('This action cannot be undone.'),
+                    title: Text(s.confirmDelete),
+                    content: Text(s.confirmDeleteBody),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Cancel'),
+                        child: Text(s.cancel),
                       ),
                       TextButton(
                         onPressed: () {
@@ -254,7 +257,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                         style: TextButton.styleFrom(
                           foregroundColor: const Color(0xFFE05C6B),
                         ),
-                        child: const Text('Delete'),
+                        child: Text(s.delete),
                       ),
                     ],
                   ),
@@ -271,12 +274,13 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
             children: [
               _TypeToggle(
                 selected: state.type,
+                strings: s,
                 onChanged: (t) =>
                     ref.read(addTransactionProvider(widget.initial).notifier).setType(t),
               ),
               const SizedBox(height: 24),
 
-              _SectionLabel('Amount'),
+              _SectionLabel(s.amount),
               const SizedBox(height: 8),
               AnimatedBuilder(
                 animation: _borderColorAnimation,
@@ -339,7 +343,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
               const SizedBox(height: 20),
 
               Text(
-                'Currency',
+                s.currency,
                 style: TextStyle(
                   fontSize: 13,
                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
@@ -353,7 +357,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
               ),
               const SizedBox(height: 20),
 
-              _SectionLabel('Category'),
+              _SectionLabel(s.category),
               const SizedBox(height: 8),
               _CategoryPicker(
                 categories: categories,
@@ -372,7 +376,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Date',
+                          s.date,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                             fontWeight: FontWeight.w500,
@@ -400,7 +404,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    DateFormat('MMM d, yyyy').format(_selectedDate),
+                                    DateFormat('MMM d, yyyy', s.dateLocale).format(_selectedDate),
                                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                       color: Theme.of(context).colorScheme.onSurface,
                                       fontWeight: FontWeight.w500,
@@ -422,7 +426,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Time',
+                          s.time,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                             fontWeight: FontWeight.w500,
@@ -466,7 +470,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
               ),
               const SizedBox(height: 20),
 
-              _SectionLabel('Note (optional)'),
+              _SectionLabel(s.noteOptional),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _noteController,
@@ -482,7 +486,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                       ),
                     ),
                 decoration: InputDecoration(
-                  hintText: 'Add a note...',
+                  hintText: s.addNote,
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: isDark
@@ -530,7 +534,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                                 ),
                               )
                             : Text(
-                                state.isEditing ? 'Save Changes' : 'Add Transaction',
+                                state.isEditing ? s.saveChanges : s.addTransaction,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -570,7 +574,12 @@ class _SectionLabel extends StatelessWidget {
 class _TypeToggle extends StatelessWidget {
   final TransactionType selected;
   final ValueChanged<TransactionType> onChanged;
-  const _TypeToggle({required this.selected, required this.onChanged});
+  final AppStrings strings;
+  const _TypeToggle({
+    required this.selected,
+    required this.onChanged,
+    required this.strings,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -584,14 +593,14 @@ class _TypeToggle extends StatelessWidget {
       child: Row(
         children: [
           _TypeOption(
-            label: 'Income',
+            label: strings.typeIncome,
             icon: Icons.arrow_downward_rounded,
             color: AppColors.income,
             isSelected: selected == TransactionType.income,
             onTap: () => onChanged(TransactionType.income),
           ),
           _TypeOption(
-            label: 'Expense',
+            label: strings.typeExpense,
             icon: Icons.arrow_upward_rounded,
             color: AppColors.expense,
             isSelected: selected == TransactionType.expense,
