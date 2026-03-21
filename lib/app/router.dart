@@ -6,26 +6,25 @@ import '../features/dashboard/screen.dart';
 import '../features/add_transaction/screen.dart';
 import '../features/categories/screen.dart';
 import '../features/settings/screen.dart';
-import '../features/splash/screen.dart';
 import '../shared/models/transaction.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
-  initialLocation: '/splash',
+  initialLocation: '/dashboard',
   routes: [
-    GoRoute(
-      path: '/splash',
-      builder: (context, state) => const SplashScreen(),
-    ),
     ShellRoute(
       navigatorKey: _shellKey,
       builder: (context, state, child) => AppShell(child: child),
       routes: [
         GoRoute(
           path: '/dashboard',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: DashboardScreen(),
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const DashboardScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+            transitionDuration: const Duration(milliseconds: 350),
           ),
         ),
         GoRoute(

@@ -34,11 +34,22 @@ flutter_launcher_icons:
   adaptive_icon_background: "#0F0F14"  
   adaptive_icon_foreground: "assets/icon/icon.png"
 
+flutter_native_splash:
+  color: "#111827"
+  color_dark: "#111827"
+  image: assets/icon/icon.png
+  android_12:
+    color: "#111827"
+    color_dark: "#111827"
+    image: assets/icon/icon.png
+  web: false
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.3
 
 flutter:
   uses-material-design: true
