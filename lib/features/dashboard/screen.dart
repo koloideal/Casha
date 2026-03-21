@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import '../../core/constants.dart';
 import '../../core/services/card_color_service.dart';
+import '../../core/services/haptic_service.dart';
 import '../../shared/models/transaction.dart';
 import '../../shared/utils/currency_utils.dart';
 import '../../shared/providers/amount_format_provider.dart';
@@ -108,6 +109,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   void _closeOverlay({required bool apply}) {
     if (apply) {
+      HapticService.medium();
       ref.read(cardColorsProvider.notifier).save(_tempPrimary, _tempSecondary, _tempGradientType);
     } else {
       setState(() {
@@ -191,7 +193,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/add'),
+        onPressed: () {
+          HapticService.medium();
+          context.push('/add');
+        },
         backgroundColor: const Color(0xFF7C6DED),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
@@ -486,7 +491,10 @@ class _FilterChip extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticService.selection();
+        onTap();
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -745,7 +753,10 @@ class _BalanceCardState extends ConsumerState<_BalanceCard>
         .toList();
 
     return GestureDetector(
-      onLongPress: widget.onLongPress,
+      onLongPress: () {
+        HapticService.heavy();
+        widget.onLongPress?.call();
+      },
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) {

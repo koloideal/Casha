@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/constants.dart';
+import '../../core/services/haptic_service.dart';
 import '../../shared/models/transaction.dart';
 import '../dashboard/provider.dart';
 import '../settings/provider.dart';
@@ -158,6 +159,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     }
     
     ref.read(addTransactionProvider(widget.initial).notifier).setSubmitting(false);
+    
+    HapticService.medium();
 
     if (mounted) context.pop();
   }

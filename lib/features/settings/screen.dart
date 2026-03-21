@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../core/services/biometric_service.dart';
+import '../../core/services/haptic_service.dart';
 import '../../shared/utils/currency_utils.dart';
 import '../../shared/providers/amount_format_provider.dart';
 import '../dashboard/provider.dart';
@@ -188,6 +189,64 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 16),
+
+            Consumer(
+              builder: (context, ref, _) {
+                final enabled = ref.watch(hapticEnabledProvider);
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                return Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.vibration_rounded,
+                          color: AppColors.accent,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Haptic Feedback',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                            ),
+                            Text(
+                              'Vibration on interactions',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: enabled,
+                        onChanged: (val) => ref.read(hapticEnabledProvider.notifier).toggle(val),
+                        activeColor: const Color(0xFF7C6DED),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 16),
 
@@ -584,6 +643,7 @@ class _BiometricSectionState extends State<_BiometricSection> {
     if (val) {
       final ok = await BiometricService.authenticate();
       if (!ok) return;
+      HapticService.light();
     }
     await BiometricService.setEnabled(val);
     if (mounted) setState(() => _enabled = val);

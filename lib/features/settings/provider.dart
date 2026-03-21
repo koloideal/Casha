@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants.dart';
+import '../../core/services/haptic_service.dart';
 import '../../shared/services/exchange_rate_service.dart';
 import '../../shared/utils/currency_utils.dart';
 import '../../shared/providers/amount_format_provider.dart';
@@ -102,6 +104,27 @@ final exchangeRateServiceProvider = Provider<ExchangeRateService>((ref) {
 final ratesInitProvider = FutureProvider<void>((ref) async {
   await ref.read(exchangeRateServiceProvider).fetchRates();
 });
+
+final hapticEnabledProvider = StateNotifierProvider<HapticNotifier, bool>((ref) {
+  return HapticNotifier();
+});
+
+class HapticNotifier extends StateNotifier<bool> {
+  HapticNotifier() : super(true) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    state = HapticService.isEnabled;
+  }
+
+  Future<void> toggle(bool value) async {
+    await HapticService.setEnabled(value);
+    state = value;
+    // Give tactile confirmation when turning ON
+    if (value) HapticFeedback.mediumImpact();
+  }
+}
 
 final exportProvider = Provider<ExportService>((ref) {
   return ExportService(ref);
