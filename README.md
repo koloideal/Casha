@@ -102,3 +102,16 @@ git clone https://github.com/koloideal/casha.git
 cd casha
 flutter pub get
 flutter run
+```
+
+Build release APK
+```console
+flutter build apk --release
+```
+
+Build for Google Play
+```console
+flutter build appbundle --release
+```
+
+<p align="center"> <sub>casha — <em>powered with ❤️ by</em> <strong>kolo</strong></sub> </p> 
