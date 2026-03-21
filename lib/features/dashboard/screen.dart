@@ -1,37 +1,18 @@
-import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:sensors_plus/sensors_plus.dart';
-import '../../core/constants.dart';
 import '../../core/services/card_color_service.dart';
 import '../../core/services/haptic_service.dart';
-import '../../shared/models/transaction.dart';
-import '../../shared/utils/currency_utils.dart';
-import '../../shared/providers/amount_format_provider.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
-
-String _smartBalance(double amount, AmountFormat fmt, String symbol) {
-  const spaceAfter = {'Br'};
-  final sep = spaceAfter.contains(symbol) ? ' ' : '';
-  final isWhole = amount == amount.floorToDouble();
-
-  String formatted;
-  if (isWhole) {
-    formatted = fmt.format(amount);
-    if (formatted.endsWith('.00')) {
-      formatted = formatted.substring(0, formatted.length - 3);
-    }
-  } else {
-    formatted = fmt.format(amount);
-  }
-  return '$symbol$sep$formatted';
-}
+import 'widgets/balance_card.dart';
+import 'widgets/budget_progress.dart';
+import 'widgets/color_editor_overlay.dart';
+import 'widgets/filter_chips.dart';
+import 'widgets/search_bar.dart' as custom;
+import 'widgets/summary_row.dart';
+import 'widgets/transaction_tile.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -44,83 +25,64 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   final _searchFocusNode = FocusNode();
-  bool _editingCard = false;
-  bool _editingPrimary = true;
-  Color _tempPrimary = CardColorService.defaultPrimary;
-  Color _tempSecondary = CardColorService.defaultSecondary;
-  HSVColor _tempPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
-  HSVColor _tempSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
-  Color _savedPrimary = CardColorService.defaultPrimary;
-  Color _savedSecondary = CardColorService.defaultSecondary;
-  HSVColor _savedPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
-  HSVColor _savedSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
-  GradientType _tempGradientType = GradientType.linear;
-  GradientType _savedGradientType = GradientType.linear;
-  OverlayEntry? _overlayEntry;
-
-  HSVColor get _currentHSV => _editingPrimary ? _tempPrimaryHSV : _tempSecondaryHSV;
-
-  void _onHSVChanged(HSVColor hsv) {
-    setState(() {
-      if (_editingPrimary) {
-        _tempPrimaryHSV = hsv;
-        _tempPrimary = hsv.toColor();
-      } else {
-        _tempSecondaryHSV = hsv;
-        _tempSecondary = hsv.toColor();
-      }
-    });
-  }
-
-  Border? _themeBorder(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1);
-  }
+  bool editingCard = false;
+  bool editingPrimary = true;
+  Color tempPrimary = CardColorService.defaultPrimary;
+  Color tempSecondary = CardColorService.defaultSecondary;
+  HSVColor tempPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
+  HSVColor tempSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
+  Color savedPrimary = CardColorService.defaultPrimary;
+  Color savedSecondary = CardColorService.defaultSecondary;
+  HSVColor savedPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
+  HSVColor savedSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
+  GradientType tempGradientType = GradientType.linear;
+  GradientType savedGradientType = GradientType.linear;
+  OverlayEntry? overlayEntry;
 
   void _onCardLongPress() {
     final colors = ref.read(cardColorsProvider);
-    _savedPrimary = colors.primary;
-    _savedSecondary = colors.secondary;
-    _savedPrimaryHSV = HSVColor.fromColor(colors.primary);
-    _savedSecondaryHSV = HSVColor.fromColor(colors.secondary);
-    _savedGradientType = colors.gradientType;
-    _tempPrimary = colors.primary;
-    _tempSecondary = colors.secondary;
-    _tempPrimaryHSV = HSVColor.fromColor(colors.primary);
-    _tempSecondaryHSV = HSVColor.fromColor(colors.secondary);
-    _tempGradientType = colors.gradientType;
+    savedPrimary = colors.primary;
+    savedSecondary = colors.secondary;
+    savedPrimaryHSV = HSVColor.fromColor(colors.primary);
+    savedSecondaryHSV = HSVColor.fromColor(colors.secondary);
+    savedGradientType = colors.gradientType;
+    tempPrimary = colors.primary;
+    tempSecondary = colors.secondary;
+    tempPrimaryHSV = HSVColor.fromColor(colors.primary);
+    tempSecondaryHSV = HSVColor.fromColor(colors.secondary);
+    tempGradientType = colors.gradientType;
     
     setState(() {
-      _editingCard = true;
-      _editingPrimary = true;
+      editingCard = true;
+      editingPrimary = true;
     });
     _showOverlay();
   }
 
   void _showOverlay() {
-    _overlayEntry = OverlayEntry(
-      builder: (overlayContext) => _FullScreenBlurOverlay(
+    overlayEntry = OverlayEntry(
+      builder: (overlayContext) => FullScreenBlurOverlay(
         dashboardState: this,
         context: context,
       ),
     );
-    Overlay.of(context, rootOverlay: true).insert(_overlayEntry!);
+    Overlay.of(context, rootOverlay: true).insert(overlayEntry!);
   }
 
-  void _closeOverlay({required bool apply}) {
+  void closeOverlay({required bool apply}) {
     if (apply) {
       HapticService.medium();
-      ref.read(cardColorsProvider.notifier).save(_tempPrimary, _tempSecondary, _tempGradientType);
+      ref.read(cardColorsProvider.notifier).save(tempPrimary, tempSecondary, tempGradientType);
     } else {
       setState(() {
-        _tempPrimary = _savedPrimary;
-        _tempSecondary = _savedSecondary;
-        _tempGradientType = _savedGradientType;
+        tempPrimary = savedPrimary;
+        tempSecondary = savedSecondary;
+        tempGradientType = savedGradientType;
       });
     }
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-    setState(() => _editingCard = false);
+    overlayEntry?.remove();
+    overlayEntry = null;
+    setState(() => editingCard = false);
   }
 
   @override
@@ -128,14 +90,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     super.initState();
     Future.microtask(() async {
       final colors = ref.read(cardColorsProvider);
-      _tempPrimary = colors.primary;
-      _tempSecondary = colors.secondary;
+      tempPrimary = colors.primary;
+      tempSecondary = colors.secondary;
     });
   }
 
   @override
   void dispose() {
-    _overlayEntry?.remove();
+    overlayEntry?.remove();
     _searchController.dispose();
     _scrollController.dispose();
     _searchFocusNode.dispose();
@@ -160,7 +122,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final budget = ref.watch(budgetProvider);
     final recent = ref.watch(recentTransactionsProvider);
     final currencyInfo = ref.watch(currencyProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -214,30 +175,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _BalanceCard(
+                    BalanceCard(
                       balance: balance,
                       currencyInfo: currencyInfo,
                       onLongPress: _onCardLongPress,
-                      previewPrimary: _editingCard ? _tempPrimary : null,
-                      previewSecondary: _editingCard ? _tempSecondary : null,
-                      previewGradientType: _editingCard ? _tempGradientType : null,
+                      previewPrimary: editingCard ? tempPrimary : null,
+                      previewSecondary: editingCard ? tempSecondary : null,
+                      previewGradientType: editingCard ? tempGradientType : null,
                     ),
                     const SizedBox(height: 16),
-                    _SummaryRow(
+                    SummaryRow(
                       income: income,
                       expense: expense,
                       currencyInfo: currencyInfo,
                     ),
                     if (budget != null) ...[
                       const SizedBox(height: 16),
-                      _BudgetProgress(
+                      BudgetProgress(
                         spent: monthExpense,
                         budget: budget,
                         currencyInfo: currencyInfo,
                       ),
                     ],
                     const SizedBox(height: 24),
-                    _SearchBar(
+                    custom.SearchBar(
                       controller: _searchController,
                       focusNode: _searchFocusNode,
                       onTap: _scrollToSearch,
@@ -261,7 +222,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             if (recent.isEmpty)
               const SliverFillRemaining(
                 hasScrollBody: false,
-                child: _EmptyState(),
+                child: EmptyState(),
               )
             else
               SliverPadding(
@@ -271,1297 +232,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   itemBuilder: (context, i) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: RepaintBoundary(
-                      child: _TransactionTile(transaction: recent[i]),
+                      child: TransactionTile(transaction: recent[i]),
                     ),
                   ),
                 ),
               ),
             const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PanelTab extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _PanelTab({
-    required this.label,
-    required this.isSelected,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final unselectedBorder = isDark ? Colors.white24 : const Color(0xFFCCCCDD);
-    final unselectedText = isDark
-        ? Colors.white60
-        : Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected ? color : unselectedBorder,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark ? Colors.white30 : Colors.black12,
-                  width: 1,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? color : unselectedText,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SearchBar extends StatelessWidget {
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final VoidCallback onTap;
-  final WidgetRef ref;
-  const _SearchBar({
-    required this.controller,
-    required this.focusNode,
-    required this.onTap,
-    required this.ref,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return TextField(
-      controller: controller,
-      focusNode: focusNode,
-      onTap: onTap,
-      decoration: InputDecoration(
-        hintText: 'Search transactions...',
-        prefixIcon: Icon(
-          Icons.search_rounded,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-        ),
-        suffixIcon: controller.text.isNotEmpty
-            ? IconButton(
-                icon: const Icon(Icons.clear_rounded, size: 20),
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                onPressed: () {
-                  controller.clear();
-                  ref.read(searchQueryProvider.notifier).state = '';
-                },
-              )
-            : null,
-        filled: true,
-        fillColor: Theme.of(context).inputDecorationTheme.fillColor,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: isDark ? Colors.transparent : const Color(0xFFCCCCDD),
-            width: 1,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF7C6DED), width: 1.5),
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-      ),
-      onChanged: (v) => ref.read(searchQueryProvider.notifier).state = v,
-    );
-  }
-}
-
-class FilterChips extends ConsumerWidget {
-  const FilterChips({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final typeFilter = ref.watch(transactionFilterProvider);
-    final timeFilter = ref.watch(timeFilterProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Row(
-      children: [
-        // TIME GROUP
-        _FilterChip(
-          label: 'All Time',
-          isSelected: timeFilter == TimeFilter.allTime,
-          onTap: () => ref.read(timeFilterProvider.notifier).state = TimeFilter.allTime,
-        ),
-        const SizedBox(width: 6),
-        _FilterChip(
-          label: 'Month',
-          isSelected: timeFilter == TimeFilter.lastMonth,
-          onTap: () => ref.read(timeFilterProvider.notifier).state = TimeFilter.lastMonth,
-        ),
-
-        // VISUAL DIVIDER
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Container(
-            width: 1,
-            height: 20,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(
-              isDark ? 0.15 : 0.2,
-            ),
-          ),
-        ),
-
-        // TYPE GROUP
-        _FilterChip(
-          label: 'All',
-          isSelected: typeFilter == TransactionFilter.all,
-          onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.all,
-        ),
-        const SizedBox(width: 6),
-        _FilterChip(
-          label: 'Income',
-          isSelected: typeFilter == TransactionFilter.income,
-          color: AppColors.income,
-          onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.income,
-        ),
-        const SizedBox(width: 6),
-        _FilterChip(
-          label: 'Expense',
-          isSelected: typeFilter == TransactionFilter.expense,
-          color: AppColors.expense,
-          onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.expense,
-        ),
-      ],
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final Color? color;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final chipColor = color ?? AppColors.accent;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: () {
-        HapticService.selection();
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? chipColor.withOpacity(0.2)
-              : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: isSelected
-              ? Border.all(color: chipColor, width: 1.5)
-              : isDark
-                  ? null
-                  : Border.all(color: const Color(0xFFDDDDEE), width: 1),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 12).merge(
-            Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: isSelected
-                  ? chipColor
-                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BudgetProgress extends ConsumerWidget {
-  final double spent;
-  final double budget;
-  final CurrencyInfo currencyInfo;
-  const _BudgetProgress({
-    required this.spent,
-    required this.budget,
-    required this.currencyInfo,
-  });
-
-  Border? _themeBorder(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1);
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final fmt = ref.watch(amountFormatProvider);
-    final progress = budget > 0 ? spent / budget : 0.0;
-    final isOver = progress > 1.0;
-    final displayPercent = (progress * 100).toStringAsFixed(0);
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border(
-            left: BorderSide(
-              color: isOver ? const Color(0xFFE05C6B) : const Color(0xFF7C6DED),
-              width: 3,
-            ),
-            top: _themeBorder(context)?.top ?? BorderSide.none,
-            right: _themeBorder(context)?.right ?? BorderSide.none,
-            bottom: _themeBorder(context)?.bottom ?? BorderSide.none,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Monthly Budget',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-                Text(
-                  '$displayPercent%',
-                  style: TextStyle(
-                    color: isOver
-                        ? const Color(0xFFE05C6B)
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.7),
-                    fontWeight: isOver ? FontWeight.w700 : FontWeight.normal,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: isOver ? 1.0 : progress,
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withOpacity(0.1),
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  isOver
-                      ? const Color(0xFFE05C6B)
-                      : (progress > 0.8
-                            ? Colors.orange
-                            : const Color(0xFF4CAF8C)),
-                ),
-                minHeight: 8,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Spent: ${formatAmount(currencyInfo.symbol, spent, fmt)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-                Text(
-                  'Limit: ${formatAmount(currencyInfo.symbol, budget, fmt)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BalanceCard extends ConsumerStatefulWidget {
-  final double balance;
-  final CurrencyInfo currencyInfo;
-  final VoidCallback? onLongPress;
-  final Color? previewPrimary;
-  final Color? previewSecondary;
-  final GradientType? previewGradientType;
-  
-  const _BalanceCard({
-    required this.balance,
-    required this.currencyInfo,
-    this.onLongPress,
-    this.previewPrimary,
-    this.previewSecondary,
-    this.previewGradientType,
-  });
-
-  @override
-  ConsumerState<_BalanceCard> createState() => _BalanceCardState();
-}
-
-class _BalanceCardState extends ConsumerState<_BalanceCard>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  double _tiltX = 0.0, _tiltY = 0.0;
-  double _targetTiltX = 0.0, _targetTiltY = 0.0;
-  StreamSubscription<AccelerometerEvent>? _sub;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat();
-
-    _sub =
-        accelerometerEventStream(
-          samplingPeriod: const Duration(milliseconds: 50),
-        ).listen((e) {
-          _targetTiltY = (e.x / 9.8).clamp(-1.0, 1.0);
-          _targetTiltX = ((e.y / 9.8) - 1.0).clamp(-1.0, 1.0);
-        });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _sub?.cancel();
-    super.dispose();
-  }
-
-  Gradient _buildGradient(Color primary, Color secondary, GradientType type) {
-    final colorDark = Color.lerp(secondary, Colors.black, 0.3)!;
-
-    switch (type) {
-      case GradientType.linear:
-        return LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [primary, secondary, colorDark],
-          stops: const [0.0, 0.6, 1.0],
-        );
-      case GradientType.linearReverse:
-        return LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [primary, secondary, colorDark],
-          stops: const [0.0, 0.6, 1.0],
-        );
-      case GradientType.radial:
-        // Center of the widget, radius covers entire card
-        return RadialGradient(
-          center: Alignment.center, // true center of the widget
-          radius: 1.4,              // 1.4 = reaches the corners cleanly
-          colors: [primary, secondary, colorDark],
-          stops: const [0.0, 0.6, 1.0],
-        );
-      case GradientType.sweep:
-        // Smooth clockwise sweep around center — all colors flow around the full circle
-        return SweepGradient(
-          center: Alignment.center,
-          startAngle: 0.0,
-          endAngle: 3.14159 * 2, // full 360 degrees
-          colors: [
-            primary,
-            secondary,
-            colorDark,
-            secondary,
-            primary, // close the loop smoothly back to start color
-          ],
-          stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
-        );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final rates = ref.read(exchangeRateServiceProvider);
-    final fmt = ref.watch(amountFormatProvider);
-    final savedColors = ref.watch(cardColorsProvider);
-    final primary = widget.previewPrimary ?? savedColors.primary;
-    final secondary = widget.previewSecondary ?? savedColors.secondary;
-    final gradientType = widget.previewGradientType ?? savedColors.gradientType;
-    final allCurrencies = [
-      ('USD', r'$'),
-      ('EUR', '€'),
-      ('BYN', 'Br'),
-      ('RUB', '₽'),
-    ];
-    final others = allCurrencies
-        .where((c) => c.$1 != widget.currencyInfo.code)
-        .toList();
-
-    return GestureDetector(
-      onLongPress: () {
-        HapticService.heavy();
-        widget.onLongPress?.call();
-      },
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          _tiltX += (_targetTiltX - _tiltX) * 0.15;
-          _tiltY += (_targetTiltY - _tiltY) * 0.15;
-
-          return Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.001)
-              ..rotateX(_tiltX * 0.42)
-              ..rotateY(_tiltY * 0.42),
-            child: Container(
-              width: double.infinity,
-              height: 180,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: _buildGradient(primary, secondary, gradientType),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Stack(
-                  children: [
-                    // existing card content
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 20,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'TOTAL BALANCE',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    letterSpacing: 1.5,
-                                    color: Colors.white.withOpacity(0.6),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    _smartBalance(
-                                      widget.balance,
-                                      fmt,
-                                      widget.currencyInfo.symbol,
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: 48,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                    ),
-                                    maxLines: 1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (widget.balance != 0) ...[
-                            const SizedBox(width: 16),
-                            Container(
-                              width: 1,
-                              height: 70,
-                              color: Colors.white.withOpacity(0.15),
-                            ),
-                            const SizedBox(width: 16),
-                            SizedBox(
-                              width: 110,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: others.map((c) {
-                                  final converted = rates.convert(
-                                    widget.balance,
-                                    widget.currencyInfo.code,
-                                    c.$1,
-                                  );
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 3),
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        _smartBalance(converted, fmt, c.$2),
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.white.withOpacity(0.65),
-                                        ),
-                                        maxLines: 1,
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    // hint text — absolute position, bottom center, no layout impact
-                    Positioned(
-                      bottom: 8,
-                      left: 0,
-                      right: 0,
-                      child: Text(
-                        'tap and hold to edit',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: Colors.white.withOpacity(0.18),
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _SummaryRow extends StatelessWidget {
-  final double income;
-  final double expense;
-  final CurrencyInfo currencyInfo;
-  const _SummaryRow({
-    required this.income,
-    required this.expense,
-    required this.currencyInfo,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _SummaryCard(
-            label: 'Income',
-            amount: income,
-            color: AppColors.income,
-            icon: Icons.arrow_downward_rounded,
-            currencyInfo: currencyInfo,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _SummaryCard(
-            label: 'Expenses',
-            amount: expense,
-            color: AppColors.expense,
-            icon: Icons.arrow_upward_rounded,
-            currencyInfo: currencyInfo,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SummaryCard extends ConsumerWidget {
-  final String label;
-  final double amount;
-  final Color color;
-  final IconData icon;
-  final CurrencyInfo currencyInfo;
-  const _SummaryCard({
-    required this.label,
-    required this.amount,
-    required this.color,
-    required this.icon,
-    required this.currencyInfo,
-  });
-
-  Border? _themeBorder(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1);
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final fmt = ref.watch(amountFormatProvider);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: _themeBorder(context),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  formatAmount(currencyInfo.symbol, amount, fmt),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TransactionTile extends ConsumerWidget {
-  final Transaction transaction;
-  const _TransactionTile({required this.transaction});
-
-  Border? _themeBorder(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1);
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final fmt = ref.watch(amountFormatProvider);
-    final isIncome = transaction.type == TransactionType.income;
-    final color = isIncome ? AppColors.income : AppColors.expense;
-    final catColor =
-        AppCategories.colors[transaction.category] ?? AppColors.accent;
-    final catIcon =
-        AppCategories.icons[transaction.category] ?? Icons.category_rounded;
-
-    return GestureDetector(
-      onTap: () => context.push('/add', extra: transaction),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: _themeBorder(context),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: catColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(catIcon, color: catColor, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    transaction.category,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  if (transaction.note != null && transaction.note!.isNotEmpty)
-                    Text(
-                      transaction.note!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  else
-                    Text(
-                      DateFormat('MMM d, yyyy · HH:mm').format(transaction.date),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Text(
-              '${isIncome ? '+ ' : '- '}${formatAmount(transaction.currency, transaction.amount, fmt)}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.receipt_long_rounded,
-              size: 48,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No transactions found',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Tap + to add your first transaction',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FullScreenBlurOverlay extends StatefulWidget {
-  final _DashboardScreenState dashboardState;
-  final BuildContext context;
-
-  const _FullScreenBlurOverlay({
-    required this.dashboardState,
-    required this.context,
-  });
-
-  @override
-  State<_FullScreenBlurOverlay> createState() => _FullScreenBlurOverlayState();
-}
-
-class _FullScreenBlurOverlayState extends State<_FullScreenBlurOverlay> {
-  _DashboardScreenState get dash => widget.dashboardState;
-
-  @override
-  Widget build(BuildContext context) {
-    final mq = MediaQuery.of(widget.context);
-    final cardTop = mq.padding.top + kToolbarHeight + 16;
-    final cardHeight = 180.0;
-    final panelTop = cardTop + cardHeight + 50;
-    final panelBottom = mq.padding.bottom + 16;
-
-    return Material(
-      color: Colors.transparent,
-      child: Stack(
-        children: [
-          // FULL SCREEN BLUR — covers navigator, appbar, footer, everything
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                color: Colors.black.withOpacity(0.6),
-              ),
-            ),
-          ),
-          // DISMISS tap area
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () {
-                dash._closeOverlay(apply: false);
-              },
-              behavior: HitTestBehavior.translucent,
-              child: const SizedBox.expand(),
-            ),
-          ),
-          // CARD re-rendered sharp on top of blur, with live preview colors
-          Positioned(
-            top: cardTop,
-            left: 20,
-            right: 20,
-            child: Consumer(
-              builder: (ctx, ref, _) => _BalanceCard(
-                balance: ref.read(totalBalanceProvider),
-                currencyInfo: ref.read(currencyProvider),
-                onLongPress: null,
-                previewPrimary: dash._tempPrimary,
-                previewSecondary: dash._tempSecondary,
-                previewGradientType: dash._tempGradientType,
-              ),
-            ),
-          ),
-          // COLOR PANEL
-          Positioned(
-            top: panelTop,
-            left: 20,
-            right: 20,
-            bottom: panelBottom,
-            child: GestureDetector(
-              onTap: () {},
-              behavior: HitTestBehavior.opaque,
-              child: _buildPanel(context, mq),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPanel(BuildContext context, MediaQueryData mq) {
-    return SingleChildScrollView(
-      physics: const ClampingScrollPhysics(),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-        decoration: BoxDecoration(
-          color: Theme.of(widget.context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: StatefulBuilder(
-          builder: (ctx, setPanelState) {
-            final isDark = Theme.of(widget.context).brightness == Brightness.dark;
-
-            void onHSVChanged(HSVColor hsv) {
-              setPanelState(() {});
-              dash.setState(() {
-                if (dash._editingPrimary) {
-                  dash._tempPrimaryHSV = hsv;
-                  dash._tempPrimary = hsv.toColor();
-                } else {
-                  dash._tempSecondaryHSV = hsv;
-                  dash._tempSecondary = hsv.toColor();
-                }
-              });
-              // Force OverlayEntry to rebuild so the card inside it gets new preview colors
-              dash._overlayEntry?.markNeedsBuild();
-            }
-
-            final currentHSV = dash._editingPrimary
-                ? dash._tempPrimaryHSV
-                : dash._tempSecondaryHSV;
-
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // TOP ROW: tabs + X
-                Row(
-                  children: [
-                    _PanelTab(
-                      label: 'Primary',
-                      isSelected: dash._editingPrimary,
-                      color: dash._tempPrimary,
-                      onTap: () {
-                        dash.setState(() => dash._editingPrimary = true);
-                        setPanelState(() {});
-                        dash._overlayEntry?.markNeedsBuild();
-                      },
-                    ),
-                    const SizedBox(width: 10),
-                    _PanelTab(
-                      label: 'Secondary',
-                      isSelected: !dash._editingPrimary,
-                      color: dash._tempSecondary,
-                      onTap: () {
-                        dash.setState(() => dash._editingPrimary = false);
-                        setPanelState(() {});
-                        dash._overlayEntry?.markNeedsBuild();
-                      },
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () => dash._closeOverlay(apply: false),
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE05C6B).withOpacity(0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close_rounded,
-                          size: 18,
-                          color: Color(0xFFE05C6B),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // 2D SPECTRUM AREA
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: SizedBox(
-                    height: 160,
-                    width: double.infinity,
-                    child: ColorPickerArea(
-                      currentHSV,
-                      onHSVChanged,
-                      PaletteType.hsvWithHue,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // HUE SLIDER
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: SizedBox(
-                    height: 22,
-                    child: ColorPickerSlider(
-                      TrackType.hue,
-                      currentHSV,
-                      onHSVChanged,
-                      displayThumbColor: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // COLOR PREVIEW ROW
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        dash.setState(() => dash._editingPrimary = true);
-                        setPanelState(() {});
-                        dash._overlayEntry?.markNeedsBuild();
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: dash._tempPrimary,
-                              borderRadius: BorderRadius.circular(8),
-                              border: dash._editingPrimary
-                                  ? Border.all(color: Colors.white, width: 2)
-                                  : Border.all(
-                                      color: Colors.transparent, width: 2),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '#${dash._tempPrimary.value.toRadixString(16).substring(2).toUpperCase()}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontFamily: 'monospace',
-                              fontWeight: dash._editingPrimary
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                              color: Theme.of(widget.context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(
-                                    dash._editingPrimary ? 0.8 : 0.4,
-                                  ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () {
-                        dash.setState(() => dash._editingPrimary = false);
-                        setPanelState(() {});
-                        dash._overlayEntry?.markNeedsBuild();
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '#${dash._tempSecondary.value.toRadixString(16).substring(2).toUpperCase()}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontFamily: 'monospace',
-                              fontWeight: !dash._editingPrimary
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                              color: Theme.of(widget.context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(
-                                    !dash._editingPrimary ? 0.8 : 0.4,
-                                  ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: dash._tempSecondary,
-                              borderRadius: BorderRadius.circular(8),
-                              border: !dash._editingPrimary
-                                  ? Border.all(color: Colors.white, width: 2)
-                                  : Border.all(
-                                      color: Colors.transparent, width: 2),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // GRADIENT TYPE SECTION
-                Text(
-                  'Gradient Style',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: GradientType.values.map((type) {
-                    final isSelected = dash._tempGradientType == type;
-                    final label = switch (type) {
-                      GradientType.linear => 'Linear',
-                      GradientType.linearReverse => 'Reverse',
-                      GradientType.radial => 'Radial',
-                      GradientType.sweep => 'Sweep',
-                    };
-                    final icon = switch (type) {
-                      GradientType.linear => Icons.trending_flat_rounded,
-                      GradientType.linearReverse => Icons.swap_horiz_rounded,
-                      GradientType.radial => Icons.blur_circular_rounded,
-                      GradientType.sweep => Icons.rotate_right_rounded,
-                    };
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: GestureDetector(
-                          onTap: () {
-                            dash.setState(() => dash._tempGradientType = type);
-                            setPanelState(() {});
-                            dash._overlayEntry?.markNeedsBuild();
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFF7C6DED).withOpacity(0.15)
-                                  : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFF7C6DED)
-                                    : Colors.transparent,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  icon,
-                                  size: 18,
-                                  color: isSelected
-                                      ? const Color(0xFF7C6DED)
-                                      : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.5),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  label,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                    color: isSelected
-                                        ? const Color(0xFF7C6DED)
-                                        : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.5),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 16),
-                // RESET + APPLY ROW
-                Row(
-                  children: [
-                    // RESET button
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          final isDark = Theme.of(widget.context).brightness == Brightness.dark;
-                          final defPrimary = isDark
-                              ? CardColorService.defaultPrimary
-                              : CardColorService.defaultPrimaryLight;
-                          final defSecondary = isDark
-                              ? CardColorService.defaultSecondary
-                              : CardColorService.defaultSecondaryLight;
-                          dash.setState(() {
-                            dash._tempPrimary = defPrimary;
-                            dash._tempSecondary = defSecondary;
-                            dash._tempPrimaryHSV = HSVColor.fromColor(defPrimary);
-                            dash._tempSecondaryHSV = HSVColor.fromColor(defSecondary);
-                            dash._tempGradientType = GradientType.linear;
-                          });
-                          setPanelState(() {});
-                          dash._overlayEntry?.markNeedsBuild();
-                        },
-                        icon: const Icon(Icons.restart_alt_rounded, size: 16),
-                        label: const Text('Reset'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.7),
-                          side: BorderSide(
-                            color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.2),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // APPLY button
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        onPressed: () => dash._closeOverlay(apply: true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF7C6DED),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: const Text(
-                          'Apply',
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            );
-          },
         ),
       ),
     );
