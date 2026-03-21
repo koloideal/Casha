@@ -20,6 +20,7 @@ class SettingsScreen extends ConsumerWidget {
     final s = ref.read(stringsProvider);
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: Text(s.clearDataConfirm),
         content: Text(s.clearDataWarning),
@@ -29,10 +30,11 @@ class SettingsScreen extends ConsumerWidget {
             child: Text(s.cancel),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              showDialog(
+              await showDialog(
                 context: context,
+                barrierDismissible: false,
                 builder: (ctx2) => AlertDialog(
                   title: Text(s.areYouSure),
                   content: Text(s.allTransactionsWillBeDeleted),
@@ -42,11 +44,42 @@ class SettingsScreen extends ConsumerWidget {
                       child: Text(s.noKeepThem),
                     ),
                     TextButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        final biometricEnabled = await BiometricService.isEnabled();
+                        if (biometricEnabled) {
+                          final authenticated = await BiometricService.authenticate();
+                          if (!authenticated) {
+                            Navigator.pop(ctx2);
+                            return;
+                          }
+                        }
                         ref.read(transactionsProvider.notifier).clearAll();
                         Navigator.pop(ctx2);
+                        
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(s.allTransactionsDeleted)),
+                          SnackBar(
+                            content: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  s.allTransactionsDeleted,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: const Color(0xFF4CAF50),
+                            behavior: SnackBarBehavior.fixed,
+                            duration: const Duration(seconds: 3),
+                          ),
                         );
                       },
                       style: TextButton.styleFrom(

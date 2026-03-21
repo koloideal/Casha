@@ -76,8 +76,8 @@ class AppStrings {
   String get data => _ru ? 'Данные' : 'Data';
   String get exportData => _ru ? 'Экспорт данных' : 'Export data';
   String get clearData => _ru ? 'Очистить данные' : 'Clear all data';
-  String get clearAllTransactions => _ru ? 'Очистить все транзакции' : 'Clear All Transactions';
-  String get clearDataConfirm => _ru ? 'Удалить все транзакции?' : 'Clear all transactions?';
+  String get clearAllTransactions => _ru ? 'Удалить транзакции' : 'Clear All Transactions';
+  String get clearDataConfirm => _ru ? 'Удалить транзакции?' : 'Clear all transactions?';
   String get clearDataWarning => _ru ? 'Это навсегда удалит всю историю транзакций. Это действие нельзя отменить.' : 'This will permanently delete all your transaction history. This cannot be undone.';
   String get areYouSure => _ru ? 'Вы абсолютно уверены?' : 'Are you absolutely sure?';
   String get allTransactionsDeleted => _ru ? 'Все транзакции удалены' : 'All transactions deleted';
