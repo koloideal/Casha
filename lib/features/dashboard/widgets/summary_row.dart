@@ -64,7 +64,10 @@ class SummaryCard extends ConsumerWidget {
 
   Border? _themeBorder(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1);
+    return Border.all(
+      color: isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFDDDDEE),
+      width: 1,
+    );
   }
 
   @override

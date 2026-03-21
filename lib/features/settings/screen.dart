@@ -312,11 +312,24 @@ class _BiometricSectionState extends ConsumerState<_BiometricSection> {
                     ],
                   ),
                 ),
-                Switch(
-                  value: _enabled,
-                  onChanged: _onToggle,
-                  activeThumbColor: const Color(0xFF7C6DED),
-                ),
+                if (_loading)
+                  const SizedBox(
+                    width: 48,
+                    height: 32,
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  )
+                else
+                  Switch(
+                    value: _enabled,
+                    onChanged: _onToggle,
+                    activeThumbColor: const Color(0xFF7C6DED),
+                  ),
               ],
             ),
           ),

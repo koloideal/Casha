@@ -8,8 +8,8 @@ class CardColorService {
   static const _key2 = 'card_color_secondary';
   static const _keyGradient = 'card_gradient_type';
 
-  static const defaultPrimary = Color(0xFFD3B3C2);
-  static const defaultSecondary = Color(0xFF937070);
+  static const defaultPrimary = Color(0xFF5E5D5D);
+  static const defaultSecondary = Color(0xFF9E9E9E);
 
   static const defaultPrimaryLight = Color(0xFF6A6482);
   static const defaultSecondaryLight = Color(0xFF000000);
