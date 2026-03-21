@@ -232,7 +232,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                 Expanded(
                   child: LayoutBuilder(
                     builder: (lbCtx, constraints) {
-                      const reservedBelow = 70.0;
+                      const reservedBelow = 78.0;
                       final spectrumH =
                           (constraints.maxHeight - reservedBelow).clamp(
                               40.0, double.infinity);
@@ -253,19 +253,13 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: SizedBox(
-                                height: 22,
-                                child: ColorPickerSlider(
-                                  TrackType.hue,
-                                  currentHSV,
-                                  onHSVChanged,
-                                  displayThumbColor: true,
-                                ),
-                              ),
+                          SizedBox(
+                            height: 36,  //
+                            child: ColorPickerSlider(
+                              TrackType.hue,
+                              currentHSV,
+                              onHSVChanged,
+                              displayThumbColor: true,
                             ),
                           ),
                           const SizedBox(height: 8),
