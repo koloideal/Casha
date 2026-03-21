@@ -15,7 +15,13 @@ void main() async {
   await initializeDateFormatting('ru_RU', null);
   await initializeDateFormatting('en', null);
   await initializeDateFormatting('ru', null);
-  await GoogleFonts.pendingFonts([GoogleFonts.nunito()]);
+  await GoogleFonts.pendingFonts([
+    GoogleFonts.nunito(),
+    GoogleFonts.nunito(fontWeight: FontWeight.w600),
+    GoogleFonts.nunito(fontWeight: FontWeight.w700),
+    GoogleFonts.nunito(fontWeight: FontWeight.w800),
+  ]);
+
   
   final prefs = await SharedPreferences.getInstance();
   await HapticService.init();

@@ -2,13 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/constants.dart';
 
+final _nunitoFamily = GoogleFonts.nunito().fontFamily;
+
+TextTheme _withCyrillicFallback(TextTheme theme) {
+  return theme.copyWith(
+    displayLarge: theme.displayLarge?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    displayMedium: theme.displayMedium?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    displaySmall: theme.displaySmall?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    headlineLarge: theme.headlineLarge?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    headlineMedium: theme.headlineMedium?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    headlineSmall: theme.headlineSmall?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    titleLarge: theme.titleLarge?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    titleMedium: theme.titleMedium?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    titleSmall: theme.titleSmall?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    bodyLarge: theme.bodyLarge?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    bodyMedium: theme.bodyMedium?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    bodySmall: theme.bodySmall?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    labelLarge: theme.labelLarge?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    labelMedium: theme.labelMedium?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+    labelSmall: theme.labelSmall?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
+  );
+}
+
+
 class AppTheme {
   static ThemeData get darkTheme {
     final base = ThemeData.dark(useMaterial3: true);
-    final textTheme = GoogleFonts.poppinsTextTheme(base.textTheme).apply(
-      bodyColor: AppColors.textPrimary,
-      displayColor: AppColors.textPrimary,
-      fontFamilyFallback: ['Nunito'], // Ensures Cyrillic renders with same visual style
+    final textTheme = _withCyrillicFallback(
+      GoogleFonts.poppinsTextTheme(base.textTheme).apply(
+        bodyColor: AppColors.textPrimary,
+        displayColor: AppColors.textPrimary,
+      ),
     );
 
     return base.copyWith(
