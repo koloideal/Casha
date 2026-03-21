@@ -574,31 +574,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Padding(
               padding: const EdgeInsets.only(bottom: 24),
               child: Center(
-                child: RichText(
-                  textAlign: TextAlign.center,
-                  text: const TextSpan(
-                    style: TextStyle(fontSize: 13, color: Colors.white30),
-                    children: [
-                      TextSpan(
-                        text: 'casha',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white38,
-                        ),
+                child: Builder(
+                  builder: (context) {
+                    final isDark = Theme.of(context).brightness == Brightness.dark;
+                    final baseColor = isDark
+                        ? Colors.white.withOpacity(0.25)
+                        : Colors.black.withOpacity(0.25);
+                    final emphasisColor = isDark
+                        ? Colors.white.withOpacity(0.35)
+                        : Colors.black.withOpacity(0.35);
+                    
+                    return RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: TextStyle(fontSize: 13, color: baseColor),
+                        children: [
+                          TextSpan(
+                            text: 'casha',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: emphasisColor,
+                            ),
+                          ),
+                          TextSpan(
+                            text: '  powered with ❤️ by  ',
+                            style: TextStyle(fontStyle: FontStyle.italic),
+                          ),
+                          TextSpan(
+                            text: 'kolo',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: emphasisColor,
+                            ),
+                          ),
+                        ],
                       ),
-                      TextSpan(
-                        text: '  powered with ❤️ by  ',
-                        style: TextStyle(fontStyle: FontStyle.italic),
-                      ),
-                      TextSpan(
-                        text: 'kolo',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white38,
-                        ),
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),

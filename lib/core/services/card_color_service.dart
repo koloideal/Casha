@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum GradientType { linear, radial, sweep, linearReverse }
+enum GradientType { linear, linearReverse, radial, sweep, solid }
 
 class CardColorService {
   static const _key1 = 'card_color_primary';

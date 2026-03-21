@@ -119,6 +119,11 @@ class BalanceCardState extends ConsumerState<BalanceCard>
           ],
           stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
         );
+      case GradientType.solid:
+        return LinearGradient(
+          colors: [primary, primary, primary],
+          stops: const [0.0, 0.5, 1.0],
+        );
     }
   }
 
@@ -159,7 +164,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
               ..rotateY(_tiltY * 0.42),
             child: Container(
               width: double.infinity,
-              height: 180,
+              height: 220,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 gradient: _buildGradient(primary, secondary, gradientType),
