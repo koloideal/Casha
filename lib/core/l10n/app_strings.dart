@@ -70,8 +70,8 @@ class AppStrings {
   String get budgetHint => _ru ? 'Месячный лимит' : 'Monthly limit';
   String get budgetNone => _ru ? 'Не установлен' : 'Not set';
   String get monthlyBudgetSetting => _ru ? 'Месячный бюджет' : 'Monthly Budget';
-  String get yourMonthlySpendingLimit => _ru ? 'Ваш месячный лимит расходов' : 'Your monthly spending limit';
-  String get setMonthlySpendingLimit => _ru ? 'Установите месячный лимит расходов для отслеживания бюджета' : 'Set a monthly spending limit to track your budget';
+  String get yourMonthlySpendingLimit => _ru ? 'Ваш лимит расходов на месяц' : 'Your monthly spending limit';
+  String get setMonthlySpendingLimit => _ru ? 'Контролируйте свои расходы за месяц' : 'Track your monthly spending';
   String get leaveEmptyToRemove => _ru ? 'Оставьте пустым для удаления лимита' : 'Leave empty to remove budget limit';
   String get data => _ru ? 'Данные' : 'Data';
   String get exportData => _ru ? 'Экспорт данных' : 'Export data';

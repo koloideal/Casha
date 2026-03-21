@@ -8,7 +8,7 @@ class AppTheme {
     final textTheme = GoogleFonts.poppinsTextTheme(base.textTheme).apply(
       bodyColor: AppColors.textPrimary,
       displayColor: AppColors.textPrimary,
-      fontFamilyFallback: ['Roboto'], // Ensures Cyrillic renders with same visual style
+      fontFamilyFallback: ['Nunito'], // Ensures Cyrillic renders with same visual style
     );
 
     return base.copyWith(
