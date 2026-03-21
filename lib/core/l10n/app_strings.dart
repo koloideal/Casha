@@ -7,7 +7,6 @@ class AppStrings {
 
   bool get _ru => locale == AppLocale.ru;
 
-  // ── Dashboard ──
   String get appTitle => _ru ? 'Мои финансы' : 'My Finances';
   String get totalBalance => _ru ? 'ОБЩИЙ БАЛАНС' : 'TOTAL BALANCE';
   String get tapAndHoldToEdit => _ru ? 'удерживайте для редактирования' : 'tap and hold to edit';
@@ -27,7 +26,6 @@ class AppStrings {
   String get noTransactions => _ru ? 'Транзакции не найдены' : 'No transactions found';
   String get addFirstTx => _ru ? 'Нажмите + чтобы добавить первую транзакцию' : 'Tap + to add your first transaction';
 
-  // ── Add/Edit transaction screen ──
   String get addTransaction => _ru ? 'Новая транзакция' : 'Add Transaction';
   String get editTransaction => _ru ? 'Редактировать' : 'Edit Transaction';
   String get amount => _ru ? 'Сумма' : 'Amount';
@@ -46,7 +44,6 @@ class AppStrings {
   String get noteOptional => _ru ? 'Заметка (необязательно)' : 'Note (optional)';
   String get addNote => _ru ? 'Добавить заметку...' : 'Add a note...';
 
-  // ── Settings ──
   String get settings => _ru ? 'Настройки' : 'Settings';
   String get managePreferences => _ru ? 'Управление настройками' : 'Manage your preferences';
   String get appearance => _ru ? 'Внешний вид' : 'Appearance';
@@ -86,12 +83,10 @@ class AppStrings {
   String get allTransactionsWillBeDeleted => _ru ? 'Все транзакции будут удалены навсегда. Восстановить их будет невозможно.' : 'All transactions will be deleted forever. There is no way to recover them.';
   String get dangerZone => _ru ? 'Опасная зона' : 'Danger Zone';
 
-  // ── Navigation ──
   String get navDashboard => _ru ? 'Главная' : 'Dashboard';
   String get navCategories => _ru ? 'Категории' : 'Categories';
   String get navSettings => _ru ? 'Настройки' : 'Settings';
 
-  // ── Categories ──
   String get categories => _ru ? 'Категории' : 'Categories';
   String get rankedByAmount => _ru ? 'По сумме' : 'Ranked by Amount';
   String get addCategory => _ru ? 'Добавить категорию' : 'Add Category';
@@ -106,9 +101,8 @@ class AppStrings {
   String get total => _ru ? 'Всего' : 'Total';
   String get lastSixMonths => _ru ? 'Последние 6 месяцев' : 'Last 6 Months';
 
-  // ── Built-in category names (translated for display only, stored in English) ──
   String categoryLabel(String key) {
-    if (!_ru) return key; // English: return key as-is
+    if (!_ru) return key;
     const map = {
       'Food': 'Еда',
       'Transport': 'Транспорт',
@@ -131,10 +125,9 @@ class AppStrings {
       'Business': 'Бизнес',
       'Savings': 'Накопления',
     };
-    return map[key] ?? key; // fallback to English key if not in map
+    return map[key] ?? key;
   }
 
-  // ── Color editor overlay ──
   String get colorPrimary => _ru ? 'Основной' : 'Primary';
   String get colorSecondary => _ru ? 'Второй' : 'Secondary';
   String get colorSolid => _ru ? 'Однотон' : 'Solid';
@@ -145,6 +138,5 @@ class AppStrings {
   String get reset => _ru ? 'Сброс' : 'Reset';
   String get apply => _ru ? 'Применить' : 'Apply';
 
-  // ── Date locale code for intl DateFormat ──
   String get dateLocale => _ru ? 'ru_RU' : 'en_US';
 }

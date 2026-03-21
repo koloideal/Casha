@@ -18,25 +18,21 @@ class HapticService {
     await prefs.setBool(_key, value);
   }
 
-  // Light tap — filter chips, toggles, small interactions
   static void light() {
     if (!_enabled) return;
     HapticFeedback.lightImpact();
   }
 
-  // Medium — confirm button, apply, save
   static void medium() {
     if (!_enabled) return;
     HapticFeedback.mediumImpact();
   }
 
-  // Heavy — long press on balance card
   static void heavy() {
     if (!_enabled) return;
     HapticFeedback.heavyImpact();
   }
 
-  // Selection click — switching tabs, filter chips
   static void selection() {
     if (!_enabled) return;
     HapticFeedback.selectionClick();

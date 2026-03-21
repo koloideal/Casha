@@ -127,7 +127,6 @@ class HapticNotifier extends StateNotifier<bool> {
   Future<void> toggle(bool value) async {
     await HapticService.setEnabled(value);
     state = value;
-    // Give tactile confirmation when turning ON
     if (value) HapticFeedback.mediumImpact();
   }
 }

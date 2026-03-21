@@ -81,30 +81,22 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
   }
 
   String? _validateAndParseAmount(String raw) {
-    // trim whitespace
     final trimmed = raw.trim();
     
-    // empty check
-    if (trimmed.isEmpty) return null; // returns null = invalid, show dialog
+    if (trimmed.isEmpty) return null;
     
-    // replace comma with dot for European locale input
     final normalized = trimmed.replaceAll(',', '.');
     
-    // only digits and one dot allowed
     final validPattern = RegExp(r'^\d+\.?\d*$');
     if (!validPattern.hasMatch(normalized)) return null;
     
-    // parse
     final value = double.tryParse(normalized);
     if (value == null) return null;
     
-    // must be greater than zero
     if (value <= 0) return null;
     
-    // must not exceed reasonable max (prevent overflow)
     if (value > 999_999_999) return null;
     
-    // must not have more than 2 decimal places
     final parts = normalized.split('.');
     if (parts.length == 2 && parts[1].length > 2) return null;
     
@@ -128,7 +120,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     final amount = double.parse(parsed);
     final state = ref.read(addTransactionProvider(widget.initial));
     
-    // Combine date and time
     final finalDateTime = DateTime(
       _selectedDate.year,
       _selectedDate.month,
@@ -168,8 +159,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
   }
 
   Future<void> _pickDate() async {
-    // Note: Using showDatePicker (system bottom sheet) which cannot be resized from Flutter.
-    // The calendar height is controlled by the system and varies by platform.
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
@@ -370,7 +359,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // DATE column
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -420,7 +408,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // TIME column
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

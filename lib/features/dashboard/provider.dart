@@ -115,7 +115,6 @@ final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
 
   var filtered = txs;
 
-  // Apply time filter first
   if (timeFilter == TimeFilter.lastMonth) {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, 1);
@@ -126,14 +125,12 @@ final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
     ).toList();
   }
 
-  // Apply type filter
   if (typeFilter == TransactionFilter.income) {
     filtered = filtered.where((t) => t.type == TransactionType.income).toList();
   } else if (typeFilter == TransactionFilter.expense) {
     filtered = filtered.where((t) => t.type == TransactionType.expense).toList();
   }
 
-  // Apply search query
   if (query.isNotEmpty) {
     filtered = filtered.where((t) {
       final matchesCategory = t.category.toLowerCase().contains(query);
@@ -150,7 +147,6 @@ final recentTransactionsProvider = Provider<List<Transaction>>((ref) {
   return ref.watch(filteredTransactionsProvider).take(20).toList();
 });
 
-// Loaded card colors state
 class CardColors {
   final Color primary;
   final Color secondary;

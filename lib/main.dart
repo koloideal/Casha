@@ -10,7 +10,6 @@ import 'features/dashboard/provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize date formatting for both locales
   await initializeDateFormatting('en_US', null);
   await initializeDateFormatting('ru_RU', null);
   await initializeDateFormatting('en', null);

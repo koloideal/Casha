@@ -7,7 +7,6 @@ class LocaleNotifier extends Notifier<AppLocale> {
 
   @override
   AppLocale build() {
-    // Load persisted locale synchronously via ref
     final prefs = ref.read(sharedPreferencesProvider);
     final saved = prefs.getString(_key);
     return saved == 'ru' ? AppLocale.ru : AppLocale.en;
