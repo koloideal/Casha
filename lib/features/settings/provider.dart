@@ -74,22 +74,24 @@ final currencyProvider = StateNotifierProvider<CurrencyNotifier, CurrencyInfo>(
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   final SharedPreferences _prefs;
 
-  ThemeModeNotifier(this._prefs) : super(ThemeMode.dark) {
+  ThemeModeNotifier(this._prefs) : super(ThemeMode.system) {
     _load();
   }
 
   void _load() {
-    state = (_prefs.getBool('dark_mode') ?? true) ? ThemeMode.dark : ThemeMode.light;
+    final saved = _prefs.getString('theme_mode');
+    if (saved == 'dark') {
+      state = ThemeMode.dark;
+    } else if (saved == 'light') {
+      state = ThemeMode.light;
+    } else {
+      state = ThemeMode.system;
+    }
   }
 
-  Future<void> toggle() async {
-    state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-    await _prefs.setBool('dark_mode', state == ThemeMode.dark);
-  }
-
-  Future<void> setThemeMode(bool isDark) async {
-    state = isDark ? ThemeMode.dark : ThemeMode.light;
-    await _prefs.setBool('dark_mode', isDark);
+  Future<void> setThemeMode(ThemeMode mode) async {
+    state = mode;
+    await _prefs.setString('theme_mode', mode.name);
   }
 }
 

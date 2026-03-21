@@ -11,7 +11,6 @@ class ThemeSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
     final themeMode = ref.watch(themeProvider);
-    final isDarkMode = themeMode == ThemeMode.dark;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -21,49 +20,132 @@ class ThemeSection extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-              color: AppColors.accent,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  s.darkMode,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                Text(
-                  isDarkMode ? s.enabled : s.disabled,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                      ),
+                child: Icon(
+                  themeMode == ThemeMode.dark
+                      ? Icons.dark_mode_rounded
+                      : themeMode == ThemeMode.light
+                          ? Icons.light_mode_rounded
+                          : Icons.brightness_auto_rounded,
+                  color: AppColors.accent,
+                  size: 20,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                s.theme,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+              ),
+            ],
           ),
-          Switch(
-            value: isDarkMode,
-            onChanged: (value) {
-              ref.read(themeProvider.notifier).setThemeMode(value);
-            },
-            activeThumbColor: AppColors.accent,
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _ThemeOption(
+                  label: s.themeDark,
+                  icon: Icons.dark_mode_rounded,
+                  isSelected: themeMode == ThemeMode.dark,
+                  onTap: () => ref.read(themeProvider.notifier).setThemeMode(ThemeMode.dark),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ThemeOption(
+                  label: s.themeSystem,
+                  icon: Icons.brightness_auto_rounded,
+                  isSelected: themeMode == ThemeMode.system,
+                  onTap: () => ref.read(themeProvider.notifier).setThemeMode(ThemeMode.system),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ThemeOption(
+                  label: s.themeLight,
+                  icon: Icons.light_mode_rounded,
+                  isSelected: themeMode == ThemeMode.light,
+                  onTap: () => ref.read(themeProvider.notifier).setThemeMode(ThemeMode.light),
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ThemeOption extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ThemeOption({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.accent.withOpacity(0.15)
+              : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03)),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.accent
+                : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.08)),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? AppColors.accent
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              size: 22,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected
+                    ? AppColors.accent
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

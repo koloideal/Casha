@@ -213,11 +213,9 @@ class _BiometricSectionState extends ConsumerState<_BiometricSection> {
   }
 
   Future _onToggle(bool val) async {
-    if (val) {
-      final ok = await BiometricService.authenticate();
-      if (!ok) return;
-      HapticService.light();
-    }
+    final ok = await BiometricService.authenticate();
+    if (!ok) return;
+    HapticService.light();
     await BiometricService.setEnabled(val);
     if (mounted) setState(() => _enabled = val);
   }
