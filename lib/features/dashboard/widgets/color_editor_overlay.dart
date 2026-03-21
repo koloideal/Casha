@@ -136,7 +136,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                         isDimmed: isSolid,
                         onTap: () {
                           dash.setState(() {
-                            if (isSolid) dash.tempGradientType = GradientType.linear;
+                            if (isSolid) dash.tempGradientType = CardColorService.defaultGradient;
                             dash.editingPrimary = true;
                           });
                           setPanelState(() {});
@@ -153,7 +153,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                         isDimmed: isSolid,
                         onTap: () {
                           dash.setState(() {
-                            if (isSolid) dash.tempGradientType = GradientType.linear;
+                            if (isSolid) dash.tempGradientType = CardColorService.defaultGradient;
                             dash.editingPrimary = false;
                           });
                           setPanelState(() {});
@@ -497,7 +497,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                             dash.tempSecondary = defS;
                             dash.tempPrimaryHSV = HSVColor.fromColor(defP);
                             dash.tempSecondaryHSV = HSVColor.fromColor(defS);
-                            dash.tempGradientType = GradientType.linear;
+                            dash.tempGradientType = CardColorService.defaultGradient;
                           });
                           setPanelState(() {});
                           dash.overlayEntry?.markNeedsBuild();
@@ -569,11 +569,12 @@ class PanelTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final unselectedBorder =
-        isDark ? Colors.white24 : const Color(0xFFCCCCDD);
-    final unselectedText = isDark
-        ? Colors.white60
-        : Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
+    final borderColor = isSelected 
+        ? const Color(0xFF7C6DED)
+        : (isDark ? Colors.white24 : const Color(0xFFCCCCDD));
+    final textColor = isSelected
+        ? const Color(0xFF7C6DED)
+        : (isDark ? Colors.white60 : Theme.of(context).colorScheme.onSurface.withOpacity(0.5));
 
     return GestureDetector(
       onTap: onTap,
@@ -585,10 +586,10 @@ class PanelTab extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
+            color: isSelected ? const Color(0xFF7C6DED).withOpacity(0.15) : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: isSelected ? color : unselectedBorder,
+              color: borderColor,
               width: 1.5,
             ),
           ),
@@ -619,7 +620,7 @@ class PanelTab extends StatelessWidget {
                     fontSize: 12,
                     fontWeight:
                         isSelected ? FontWeight.w600 : FontWeight.normal,
-                    color: isSelected ? color : unselectedText,
+                    color: textColor,
                   ),
                 ),
               ),

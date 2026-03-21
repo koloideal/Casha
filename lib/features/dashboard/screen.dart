@@ -36,8 +36,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Color savedSecondary = CardColorService.defaultSecondary;
   HSVColor savedPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
   HSVColor savedSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
-  GradientType tempGradientType = GradientType.linear;
-  GradientType savedGradientType = GradientType.linear;
+  GradientType tempGradientType = CardColorService.defaultGradient;
+  GradientType savedGradientType = CardColorService.defaultGradient;
   OverlayEntry? overlayEntry;
 
   void _onCardLongPress() {

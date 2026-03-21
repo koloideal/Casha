@@ -96,7 +96,7 @@ class SettingsScreen extends ConsumerWidget {
       ),
       body: ListView(
         physics: const ClampingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
         children: [
           const ThemeSection(),
           const SizedBox(height: 16),
@@ -141,10 +141,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 40),
           const _FooterWidget(),
-          const SizedBox(height: 32),
-          const SizedBox(height: 8),
         ],
       ),
     );
