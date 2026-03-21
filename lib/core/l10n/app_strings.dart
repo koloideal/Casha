@@ -59,8 +59,8 @@ class AppStrings {
   String get disabled => _ru ? 'Выключено' : 'Disabled';
   String get hapticFeedback => _ru ? 'Тактильная отдача' : 'Haptic Feedback';
   String get vibrationOnInteractions => _ru ? 'Вибрация при взаимодействии' : 'Vibration on interactions';
-  String get biometricLock => _ru ? 'Биометрическая блокировка' : 'Biometric Lock';
-  String get requireFingerprint => _ru ? 'Требовать отпечаток при запуске' : 'Require fingerprint on app launch';
+  String get biometricLock => _ru ? 'Биометрия' : 'Biometric Lock';
+  String get requireFingerprint => _ru ? 'Отпечаток при запуске' : 'Require fingerprint to unlock';
   String get currency => _ru ? 'Валюта' : 'Currency';
   String get amountFormat => _ru ? 'Формат суммы' : 'Amount Format';
   String get language => _ru ? 'Язык' : 'Language';
@@ -136,7 +136,7 @@ class AppStrings {
 
   // ── Color editor overlay ──
   String get colorPrimary => _ru ? 'Основной' : 'Primary';
-  String get colorSecondary => _ru ? 'Вторичный' : 'Secondary';
+  String get colorSecondary => _ru ? 'Второй' : 'Secondary';
   String get colorSolid => _ru ? 'Однотон' : 'Solid';
   String get gradientLinear => _ru ? 'Линейный' : 'Linear';
   String get gradientReverse => _ru ? 'Обратный' : 'Reverse';

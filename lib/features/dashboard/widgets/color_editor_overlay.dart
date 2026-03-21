@@ -9,6 +9,11 @@ import '../../settings/provider.dart';
 import '../provider.dart';
 import 'balance_card.dart';
 
+String _colorToHex(Color color) {
+  final hex = color.value.toRadixString(16).padLeft(8, '0').toUpperCase();
+  return hex.substring(2);
+}
+
 class FullScreenBlurOverlay extends StatefulWidget {
   final dynamic dashboardState;
   final BuildContext context;
@@ -305,7 +310,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                                           ),
                                           const SizedBox(width: 5),
                                           Text(
-                                            '#${dash.tempPrimary.value.toRadixString(16).substring(2).toUpperCase()}',
+                                            '#${_colorToHex(dash.tempPrimary)}',
                                             style: TextStyle(
                                               fontSize: 11,
                                               fontFamily: 'monospace',
@@ -337,7 +342,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Text(
-                                              '#${dash.tempSecondary.value.toRadixString(16).substring(2).toUpperCase()}',
+                                              '#${_colorToHex(dash.tempSecondary)}',
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 fontFamily: 'monospace',
