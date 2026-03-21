@@ -68,6 +68,7 @@ class AppShell extends ConsumerWidget {
     final s = ref.watch(stringsProvider);
     final idx = _locationToIndex(context);
     return Scaffold(
+      extendBody: true,
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: idx,
