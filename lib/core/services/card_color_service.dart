@@ -8,15 +8,14 @@ class CardColorService {
   static const _key2 = 'card_color_secondary';
   static const _keyGradient = 'card_gradient_type';
 
-  // DARK theme defaults — lighter, more vibrant purples
-  static const defaultPrimary = Color(0xFF9B8FFF);        // light violet
-  static const defaultSecondary = Color(0xFF6B5DD3);      // medium purple
+  static const defaultPrimary = Color(0xFF111827);
+  static const defaultSecondary = Color(0xFFF59E0B);
 
-  // LIGHT theme defaults — deep, saturated darks
-  static const defaultPrimaryLight = Color(0xFF2D1B8E);   // deep indigo
-  static const defaultSecondaryLight = Color(0xFF1A0F5C); // very dark navy
+  static const defaultPrimaryLight = Color(0xFF1F2937);
+  static const defaultSecondaryLight = Color(0xFFFBBF24);
 
-  static const defaultGradient = GradientType.linear;
+  static const defaultGradient = GradientType.sweep;
+
 
   static Future<(Color, Color, GradientType)> load() async {
     final prefs = await SharedPreferences.getInstance();
