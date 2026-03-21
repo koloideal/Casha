@@ -30,8 +30,8 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
     final mq = MediaQuery.of(widget.context);
     final cardTop = mq.padding.top + kToolbarHeight + 16;
     const cardHeight = 220.0;
-    final panelTop = cardTop + cardHeight + 32;
-    const panelHeight = 460.0;
+    final panelTop = cardTop + cardHeight + 82;
+    const panelHeight = 410.0;
 
     return Material(
       color: Colors.transparent,
@@ -110,10 +110,10 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
             dash.overlayEntry?.markNeedsBuild();
           }
 
-          final currentHSV = dash.editingPrimary
+          final isSolid = dash.tempGradientType == GradientType.solid;
+          final currentHSV = (isSolid || dash.editingPrimary)
               ? dash.tempPrimaryHSV
               : dash.tempSecondaryHSV;
-          final isSolid = dash.tempGradientType == GradientType.solid;
 
           return Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -170,9 +170,13 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                     GestureDetector(
                       onTap: () {
                         dash.setState(() {
-                          dash.tempGradientType = isSolid
-                              ? GradientType.linear
-                              : GradientType.solid;
+                          if (isSolid) {
+                            dash.tempGradientType = GradientType.linear;
+                            // keep editingPrimary as is when turning off
+                          } else {
+                            dash.tempGradientType = GradientType.solid;
+                            dash.editingPrimary = true;   // ALWAYS switch to primary when entering Solid
+                          }
                         });
                         setPanelState(() {});
                         dash.overlayEntry?.markNeedsBuild();
@@ -233,7 +237,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                 Expanded(
                   child: LayoutBuilder(
                     builder: (lbCtx, constraints) {
-                      const reservedBelow = 62.0;
+                      const reservedBelow = 66.0;
                       final spectrumH =
                           (constraints.maxHeight - reservedBelow).clamp(
                               40.0, double.infinity);
@@ -254,23 +258,11 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Theme(
-                            data: Theme.of(widget.context).copyWith(
-                              sliderTheme: const SliderThemeData(
-                                thumbShape: RoundSliderThumbShape(
-                                  enabledThumbRadius: 8,
-                                  elevation: 0,
-                                  pressedElevation: 0,
-                                ),
-                                overlayShape: RoundSliderOverlayShape(
-                                  overlayRadius: 0,
-                                ),
-                              ),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: SizedBox(
-                                height: 20,
+                          ClipRect(
+                            child: SizedBox(
+                              height: 24,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
                                 child: ColorPickerSlider(
                                   TrackType.hue,
                                   currentHSV,
