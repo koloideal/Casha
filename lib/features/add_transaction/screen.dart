@@ -658,7 +658,7 @@ class _TypeOption extends StatelessWidget {
   }
 }
 
-class _CategoryPicker extends StatelessWidget {
+class _CategoryPicker extends ConsumerWidget {
   final List<String> categories;
   final String selected;
   final ValueChanged<String> onChanged;
@@ -669,7 +669,8 @@ class _CategoryPicker extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Wrap(
       spacing: 8,
@@ -696,7 +697,7 @@ class _CategoryPicker extends StatelessWidget {
                 Icon(icon, color: isSelected ? color : Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: 16),
                 const SizedBox(width: 6),
                 Text(
-                  cat,
+                  s.categoryLabel(cat),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: isSelected ? color : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,

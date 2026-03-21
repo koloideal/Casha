@@ -10,6 +10,7 @@ class AppStrings {
   // ── Dashboard ──
   String get appTitle => _ru ? 'Мои финансы' : 'My Finances';
   String get totalBalance => _ru ? 'ОБЩИЙ БАЛАНС' : 'TOTAL BALANCE';
+  String get tapAndHoldToEdit => _ru ? 'удерживайте для редактирования' : 'tap and hold to edit';
   String get add => _ru ? 'Добавить' : 'Add';
   String get transactions => _ru ? 'Транзакции' : 'Transactions';
   String get searchHint => _ru ? 'Поиск транзакций...' : 'Search transactions...';
@@ -85,6 +86,11 @@ class AppStrings {
   String get allTransactionsWillBeDeleted => _ru ? 'Все транзакции будут удалены навсегда. Восстановить их будет невозможно.' : 'All transactions will be deleted forever. There is no way to recover them.';
   String get dangerZone => _ru ? 'Опасная зона' : 'Danger Zone';
 
+  // ── Navigation ──
+  String get navDashboard => _ru ? 'Главная' : 'Dashboard';
+  String get navCategories => _ru ? 'Категории' : 'Categories';
+  String get navSettings => _ru ? 'Настройки' : 'Settings';
+
   // ── Categories ──
   String get categories => _ru ? 'Категории' : 'Categories';
   String get rankedByAmount => _ru ? 'По сумме' : 'Ranked by Amount';
@@ -95,6 +101,10 @@ class AppStrings {
   String get categoryColor => _ru ? 'Цвет' : 'Color';
   String get deleteCategory => _ru ? 'Удалить категорию' : 'Delete Category';
   String get noCategoriesYet => _ru ? 'Нет категорий' : 'No categories yet';
+  String get noExpenseData => _ru ? 'Нет данных о расходах' : 'No expense data';
+  String get addExpensesToSeeBreakdown => _ru ? 'Добавьте расходы, чтобы увидеть разбивку' : 'Add some expenses to see the breakdown';
+  String get total => _ru ? 'Всего' : 'Total';
+  String get lastSixMonths => _ru ? 'Последние 6 месяцев' : 'Last 6 Months';
 
   // ── Built-in category names (translated for display only, stored in English) ──
   String categoryLabel(String key) {

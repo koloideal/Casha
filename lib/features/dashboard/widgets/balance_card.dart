@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import '../../../core/constants.dart';
+import '../../../core/l10n/locale_provider.dart';
 import '../../../core/services/card_color_service.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../shared/providers/amount_format_provider.dart';
-import '../../../shared/utils/currency_utils.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
 
@@ -129,6 +129,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
     final rates = ref.read(exchangeRateServiceProvider);
     final fmt = ref.watch(amountFormatProvider);
     final savedColors = ref.watch(cardColorsProvider);
@@ -196,7 +197,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Text(
-                                  'TOTAL BALANCE',
+                                  s.totalBalance,
                                   style: TextStyle(
                                     fontSize: 11,
                                     letterSpacing: 1.5,
@@ -271,7 +272,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                       left: 0,
                       right: 0,
                       child: Text(
-                        'tap and hold to edit',
+                        s.tapAndHoldToEdit,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 9,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../core/l10n/locale_provider.dart';
 import '../features/dashboard/screen.dart';
 import '../features/add_transaction/screen.dart';
 import '../features/categories/screen.dart';
@@ -50,7 +52,7 @@ final appRouter = GoRouter(
   ],
 );
 
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   final Widget child;
   const AppShell({super.key, required this.child});
 
@@ -62,7 +64,8 @@ class AppShell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
     final idx = _locationToIndex(context);
     return Scaffold(
       body: child,
@@ -73,21 +76,21 @@ class AppShell extends StatelessWidget {
           if (i == 1) context.go('/categories');
           if (i == 2) context.go('/settings');
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard_rounded),
-            label: 'Dashboard',
+            icon: const Icon(Icons.dashboard_outlined),
+            selectedIcon: const Icon(Icons.dashboard_rounded),
+            label: s.navDashboard,
           ),
           NavigationDestination(
-            icon: Icon(Icons.pie_chart_outline_rounded),
-            selectedIcon: Icon(Icons.pie_chart_rounded),
-            label: 'Categories',
+            icon: const Icon(Icons.pie_chart_outline_rounded),
+            selectedIcon: const Icon(Icons.pie_chart_rounded),
+            label: s.navCategories,
           ),
           NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings_rounded),
-            label: 'Settings',
+            icon: const Icon(Icons.settings_outlined),
+            selectedIcon: const Icon(Icons.settings_rounded),
+            label: s.navSettings,
           ),
         ],
       ),

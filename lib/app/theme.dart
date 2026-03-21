@@ -12,7 +12,6 @@ class AppTheme {
     );
 
     return base.copyWith(
-      fontFamily: GoogleFonts.poppins().fontFamily, // Explicit font family for Cyrillic support
       textTheme: textTheme,
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: const ColorScheme.dark(
@@ -112,7 +111,6 @@ class AppTheme {
     );
 
     return base.copyWith(
-      fontFamily: GoogleFonts.poppins().fontFamily, // Explicit font family for Cyrillic support
       textTheme: textTheme,
       scaffoldBackgroundColor: const Color(0xFFF0F0F7),
       colorScheme: const ColorScheme.light(
@@ -121,8 +119,6 @@ class AppTheme {
         secondary: AppColors.accent,
         onPrimary: Colors.white,
         onSurface: Color(0xFF1A1A2E),
-        onBackground: Color(0xFF1A1A2E),
-        background: Color(0xFFF0F0F7),
       ),
       cardTheme: CardThemeData(
         color: Colors.white,

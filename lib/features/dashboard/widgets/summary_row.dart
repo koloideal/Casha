@@ -5,7 +5,6 @@ import '../../../core/l10n/app_strings.dart';
 import '../../../shared/providers/amount_format_provider.dart';
 import '../../../shared/utils/currency_utils.dart';
 import '../../settings/provider.dart';
-import '../provider.dart';
 
 class SummaryRow extends StatelessWidget {
   final double income;

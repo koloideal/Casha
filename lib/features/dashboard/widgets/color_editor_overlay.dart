@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/services/card_color_service.dart';
-import '../../../core/services/haptic_service.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
 import 'balance_card.dart';

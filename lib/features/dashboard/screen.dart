@@ -133,7 +133,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         scrolledUnderElevation: 0,
         titleSpacing: 20,
         title: Text(
-          s.appTitle,
+          'Casha',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.w800,
             color: Theme.of(context).colorScheme.onSurface,
@@ -144,12 +144,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 20),
             child: Center(
-              child: Text(
-                DateFormat('MMMM yyyy', s.dateLocale).format(DateTime.now()),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                  fontWeight: FontWeight.w500,
-                ),
+              child: Builder(
+                builder: (context) {
+                  final raw = DateFormat('LLLL, yyyy', s.dateLocale).format(DateTime.now());
+                  final capitalized = raw.isNotEmpty ? '${raw[0].toUpperCase()}${raw.substring(1)}' : raw;
+                  return Text(
+                    capitalized,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                },
               ),
             ),
           ),
