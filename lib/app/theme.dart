@@ -2,34 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/constants.dart';
 
-final _nunitoFamily = GoogleFonts.nunito().fontFamily;
 
-TextTheme _withCyrillicFallback(TextTheme theme) {
-  return theme.copyWith(
-    displayLarge: theme.displayLarge?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    displayMedium: theme.displayMedium?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    displaySmall: theme.displaySmall?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    headlineLarge: theme.headlineLarge?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    headlineMedium: theme.headlineMedium?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    headlineSmall: theme.headlineSmall?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    titleLarge: theme.titleLarge?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    titleMedium: theme.titleMedium?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    titleSmall: theme.titleSmall?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    bodyLarge: theme.bodyLarge?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    bodyMedium: theme.bodyMedium?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    bodySmall: theme.bodySmall?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    labelLarge: theme.labelLarge?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    labelMedium: theme.labelMedium?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-    labelSmall: theme.labelSmall?.copyWith(fontFamilyFallback: [_nunitoFamily!]),
-  );
+TextStyle? _f(TextStyle? s) {
+  final result = s?.copyWith(fontFamilyFallback: ['NunitoCyrillic']);
+  debugPrint('fallback: ${result?.fontFamilyFallback}'); // проверь в логах
+  return result;
 }
+
+TextTheme _withCyrillicFallback(TextTheme t) => TextTheme(
+  displayLarge:   _f(t.displayLarge),
+  displayMedium:  _f(t.displayMedium),
+  displaySmall:   _f(t.displaySmall),
+  headlineLarge:  _f(t.headlineLarge),
+  headlineMedium: _f(t.headlineMedium),
+  headlineSmall:  _f(t.headlineSmall),
+  titleLarge:     _f(t.titleLarge),
+  titleMedium:    _f(t.titleMedium),
+  titleSmall:     _f(t.titleSmall),
+  bodyLarge:      _f(t.bodyLarge),
+  bodyMedium:     _f(t.bodyMedium),
+  bodySmall:      _f(t.bodySmall),
+  labelLarge:     _f(t.labelLarge),
+  labelMedium:    _f(t.labelMedium),
+  labelSmall:     _f(t.labelSmall),
+);
+
 
 
 class AppTheme {
   static ThemeData get darkTheme {
     final base = ThemeData.dark(useMaterial3: true);
     final textTheme = _withCyrillicFallback(
-      GoogleFonts.poppinsTextTheme(base.textTheme).apply(
+      base.textTheme.apply(
+        fontFamily: 'Poppins',
         bodyColor: AppColors.textPrimary,
         displayColor: AppColors.textPrimary,
       ),
