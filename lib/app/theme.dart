@@ -5,7 +5,6 @@ import '../core/constants.dart';
 
 TextStyle? _f(TextStyle? s) {
   final result = s?.copyWith(fontFamilyFallback: ['NunitoCyrillic']);
-  debugPrint('fallback: ${result?.fontFamilyFallback}'); // проверь в логах
   return result;
 }
 
