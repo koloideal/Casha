@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/card_color_service.dart';
 import '../../core/utils/result.dart';
+import '../../data/database/app_database.dart' as db;
+import '../../data/repositories/transaction_repository.dart';
 import '../../shared/models/transaction.dart';
 import '../../shared/services/storage_service.dart';
 import '../settings/provider.dart';
@@ -11,53 +13,86 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('Override in main');
 });
 
+final appDatabaseProvider = Provider<db.AppDatabase>((ref) {
+  return db.AppDatabase();
+});
+
+final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return TransactionRepository(db);
+});
+
 final storageServiceProvider = Provider<StorageService>((ref) {
   return StorageService(ref.watch(sharedPreferencesProvider));
 });
 
 final transactionsProvider =
-    StateNotifierProvider<TransactionsNotifier, List<Transaction>>((ref) {
-      final storage = ref.watch(storageServiceProvider);
-      return TransactionsNotifier(storage);
+    StateNotifierProvider<TransactionsNotifier, AsyncValue<List<Transaction>>>((
+      ref,
+    ) {
+      final repository = ref.watch(transactionRepositoryProvider);
+      return TransactionsNotifier(repository);
     });
 
-class TransactionsNotifier extends StateNotifier<List<Transaction>> {
-  final StorageService _storage;
+class TransactionsNotifier
+    extends StateNotifier<AsyncValue<List<Transaction>>> {
+  final TransactionRepository _repository;
 
-  TransactionsNotifier(this._storage)
-    : super(_storage.loadTransactionsUnsafe());
+  TransactionsNotifier(this._repository) : super(const AsyncValue.loading()) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    state = const AsyncValue.loading();
+    final result = await _repository.getAll();
+
+    state = result.isSuccess
+        ? AsyncValue.data(result.dataOrNull!)
+        : AsyncValue.error(result.errorOrNull!, StackTrace.current);
+  }
 
   Future<Result<void>> add(Transaction transaction) async {
-    final result = await _storage.addTransaction(transaction);
-    return result.onSuccess((_) {
-      state = _storage.loadTransactionsUnsafe();
-    });
+    final result = await _repository.add(transaction);
+
+    if (result.isSuccess) {
+      await _load();
+    }
+
+    return result;
   }
 
   Future<Result<void>> update(Transaction transaction) async {
-    final result = await _storage.updateTransaction(transaction);
-    return result.onSuccess((_) {
-      state = _storage.loadTransactionsUnsafe();
-    });
+    final result = await _repository.update(transaction);
+
+    if (result.isSuccess) {
+      await _load();
+    }
+
+    return result;
   }
 
   Future<Result<void>> delete(String id) async {
-    final result = await _storage.deleteTransaction(id);
-    return result.onSuccess((_) {
-      state = _storage.loadTransactionsUnsafe();
-    });
+    final result = await _repository.delete(id);
+
+    if (result.isSuccess) {
+      await _load();
+    }
+
+    return result;
   }
 
-  void restore(Transaction transaction) {
-    state = [...state, transaction];
-    _storage.addTransaction(transaction);
+  Future<void> restore(Transaction transaction) async {
+    await _repository.add(transaction);
+    await _load();
   }
 
-  void clearAll() {
-    state = [];
-    SharedPreferences.getInstance().then(
-      (prefs) => prefs.remove('transactions'),
-    );
+  Future<void> clearAll() async {
+    await _repository.deleteAll();
+    state = const AsyncValue.data([]);
+  }
+
+  Future<void> refresh() async {
+    await _load();
   }
 }
 
@@ -76,7 +111,8 @@ final timeFilterProvider = StateProvider<TimeFilter>(
 );
 
 final totalBalanceProvider = Provider<double>((ref) {
-  final txs = ref.watch(transactionsProvider);
+  final txsAsync = ref.watch(transactionsProvider);
+  final txs = txsAsync.valueOrNull ?? [];
   final exchangeService = ref.watch(exchangeRateServiceProvider);
   final targetCurrency = ref.watch(currencyProvider).code;
 
@@ -91,26 +127,26 @@ final totalBalanceProvider = Provider<double>((ref) {
 });
 
 final totalIncomeProvider = Provider<double>((ref) {
-  final txs = ref
-      .watch(transactionsProvider)
-      .where((t) => t.type == TransactionType.income);
+  final txsAsync = ref.watch(transactionsProvider);
+  final txs = txsAsync.valueOrNull ?? [];
+  final filtered = txs.where((t) => t.type == TransactionType.income);
   final exchangeService = ref.watch(exchangeRateServiceProvider);
   final targetCurrency = ref.watch(currencyProvider).code;
 
-  return txs.fold(0.0, (sum, t) {
+  return filtered.fold(0.0, (sum, t) {
     return sum +
         exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
   });
 });
 
 final totalExpenseProvider = Provider<double>((ref) {
-  final txs = ref
-      .watch(transactionsProvider)
-      .where((t) => t.type == TransactionType.expense);
+  final txsAsync = ref.watch(transactionsProvider);
+  final txs = txsAsync.valueOrNull ?? [];
+  final filtered = txs.where((t) => t.type == TransactionType.expense);
   final exchangeService = ref.watch(exchangeRateServiceProvider);
   final targetCurrency = ref.watch(currencyProvider).code;
 
-  return txs.fold(0.0, (sum, t) {
+  return filtered.fold(0.0, (sum, t) {
     return sum +
         exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
   });
@@ -118,25 +154,26 @@ final totalExpenseProvider = Provider<double>((ref) {
 
 final currentMonthExpenseProvider = Provider<double>((ref) {
   final now = DateTime.now();
-  final txs = ref
-      .watch(transactionsProvider)
-      .where(
-        (t) =>
-            t.type == TransactionType.expense &&
-            t.date.year == now.year &&
-            t.date.month == now.month,
-      );
+  final txsAsync = ref.watch(transactionsProvider);
+  final txs = txsAsync.valueOrNull ?? [];
+  final filtered = txs.where(
+    (t) =>
+        t.type == TransactionType.expense &&
+        t.date.year == now.year &&
+        t.date.month == now.month,
+  );
   final exchangeService = ref.watch(exchangeRateServiceProvider);
   final targetCurrency = ref.watch(currencyProvider).code;
 
-  return txs.fold(0.0, (sum, t) {
+  return filtered.fold(0.0, (sum, t) {
     return sum +
         exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
   });
 });
 
 final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
-  final txs = ref.watch(transactionsProvider);
+  final txsAsync = ref.watch(transactionsProvider);
+  final txs = txsAsync.valueOrNull ?? [];
   final query = ref.watch(searchQueryProvider).toLowerCase();
   final typeFilter = ref.watch(transactionFilterProvider);
   final timeFilter = ref.watch(timeFilterProvider);

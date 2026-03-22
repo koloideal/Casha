@@ -26,7 +26,11 @@ class BudgetNotifier extends StateNotifier<double?> {
     state = budget;
   }
 
-  void onCurrencyChanged(String oldCode, String newCode, ExchangeRateService rates) {
+  void onCurrencyChanged(
+    String oldCode,
+    String newCode,
+    ExchangeRateService rates,
+  ) {
     if (state == null) return;
     final converted = rates.convert(state!, oldCode, newCode);
     setBudget(converted);
@@ -64,12 +68,12 @@ class CurrencyNotifier extends StateNotifier<CurrencyInfo> {
   }
 }
 
-final currencyProvider = StateNotifierProvider<CurrencyNotifier, CurrencyInfo>(
-  (ref) {
-    final prefs = ref.watch(sharedPreferencesProvider);
-    return CurrencyNotifier(prefs);
-  },
-);
+final currencyProvider = StateNotifierProvider<CurrencyNotifier, CurrencyInfo>((
+  ref,
+) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return CurrencyNotifier(prefs);
+});
 
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   final SharedPreferences _prefs;
@@ -95,12 +99,12 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 }
 
-final themeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
-  (ref) {
-    final prefs = ref.watch(sharedPreferencesProvider);
-    return ThemeModeNotifier(prefs);
-  },
-);
+final themeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((
+  ref,
+) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return ThemeModeNotifier(prefs);
+});
 
 final exchangeRateServiceProvider = Provider<ExchangeRateService>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
@@ -111,7 +115,9 @@ final ratesInitProvider = FutureProvider<void>((ref) async {
   await ref.read(exchangeRateServiceProvider).fetchRates();
 });
 
-final hapticEnabledProvider = StateNotifierProvider<HapticNotifier, bool>((ref) {
+final hapticEnabledProvider = StateNotifierProvider<HapticNotifier, bool>((
+  ref,
+) {
   return HapticNotifier();
 });
 
@@ -141,7 +147,8 @@ class ExportService {
   ExportService(this._ref);
 
   Future<String> exportToCSV() async {
-    final transactions = _ref.read(transactionsProvider);
+    final transactionsAsync = _ref.read(transactionsProvider);
+    final transactions = transactionsAsync.valueOrNull ?? [];
     final currency = _ref.read(currencyProvider);
     final fmt = _ref.read(amountFormatProvider);
 
