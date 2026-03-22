@@ -47,3 +47,13 @@ class ExchangeRates extends Table {
   RealColumn get rate => real()();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
+
+/// Accounts table for multi-account support
+class Accounts extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  BoolColumn get isMain => boolean().withDefault(const Constant(false))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  TextColumn get currency => text().withDefault(const Constant('USD'))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}

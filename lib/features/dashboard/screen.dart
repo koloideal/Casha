@@ -7,7 +7,7 @@ import '../../core/services/card_color_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
-import 'widgets/balance_card.dart';
+import 'widgets/balance_card_carousel.dart';
 import 'widgets/budget_progress.dart';
 import 'widgets/color_editor_overlay.dart';
 import 'widgets/filter_chips.dart';
@@ -183,7 +183,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    BalanceCard(
+                    BalanceCardCarousel(
                       balance: balance,
                       currencyInfo: currencyInfo,
                       onLongPress: _onCardLongPress,

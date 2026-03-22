@@ -5,7 +5,9 @@ import '../../core/services/card_color_service.dart';
 import '../../core/utils/result.dart';
 import '../../data/database/app_database.dart' as db;
 import '../../data/repositories/transaction_repository.dart';
+import '../../data/repositories/account_repository.dart';
 import '../../shared/models/transaction.dart';
+import '../../shared/models/account.dart';
 import '../../shared/services/storage_service.dart';
 import '../settings/provider.dart';
 
@@ -20,6 +22,11 @@ final appDatabaseProvider = Provider<db.AppDatabase>((ref) {
 final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return TransactionRepository(db);
+});
+
+final accountRepositoryProvider = Provider<AccountRepository>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return AccountRepository(db);
 });
 
 final storageServiceProvider = Provider<StorageService>((ref) {
@@ -216,6 +223,18 @@ final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
 final recentTransactionsProvider = Provider<List<Transaction>>((ref) {
   return ref.watch(filteredTransactionsProvider).take(20).toList();
 });
+
+// Watches the list of all accounts
+final accountsProvider = StreamProvider<List<Account>>((ref) async* {
+  final repository = ref.watch(accountRepositoryProvider);
+  while (true) {
+    yield await repository.getAll();
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+});
+
+// Ephemeral UI state — active carousel index, starts at 0, not persisted
+final activeAccountIndexProvider = StateProvider<int>((ref) => 0);
 
 class CardColors {
   final Color primary;

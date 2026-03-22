@@ -9,12 +9,18 @@ import '../../core/l10n/app_strings.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/haptic_service.dart';
 import '../../shared/models/transaction.dart';
-import '../../shared/widgets/error_snackbar.dart';
 import '../dashboard/provider.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
 
 const _uuid = Uuid();
+
+// Provider to get main account name
+final mainAccountNameProvider = FutureProvider<String>((ref) async {
+  final repository = ref.watch(accountRepositoryProvider);
+  final mainAccount = await repository.getMain();
+  return mainAccount.name;
+});
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
   final Transaction? initial;
@@ -220,6 +226,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     final categories = ref.watch(availableCategoriesProvider(widget.initial));
     final overrideCurrency = state.overrideCurrency;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accountNameAsync = ref.watch(mainAccountNameProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -271,6 +278,19 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              accountNameAsync.when(
+                data: (accountName) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    'Account: $accountName',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
               _TypeToggle(
                 selected: state.type,
                 strings: s,
