@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import '../../core/utils/result.dart';
 import '../models/transaction.dart';
 
 const _uuid = Uuid();
@@ -15,50 +16,102 @@ class StorageService {
 
   StorageService(this._prefs);
 
-  List<Transaction> loadTransactions() {
-    final raw = _prefs.getString(_transactionsKey);
-    if (raw == null) return [];
-    final list = jsonDecode(raw) as List<dynamic>;
-    return list
-        .map((e) => Transaction.fromJson(e as Map<String, dynamic>))
-        .toList();
+  /// Load all transactions with error handling
+  Result<List<Transaction>> loadTransactions() {
+    return resultOf(() {
+      final raw = _prefs.getString(_transactionsKey);
+      if (raw == null) return <Transaction>[];
+
+      final list = jsonDecode(raw) as List<dynamic>;
+      return list
+          .map((e) => Transaction.fromJson(e as Map<String, dynamic>))
+          .toList();
+    });
   }
 
-  Future<void> saveTransactions(List<Transaction> transactions) async {
-    final encoded = jsonEncode(transactions.map((t) => t.toJson()).toList());
-    await _prefs.setString(_transactionsKey, encoded);
+  /// Load transactions (legacy - throws on error)
+  List<Transaction> loadTransactionsUnsafe() {
+    final result = loadTransactions();
+    return result.getOrDefault([]);
   }
 
-  Future<void> addTransaction(Transaction transaction) async {
-    final list = loadTransactions();
-    list.add(transaction);
-    await saveTransactions(list);
+  /// Save transactions with error handling
+  Future<Result<void>> saveTransactions(List<Transaction> transactions) async {
+    return asyncResultOf(() async {
+      final encoded = jsonEncode(transactions.map((t) => t.toJson()).toList());
+      await _prefs.setString(_transactionsKey, encoded);
+    });
   }
 
-  Future<void> updateTransaction(Transaction transaction) async {
-    final list = loadTransactions();
-    final index = list.indexWhere((t) => t.id == transaction.id);
-    if (index != -1) {
+  /// Add transaction with error handling
+  Future<Result<void>> addTransaction(Transaction transaction) async {
+    return asyncResultOf(() async {
+      final listResult = loadTransactions();
+      final list = listResult.getOrDefault([]);
+      list.add(transaction);
+
+      final saveResult = await saveTransactions(list);
+      if (saveResult.isFailure) {
+        throw Exception(saveResult.errorOrNull);
+      }
+    });
+  }
+
+  /// Update transaction with error handling
+  Future<Result<void>> updateTransaction(Transaction transaction) async {
+    return asyncResultOf(() async {
+      final listResult = loadTransactions();
+      final list = listResult.getOrDefault([]);
+
+      final index = list.indexWhere((t) => t.id == transaction.id);
+      if (index == -1) {
+        throw Exception('Transaction not found: ${transaction.id}');
+      }
+
       list[index] = transaction;
-      await saveTransactions(list);
-    }
+      final saveResult = await saveTransactions(list);
+      if (saveResult.isFailure) {
+        throw Exception(saveResult.errorOrNull);
+      }
+    });
   }
 
-  Future<void> deleteTransaction(String id) async {
-    final list = loadTransactions()..removeWhere((t) => t.id == id);
-    await saveTransactions(list);
+  /// Delete transaction with error handling
+  Future<Result<void>> deleteTransaction(String id) async {
+    return asyncResultOf(() async {
+      final listResult = loadTransactions();
+      final list = listResult.getOrDefault([]);
+
+      final initialLength = list.length;
+      list.removeWhere((t) => t.id == id);
+
+      if (list.length == initialLength) {
+        throw Exception('Transaction not found: $id');
+      }
+
+      final saveResult = await saveTransactions(list);
+      if (saveResult.isFailure) {
+        throw Exception(saveResult.errorOrNull);
+      }
+    });
   }
 
   double? loadBudget() {
     return _prefs.getDouble(_budgetKey);
   }
 
-  Future<void> saveBudget(double? budget) async {
-    if (budget == null) {
-      await _prefs.remove(_budgetKey);
-    } else {
-      await _prefs.setDouble(_budgetKey, budget);
-    }
+  /// Save budget with error handling
+  Future<Result<void>> saveBudget(double? budget) async {
+    return asyncResultOf(() async {
+      if (budget == null) {
+        await _prefs.remove(_budgetKey);
+      } else {
+        if (budget < 0) {
+          throw Exception('Budget cannot be negative');
+        }
+        await _prefs.setDouble(_budgetKey, budget);
+      }
+    });
   }
 
   String loadCurrency() {
@@ -78,7 +131,8 @@ class StorageService {
   }
 
   Future<void> processRecurringTransactions() async {
-    final transactions = loadTransactions();
+    final transactionsResult = loadTransactions();
+    final transactions = transactionsResult.getOrDefault([]);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     bool hasChanges = false;
@@ -104,7 +158,8 @@ class StorageService {
           shouldCreate = daysDiff >= 7;
           break;
         case RecurrenceType.monthly:
-          shouldCreate = (today.year > lastDate.year ||
+          shouldCreate =
+              (today.year > lastDate.year ||
                   (today.year == lastDate.year &&
                       today.month > lastDate.month)) &&
               today.day >= lastDate.day;
@@ -138,5 +193,81 @@ class StorageService {
     if (hasChanges) {
       await saveTransactions(transactions);
     }
+  }
+
+  /// Process recurring transactions with error handling (returns count)
+  Future<Result<int>> processRecurringTransactionsWithResult() async {
+    return asyncResultOf(() async {
+      final transactionsResult = loadTransactions();
+      final transactions = transactionsResult.getOrDefault([]);
+
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      int createdCount = 0;
+
+      for (final tx in transactions) {
+        if (tx.recurrence == RecurrenceType.none) continue;
+
+        final lastOccurrence = tx.lastOccurrence ?? tx.date;
+        final lastDate = DateTime(
+          lastOccurrence.year,
+          lastOccurrence.month,
+          lastOccurrence.day,
+        );
+
+        bool shouldCreate = false;
+
+        switch (tx.recurrence) {
+          case RecurrenceType.daily:
+            shouldCreate = today.isAfter(lastDate);
+            break;
+          case RecurrenceType.weekly:
+            final daysDiff = today.difference(lastDate).inDays;
+            shouldCreate = daysDiff >= 7;
+            break;
+          case RecurrenceType.monthly:
+            shouldCreate =
+                (today.year > lastDate.year ||
+                    (today.year == lastDate.year &&
+                        today.month > lastDate.month)) &&
+                today.day >= lastDate.day;
+            break;
+          case RecurrenceType.none:
+            break;
+        }
+
+        if (shouldCreate) {
+          final newTx = Transaction(
+            id: _uuid.v4(),
+            amount: tx.amount,
+            category: tx.category,
+            type: tx.type,
+            date: today,
+            note: tx.note,
+            recurrence: tx.recurrence,
+            lastOccurrence: today,
+            currency: tx.currency,
+            currencyCode: tx.currencyCode,
+          );
+          transactions.add(newTx);
+
+          final index = transactions.indexWhere((t) => t.id == tx.id);
+          if (index != -1) {
+            transactions[index] = tx.copyWith(lastOccurrence: today);
+          }
+
+          createdCount++;
+        }
+      }
+
+      if (createdCount > 0) {
+        final saveResult = await saveTransactions(transactions);
+        if (saveResult.isFailure) {
+          throw Exception('Failed to save recurring transactions');
+        }
+      }
+
+      return createdCount;
+    });
   }
 }

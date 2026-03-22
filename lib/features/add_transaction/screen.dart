@@ -9,6 +9,7 @@ import '../../core/l10n/app_strings.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/haptic_service.dart';
 import '../../shared/models/transaction.dart';
+import '../../shared/widgets/error_snackbar.dart';
 import '../dashboard/provider.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
@@ -17,7 +18,7 @@ const _uuid = Uuid();
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
   final Transaction? initial;
-  
+
   const AddTransactionScreen({super.key, this.initial});
 
   @override
@@ -44,7 +45,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     _selectedTime = widget.initial != null
         ? TimeOfDay.fromDateTime(widget.initial!.date)
         : TimeOfDay(hour: now.hour, minute: now.minute);
-    
+
     _shakeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 5000),
@@ -52,10 +53,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     _borderColorAnimation = ColorTween(
       begin: const Color(0xFFE05C6B),
       end: Colors.transparent,
-    ).animate(CurvedAnimation(
-      parent: _shakeController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeOut));
     _shakeController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         if (mounted) setState(() => _showError = false);
@@ -67,7 +65,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     } else {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final curr = ref.read(currencyProvider);
-        ref.read(addTransactionProvider(null).notifier).setCurrency(curr.symbol, curr.code);
+        ref
+            .read(addTransactionProvider(null).notifier)
+            .setCurrency(curr.symbol, curr.code);
       });
     }
   }
@@ -82,24 +82,24 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
 
   String? _validateAndParseAmount(String raw) {
     final trimmed = raw.trim();
-    
+
     if (trimmed.isEmpty) return null;
-    
+
     final normalized = trimmed.replaceAll(',', '.');
-    
+
     final validPattern = RegExp(r'^\d+\.?\d*$');
     if (!validPattern.hasMatch(normalized)) return null;
-    
+
     final value = double.tryParse(normalized);
     if (value == null) return null;
-    
+
     if (value <= 0) return null;
-    
+
     if (value > 999_999_999) return null;
-    
+
     final parts = normalized.split('.');
     if (parts.length == 2 && parts[1].length > 2) return null;
-    
+
     return normalized; // valid, return normalized string
   }
 
@@ -111,15 +111,15 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
   Future<void> _submit() async {
     final raw = _amountController.text;
     final parsed = _validateAndParseAmount(raw);
-    
+
     if (parsed == null) {
       _triggerError();
       return;
     }
-    
+
     final amount = double.parse(parsed);
     final state = ref.read(addTransactionProvider(widget.initial));
-    
+
     final finalDateTime = DateTime(
       _selectedDate.year,
       _selectedDate.month,
@@ -127,12 +127,18 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
       _selectedTime.hour,
       _selectedTime.minute,
     );
-    
-    ref.read(addTransactionProvider(widget.initial).notifier).setAmount(amount);
-    ref.read(addTransactionProvider(widget.initial).notifier).setDate(finalDateTime);
-    ref.read(addTransactionProvider(widget.initial).notifier).setSubmitting(true);
 
-    final note = _noteController.text.trim().isEmpty ? null : _noteController.text.trim();
+    ref.read(addTransactionProvider(widget.initial).notifier).setAmount(amount);
+    ref
+        .read(addTransactionProvider(widget.initial).notifier)
+        .setDate(finalDateTime);
+    ref
+        .read(addTransactionProvider(widget.initial).notifier)
+        .setSubmitting(true);
+
+    final note = _noteController.text.trim().isEmpty
+        ? null
+        : _noteController.text.trim();
 
     final tx = Transaction(
       id: state.editingId ?? _uuid.v4(),
@@ -150,9 +156,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     } else {
       await ref.read(transactionsProvider.notifier).add(tx);
     }
-    
-    ref.read(addTransactionProvider(widget.initial).notifier).setSubmitting(false);
-    
+
+    ref
+        .read(addTransactionProvider(widget.initial).notifier)
+        .setSubmitting(false);
+
     HapticService.medium();
 
     if (mounted) context.pop();
@@ -166,9 +174,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-            primary: AppColors.accent,
-          ),
+          colorScheme: Theme.of(
+            context,
+          ).colorScheme.copyWith(primary: AppColors.accent),
         ),
         child: child!,
       ),
@@ -193,9 +201,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-            primary: const Color(0xFF7C6DED),
-          ),
+          colorScheme: Theme.of(
+            context,
+          ).colorScheme.copyWith(primary: const Color(0xFF7C6DED)),
         ),
         child: child!,
       ),
@@ -239,7 +247,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                       ),
                       TextButton(
                         onPressed: () {
-                          ref.read(transactionsProvider.notifier).delete(widget.initial!.id);
+                          ref
+                              .read(transactionsProvider.notifier)
+                              .delete(widget.initial!.id);
                           Navigator.pop(ctx);
                           context.pop();
                         },
@@ -264,8 +274,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
               _TypeToggle(
                 selected: state.type,
                 strings: s,
-                onChanged: (t) =>
-                    ref.read(addTransactionProvider(widget.initial).notifier).setType(t),
+                onChanged: (t) => ref
+                    .read(addTransactionProvider(widget.initial).notifier)
+                    .setType(t),
               ),
               const SizedBox(height: 24),
 
@@ -286,7 +297,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: borderColor, width: isError ? 1.5 : 1),
+                      border: Border.all(
+                        color: borderColor,
+                        width: isError ? 1.5 : 1,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -294,20 +308,28 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           child: Text(
                             overrideCurrency,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.7),
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
                         ),
                         Expanded(
                           child: TextField(
                             controller: _amountController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              fontWeight: FontWeight.w600,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
                             ),
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                  fontWeight: FontWeight.w600,
+                                ),
                             decoration: const InputDecoration(
                               hintText: '0.00',
                               border: InputBorder.none,
@@ -316,11 +338,19 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                               errorBorder: InputBorder.none,
                               focusedErrorBorder: InputBorder.none,
                               filled: false,
-                              contentPadding: EdgeInsets.symmetric(vertical: 14),
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
                             ),
                             onChanged: (v) {
                               final parsed = double.tryParse(v);
-                              ref.read(addTransactionProvider(widget.initial).notifier).setAmount(parsed);
+                              ref
+                                  .read(
+                                    addTransactionProvider(
+                                      widget.initial,
+                                    ).notifier,
+                                  )
+                                  .setAmount(parsed);
                             },
                           ),
                         ),
@@ -335,14 +365,17 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                 s.currency,
                 style: TextStyle(
                   fontSize: 13,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
                 ),
               ),
               const SizedBox(height: 8),
               _CurrencyPicker(
                 selected: state.overrideCurrencyCode,
-                onChanged: (symbol, code) =>
-                    ref.read(addTransactionProvider(widget.initial).notifier).setCurrency(symbol, code),
+                onChanged: (symbol, code) => ref
+                    .read(addTransactionProvider(widget.initial).notifier)
+                    .setCurrency(symbol, code),
               ),
               const SizedBox(height: 20),
 
@@ -351,8 +384,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
               _CategoryPicker(
                 categories: categories,
                 selected: state.category,
-                onChanged: (c) =>
-                    ref.read(addTransactionProvider(widget.initial).notifier).setCategory(c),
+                onChanged: (c) => ref
+                    .read(addTransactionProvider(widget.initial).notifier)
+                    .setCategory(c),
               ),
               const SizedBox(height: 20),
 
@@ -365,38 +399,57 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                       children: [
                         Text(
                           s.date,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                                fontWeight: FontWeight.w500,
+                              ),
                         ),
                         const SizedBox(height: 6),
                         GestureDetector(
                           onTap: _pickDate,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(12),
                               border: isDark
                                   ? null
-                                  : Border.all(color: const Color(0xFFCCCCDD), width: 1),
+                                  : Border.all(
+                                      color: const Color(0xFFCCCCDD),
+                                      width: 1,
+                                    ),
                             ),
                             child: Row(
                               children: [
                                 Icon(
                                   Icons.calendar_today_rounded,
                                   size: 16,
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.6),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    DateFormat('MMM d, yyyy', s.dateLocale).format(_selectedDate),
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurface,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    DateFormat(
+                                      'MMM d, yyyy',
+                                      s.dateLocale,
+                                    ).format(_selectedDate),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -414,37 +467,51 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                       children: [
                         Text(
                           s.time,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                                fontWeight: FontWeight.w500,
+                              ),
                         ),
                         const SizedBox(height: 6),
                         GestureDetector(
                           onTap: _pickTime,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(12),
                               border: isDark
                                   ? null
-                                  : Border.all(color: const Color(0xFFCCCCDD), width: 1),
+                                  : Border.all(
+                                      color: const Color(0xFFCCCCDD),
+                                      width: 1,
+                                    ),
                             ),
                             child: Row(
                               children: [
                                 Icon(
                                   Icons.access_time_rounded,
                                   size: 16,
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.6),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   _selectedTime.format(context),
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurface,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                 ),
                               ],
                             ),
@@ -464,11 +531,18 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                 maxLines: 2,
                 maxLength: 20,
                 maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                buildCounter: (context, {required currentLength, required isFocused, maxLength}) =>
-                    Text(
+                buildCounter:
+                    (
+                      context, {
+                      required currentLength,
+                      required isFocused,
+                      maxLength,
+                    }) => Text(
                       '$currentLength/$maxLength',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.4),
                         fontSize: 11,
                       ),
                     ),
@@ -482,11 +556,15 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF7C6DED), width: 1.5),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF7C6DED),
+                      width: 1.5,
+                    ),
                   ),
                 ),
-                onChanged: (v) =>
-                    ref.read(addTransactionProvider(widget.initial).notifier).setNote(v.trim()),
+                onChanged: (v) => ref
+                    .read(addTransactionProvider(widget.initial).notifier)
+                    .setNote(v.trim()),
               ),
               const SizedBox(height: 32),
 
@@ -508,7 +586,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                           backgroundColor: typeColor.withOpacity(0.1),
                           side: BorderSide(color: typeColor, width: 2),
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           foregroundColor: typeColor,
                         ),
                         child: state.isSubmitting
@@ -521,7 +601,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                                 ),
                               )
                             : Text(
-                                state.isEditing ? s.saveChanges : s.addTransaction,
+                                state.isEditing
+                                    ? s.saveChanges
+                                    : s.addTransaction,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -550,10 +632,10 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
+      ),
     );
   }
 }
@@ -575,7 +657,9 @@ class _TypeToggle extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
+        border: isDark
+            ? null
+            : Border.all(color: const Color(0xFFDDDDEE), width: 1),
       ),
       child: Row(
         children: [
@@ -628,14 +712,24 @@ class _TypeOption extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isSelected ? color : Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: 18),
+              Icon(
+                icon,
+                color: isSelected
+                    ? color
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                size: 18,
+              ),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: isSelected ? color : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    ),
+                  color: isSelected
+                      ? color
+                      : Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
               ),
             ],
           ),
@@ -672,23 +766,41 @@ class _CategoryPicker extends ConsumerWidget {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? color.withOpacity(0.2) : Theme.of(context).colorScheme.surface,
+              color: isSelected
+                  ? color.withOpacity(0.2)
+                  : Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
               border: isSelected
                   ? Border.all(color: color, width: 1.5)
-                  : (isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
+                  : (isDark
+                        ? null
+                        : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: isSelected ? color : Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: 16),
+                Icon(
+                  icon,
+                  color: isSelected
+                      ? color
+                      : Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                  size: 16,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   s.categoryLabel(cat),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: isSelected ? color : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      ),
+                    color: isSelected
+                        ? color
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
                 ),
               ],
             ),
@@ -702,10 +814,7 @@ class _CategoryPicker extends ConsumerWidget {
 class _CurrencyPicker extends StatelessWidget {
   final String selected;
   final void Function(String symbol, String code) onChanged;
-  const _CurrencyPicker({
-    required this.selected,
-    required this.onChanged,
-  });
+  const _CurrencyPicker({required this.selected, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -724,13 +833,19 @@ class _CurrencyPicker extends StatelessWidget {
           child: GestureDetector(
             onTap: () => onChanged(c.$2, c.$1),
             child: Container(
-              margin: EdgeInsets.only(right: c.$1 == currencies.last.$1 ? 0 : 8),
+              margin: EdgeInsets.only(
+                right: c.$1 == currencies.last.$1 ? 0 : 8,
+              ),
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF7C6DED).withOpacity(0.15) : Theme.of(context).cardColor,
+                color: isSelected
+                    ? const Color(0xFF7C6DED).withOpacity(0.15)
+                    : Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: isSelected ? const Color(0xFF7C6DED) : Colors.transparent,
+                  color: isSelected
+                      ? const Color(0xFF7C6DED)
+                      : Colors.transparent,
                   width: 1.5,
                 ),
               ),
@@ -741,7 +856,9 @@ class _CurrencyPicker extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? const Color(0xFF7C6DED) : colorScheme.onSurface,
+                      color: isSelected
+                          ? const Color(0xFF7C6DED)
+                          : colorScheme.onSurface,
                     ),
                   ),
                   Text(

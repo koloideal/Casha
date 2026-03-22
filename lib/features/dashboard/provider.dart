@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/card_color_service.dart';
+import '../../core/utils/result.dart';
 import '../../shared/models/transaction.dart';
 import '../../shared/services/storage_service.dart';
 import '../settings/provider.dart';
@@ -23,21 +24,28 @@ final transactionsProvider =
 class TransactionsNotifier extends StateNotifier<List<Transaction>> {
   final StorageService _storage;
 
-  TransactionsNotifier(this._storage) : super(_storage.loadTransactions());
+  TransactionsNotifier(this._storage)
+    : super(_storage.loadTransactionsUnsafe());
 
-  Future<void> add(Transaction transaction) async {
-    await _storage.addTransaction(transaction);
-    state = _storage.loadTransactions();
+  Future<Result<void>> add(Transaction transaction) async {
+    final result = await _storage.addTransaction(transaction);
+    return result.onSuccess((_) {
+      state = _storage.loadTransactionsUnsafe();
+    });
   }
 
-  Future<void> update(Transaction transaction) async {
-    await _storage.updateTransaction(transaction);
-    state = _storage.loadTransactions();
+  Future<Result<void>> update(Transaction transaction) async {
+    final result = await _storage.updateTransaction(transaction);
+    return result.onSuccess((_) {
+      state = _storage.loadTransactionsUnsafe();
+    });
   }
 
-  Future<void> delete(String id) async {
-    await _storage.deleteTransaction(id);
-    state = _storage.loadTransactions();
+  Future<Result<void>> delete(String id) async {
+    final result = await _storage.deleteTransaction(id);
+    return result.onSuccess((_) {
+      state = _storage.loadTransactionsUnsafe();
+    });
   }
 
   void restore(Transaction transaction) {
