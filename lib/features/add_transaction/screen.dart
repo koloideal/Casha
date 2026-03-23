@@ -15,11 +15,18 @@ import 'provider.dart';
 
 const _uuid = Uuid();
 
-// Provider to get main account name
-final mainAccountNameProvider = FutureProvider<String>((ref) async {
-  final repository = ref.watch(accountRepositoryProvider);
-  final mainAccount = await repository.getMain();
-  return mainAccount.name;
+// Provider to get the account for new transactions
+final transactionAccountProvider = Provider<({int id, String name})>((ref) {
+  final activeAccount = ref.watch(activeAccountProvider);
+  
+  if (activeAccount != null) {
+    // User is on a specific account page
+    return (id: activeAccount.id, name: activeAccount.name);
+  }
+  
+  // User is on Total Balance page, use Main account
+  // This will be resolved in the widget
+  return (id: 0, name: ''); // Placeholder, will be replaced
 });
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
@@ -146,6 +153,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         ? null
         : _noteController.text.trim();
 
+    // Get account ID: use active account or fallback to main
+    final activeAccount = ref.read(activeAccountProvider);
+    final accountId = activeAccount?.id ?? 
+        (await ref.read(accountRepositoryProvider).getMain()).id;
+
     final tx = Transaction(
       id: state.editingId ?? _uuid.v4(),
       amount: amount,
@@ -155,6 +167,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
       note: note,
       currency: state.overrideCurrency,
       currencyCode: state.overrideCurrencyCode,
+      accountId: accountId,
     );
 
     if (state.isEditing) {
@@ -226,7 +239,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     final categories = ref.watch(availableCategoriesProvider(widget.initial));
     final overrideCurrency = state.overrideCurrency;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accountNameAsync = ref.watch(mainAccountNameProvider);
+    
+    // Get active account or fallback to main
+    final activeAccount = ref.watch(activeAccountProvider);
+    final accountRepository = ref.watch(accountRepositoryProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -278,18 +294,24 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              accountNameAsync.when(
-                data: (accountName) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    'Account: $accountName',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                    ),
-                  ),
-                ),
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+              FutureBuilder<String>(
+                future: activeAccount != null
+                    ? Future.value(activeAccount.name)
+                    : accountRepository.getMain().then((acc) => acc.name),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        'Account: ${snapshot.data}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
               ),
               _TypeToggle(
                 selected: state.type,

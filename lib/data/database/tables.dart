@@ -12,6 +12,7 @@ class Transactions extends Table {
   DateTimeColumn get lastOccurrence => dateTime().nullable()();
   TextColumn get currency => text().withDefault(const Constant('\$'))();
   TextColumn get currencyCode => text().withDefault(const Constant('USD'))();
+  IntColumn get accountId => integer()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   @override

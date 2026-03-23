@@ -178,6 +178,7 @@ class StorageService {
           note: tx.note,
           recurrence: tx.recurrence,
           lastOccurrence: today,
+          accountId: tx.accountId,
         );
         transactions.add(newTx);
 
@@ -248,6 +249,7 @@ class StorageService {
             lastOccurrence: today,
             currency: tx.currency,
             currencyCode: tx.currencyCode,
+            accountId: tx.accountId,
           );
           transactions.add(newTx);
 

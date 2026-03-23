@@ -117,9 +117,23 @@ final timeFilterProvider = StateProvider<TimeFilter>(
   (ref) => TimeFilter.lastMonth,
 );
 
-final totalBalanceProvider = Provider<double>((ref) {
+// Base filtered transactions by active account
+final accountFilteredTransactionsProvider = Provider<List<Transaction>>((ref) {
   final txsAsync = ref.watch(transactionsProvider);
   final txs = txsAsync.valueOrNull ?? [];
+  final activeAccount = ref.watch(activeAccountProvider);
+  
+  // If activeAccount is null (Total Balance page), return all transactions
+  if (activeAccount == null) {
+    return txs;
+  }
+  
+  // Filter by account ID
+  return txs.where((t) => t.accountId == activeAccount.id).toList();
+});
+
+final totalBalanceProvider = Provider<double>((ref) {
+  final txs = ref.watch(accountFilteredTransactionsProvider);
   final exchangeService = ref.watch(exchangeRateServiceProvider);
   final targetCurrency = ref.watch(currencyProvider).code;
 
@@ -134,8 +148,7 @@ final totalBalanceProvider = Provider<double>((ref) {
 });
 
 final totalIncomeProvider = Provider<double>((ref) {
-  final txsAsync = ref.watch(transactionsProvider);
-  final txs = txsAsync.valueOrNull ?? [];
+  final txs = ref.watch(accountFilteredTransactionsProvider);
   final filtered = txs.where((t) => t.type == TransactionType.income);
   final exchangeService = ref.watch(exchangeRateServiceProvider);
   final targetCurrency = ref.watch(currencyProvider).code;
@@ -147,8 +160,7 @@ final totalIncomeProvider = Provider<double>((ref) {
 });
 
 final totalExpenseProvider = Provider<double>((ref) {
-  final txsAsync = ref.watch(transactionsProvider);
-  final txs = txsAsync.valueOrNull ?? [];
+  final txs = ref.watch(accountFilteredTransactionsProvider);
   final filtered = txs.where((t) => t.type == TransactionType.expense);
   final exchangeService = ref.watch(exchangeRateServiceProvider);
   final targetCurrency = ref.watch(currencyProvider).code;
@@ -161,8 +173,7 @@ final totalExpenseProvider = Provider<double>((ref) {
 
 final currentMonthExpenseProvider = Provider<double>((ref) {
   final now = DateTime.now();
-  final txsAsync = ref.watch(transactionsProvider);
-  final txs = txsAsync.valueOrNull ?? [];
+  final txs = ref.watch(accountFilteredTransactionsProvider);
   final filtered = txs.where(
     (t) =>
         t.type == TransactionType.expense &&
@@ -179,8 +190,7 @@ final currentMonthExpenseProvider = Provider<double>((ref) {
 });
 
 final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
-  final txsAsync = ref.watch(transactionsProvider);
-  final txs = txsAsync.valueOrNull ?? [];
+  final txs = ref.watch(accountFilteredTransactionsProvider);
   final query = ref.watch(searchQueryProvider).toLowerCase();
   final typeFilter = ref.watch(transactionFilterProvider);
   final timeFilter = ref.watch(timeFilterProvider);
@@ -235,6 +245,25 @@ final accountsProvider = StreamProvider<List<Account>>((ref) async* {
 
 // Ephemeral UI state — active carousel index, starts at 0, not persisted
 final activeAccountIndexProvider = StateProvider<int>((ref) => 0);
+
+// Returns the currently active Account based on carousel index
+final activeAccountProvider = Provider<Account?>((ref) {
+  final index = ref.watch(activeAccountIndexProvider);
+  final accountsAsync = ref.watch(accountsProvider);
+  
+  if (index == 0) return null; // 0 means "Total Balance"
+  
+  return accountsAsync.when(
+    data: (accounts) {
+      if (index > 0 && index <= accounts.length) {
+        return accounts[index - 1];
+      }
+      return null;
+    },
+    loading: () => null,
+    error: (_, __) => null,
+  );
+});
 
 class CardColors {
   final Color primary;

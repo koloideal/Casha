@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/card_color_service.dart';
+import '../../../core/services/haptic_service.dart';
+import '../../../shared/models/transaction.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
 import 'balance_card.dart';
@@ -34,7 +36,8 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(viewportFraction: 1.0);
+    // 0.92 позволяет видеть края предыдущей/следующей карточки
+    _pageController = PageController(viewportFraction: 0.92);
   }
 
   @override
@@ -50,63 +53,59 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
 
     return accountsAsync.when(
       data: (accounts) {
-        // Debug logging
-        debugPrint('BalanceCardCarousel: accounts.length = ${accounts.length}');
-        if (accounts.isNotEmpty) {
-          debugPrint('BalanceCardCarousel: first account = ${accounts[0].name}');
-        }
-        
-        // Page 0: Total balance
-        // Pages 1..N: Account cards
-        // Page N+1: AddAccountCard (if < 5 accounts)
         final totalPages = 1 + accounts.length + (accounts.length < 5 ? 1 : 0);
 
         return Column(
           children: [
             SizedBox(
-              height: 220,
-              child: PageView.builder(
-                clipBehavior: Clip.none,
-                controller: _pageController,
-                itemCount: totalPages,
-                onPageChanged: (index) {
-                  ref.read(activeAccountIndexProvider.notifier).state = index;
-                },
-                itemBuilder: (context, index) {
-                  Widget pageContent;
-                  
-                  if (index == 0) {
-                    // Page 0: Total balance card
-                    pageContent = BalanceCard(
-                      balance: widget.balance,
-                      currencyInfo: widget.currencyInfo,
-                      onLongPress: widget.onLongPress,
-                      previewPrimary: widget.previewPrimary,
-                      previewSecondary: widget.previewSecondary,
-                      previewGradientType: widget.previewGradientType,
+              height: 230,
+              // OverflowBox позволяет PageView игнорировать паддинги родителя (DashboardScreen)
+              // и растянуться на всю ширину экрана
+              child: OverflowBox(
+                maxWidth: MediaQuery.of(context).size.width,
+                child: PageView.builder(
+                  controller: _pageController,
+                  clipBehavior: Clip.none, // Не обрезает карточку при 3D-наклоне
+                  itemCount: totalPages,
+                  onPageChanged: (index) {
+                    ref.read(activeAccountIndexProvider.notifier).state = index;
+                    if (ref.read(hapticEnabledProvider)) {
+                      HapticService.light();
+                    }
+                  },
+                  itemBuilder: (context, index) {
+                    Widget cardWidget;
+
+                    if (index == 0) {
+                      cardWidget = BalanceCard(
+                        balance: widget.balance,
+                        currencyInfo: widget.currencyInfo,
+                        onLongPress: widget.onLongPress,
+                        previewPrimary: widget.previewPrimary,
+                        previewSecondary: widget.previewSecondary,
+                        previewGradientType: widget.previewGradientType,
+                      );
+                    } else if (index <= accounts.length) {
+                      final account = accounts[index - 1];
+                      cardWidget = BalanceCard(
+                        balance: widget.balance, // TODO: Calculate per-account balance
+                        currencyInfo: widget.currencyInfo,
+                        onLongPress: null,
+                        accountName: account.name,
+                      );
+                    } else {
+                      cardWidget = AddAccountCard(
+                        onTap: () {},
+                      );
+                    }
+
+                    // Отступ между карточками во время свайпа
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: cardWidget,
                     );
-                  } else if (index <= accounts.length) {
-                    // Pages 1..N: Account cards
-                    final account = accounts[index - 1];
-                    debugPrint('BalanceCardCarousel: building account card at index $index for ${account.name}');
-                    pageContent = _AccountBalanceCard(
-                      account: account,
-                      balance: widget.balance, // TODO: Calculate per-account balance
-                      currencyInfo: widget.currencyInfo,
-                    );
-                  } else {
-                    // Page N+1: AddAccountCard
-                    pageContent = AddAccountCard(
-                      onTap: () {},
-                    );
-                  }
-                  
-                  // Add horizontal padding to create gap between cards
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: pageContent,
-                  );
-                },
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -122,75 +121,27 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
         child: Center(child: CircularProgressIndicator()),
       ),
       error: (error, stack) {
-        debugPrint('BalanceCardCarousel error: $error');
-        debugPrint('Stack: $stack');
-        // Show total balance card on error
         return Column(
           children: [
             SizedBox(
               height: 220,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: BalanceCard(
-                  balance: widget.balance,
-                  currencyInfo: widget.currencyInfo,
-                  onLongPress: widget.onLongPress,
-                  previewPrimary: widget.previewPrimary,
-                  previewSecondary: widget.previewSecondary,
-                  previewGradientType: widget.previewGradientType,
-                ),
+              child: BalanceCard(
+                balance: widget.balance,
+                currencyInfo: widget.currencyInfo,
+                onLongPress: widget.onLongPress,
+                previewPrimary: widget.previewPrimary,
+                previewSecondary: widget.previewSecondary,
+                previewGradientType: widget.previewGradientType,
               ),
             ),
             const SizedBox(height: 12),
-            _DotIndicators(
+            const _DotIndicators(
               count: 1,
               activeIndex: 0,
             ),
           ],
         );
       },
-    );
-  }
-}
-
-class _AccountBalanceCard extends ConsumerWidget {
-  final dynamic account;
-  final double balance;
-  final CurrencyInfo currencyInfo;
-
-  const _AccountBalanceCard({
-    required this.account,
-    required this.balance,
-    required this.currencyInfo,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        BalanceCard(
-          balance: balance,
-          currencyInfo: currencyInfo,
-          onLongPress: null, // No long press for account cards
-          previewPrimary: null,
-          previewSecondary: null,
-          previewGradientType: null,
-        ),
-        Positioned(
-          top: 16,
-          left: 24,
-          child: Text(
-            account.name,
-            style: TextStyle(
-              fontSize: 11,
-              letterSpacing: 1.5,
-              color: Colors.white.withOpacity(0.6),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

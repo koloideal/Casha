@@ -113,6 +113,17 @@ class $TransactionsTable extends Transactions
     requiredDuringInsert: false,
     defaultValue: const Constant('USD'),
   );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<int> accountId = GeneratedColumn<int>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -137,6 +148,7 @@ class $TransactionsTable extends Transactions
     lastOccurrence,
     currency,
     currencyCode,
+    accountId,
     createdAt,
   ];
   @override
@@ -224,6 +236,14 @@ class $TransactionsTable extends Transactions
         ),
       );
     }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -279,6 +299,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}currency_code'],
       )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}account_id'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -303,6 +327,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final DateTime? lastOccurrence;
   final String currency;
   final String currencyCode;
+  final int accountId;
   final DateTime createdAt;
   const Transaction({
     required this.id,
@@ -315,6 +340,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     this.lastOccurrence,
     required this.currency,
     required this.currencyCode,
+    required this.accountId,
     required this.createdAt,
   });
   @override
@@ -334,6 +360,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     }
     map['currency'] = Variable<String>(currency);
     map['currency_code'] = Variable<String>(currencyCode);
+    map['account_id'] = Variable<int>(accountId);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -352,6 +379,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           : Value(lastOccurrence),
       currency: Value(currency),
       currencyCode: Value(currencyCode),
+      accountId: Value(accountId),
       createdAt: Value(createdAt),
     );
   }
@@ -372,6 +400,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       lastOccurrence: serializer.fromJson<DateTime?>(json['lastOccurrence']),
       currency: serializer.fromJson<String>(json['currency']),
       currencyCode: serializer.fromJson<String>(json['currencyCode']),
+      accountId: serializer.fromJson<int>(json['accountId']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -389,6 +418,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'lastOccurrence': serializer.toJson<DateTime?>(lastOccurrence),
       'currency': serializer.toJson<String>(currency),
       'currencyCode': serializer.toJson<String>(currencyCode),
+      'accountId': serializer.toJson<int>(accountId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -404,6 +434,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     Value<DateTime?> lastOccurrence = const Value.absent(),
     String? currency,
     String? currencyCode,
+    int? accountId,
     DateTime? createdAt,
   }) => Transaction(
     id: id ?? this.id,
@@ -418,6 +449,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
         : this.lastOccurrence,
     currency: currency ?? this.currency,
     currencyCode: currencyCode ?? this.currencyCode,
+    accountId: accountId ?? this.accountId,
     createdAt: createdAt ?? this.createdAt,
   );
   Transaction copyWithCompanion(TransactionsCompanion data) {
@@ -438,6 +470,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       currencyCode: data.currencyCode.present
           ? data.currencyCode.value
           : this.currencyCode,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -455,6 +488,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('lastOccurrence: $lastOccurrence, ')
           ..write('currency: $currency, ')
           ..write('currencyCode: $currencyCode, ')
+          ..write('accountId: $accountId, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -472,6 +506,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     lastOccurrence,
     currency,
     currencyCode,
+    accountId,
     createdAt,
   );
   @override
@@ -488,6 +523,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.lastOccurrence == this.lastOccurrence &&
           other.currency == this.currency &&
           other.currencyCode == this.currencyCode &&
+          other.accountId == this.accountId &&
           other.createdAt == this.createdAt);
 }
 
@@ -502,6 +538,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<DateTime?> lastOccurrence;
   final Value<String> currency;
   final Value<String> currencyCode;
+  final Value<int> accountId;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const TransactionsCompanion({
@@ -515,6 +552,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.lastOccurrence = const Value.absent(),
     this.currency = const Value.absent(),
     this.currencyCode = const Value.absent(),
+    this.accountId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -529,13 +567,15 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.lastOccurrence = const Value.absent(),
     this.currency = const Value.absent(),
     this.currencyCode = const Value.absent(),
+    required int accountId,
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        amount = Value(amount),
        category = Value(category),
        type = Value(type),
-       date = Value(date);
+       date = Value(date),
+       accountId = Value(accountId);
   static Insertable<Transaction> custom({
     Expression<String>? id,
     Expression<double>? amount,
@@ -547,6 +587,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<DateTime>? lastOccurrence,
     Expression<String>? currency,
     Expression<String>? currencyCode,
+    Expression<int>? accountId,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -561,6 +602,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (lastOccurrence != null) 'last_occurrence': lastOccurrence,
       if (currency != null) 'currency': currency,
       if (currencyCode != null) 'currency_code': currencyCode,
+      if (accountId != null) 'account_id': accountId,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -577,6 +619,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<DateTime?>? lastOccurrence,
     Value<String>? currency,
     Value<String>? currencyCode,
+    Value<int>? accountId,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -591,6 +634,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       lastOccurrence: lastOccurrence ?? this.lastOccurrence,
       currency: currency ?? this.currency,
       currencyCode: currencyCode ?? this.currencyCode,
+      accountId: accountId ?? this.accountId,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -629,6 +673,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (currencyCode.present) {
       map['currency_code'] = Variable<String>(currencyCode.value);
     }
+    if (accountId.present) {
+      map['account_id'] = Variable<int>(accountId.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -651,6 +698,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('lastOccurrence: $lastOccurrence, ')
           ..write('currency: $currency, ')
           ..write('currencyCode: $currencyCode, ')
+          ..write('accountId: $accountId, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2276,6 +2324,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<DateTime?> lastOccurrence,
       Value<String> currency,
       Value<String> currencyCode,
+      required int accountId,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -2291,6 +2340,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<DateTime?> lastOccurrence,
       Value<String> currency,
       Value<String> currencyCode,
+      Value<int> accountId,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -2351,6 +2401,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<String> get currencyCode => $composableBuilder(
     column: $table.currencyCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get accountId => $composableBuilder(
+    column: $table.accountId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2419,6 +2474,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -2470,6 +2530,9 @@ class $$TransactionsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
@@ -2515,6 +2578,7 @@ class $$TransactionsTableTableManager
                 Value<DateTime?> lastOccurrence = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
+                Value<int> accountId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion(
@@ -2528,6 +2592,7 @@ class $$TransactionsTableTableManager
                 lastOccurrence: lastOccurrence,
                 currency: currency,
                 currencyCode: currencyCode,
+                accountId: accountId,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -2543,6 +2608,7 @@ class $$TransactionsTableTableManager
                 Value<DateTime?> lastOccurrence = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
+                required int accountId,
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion.insert(
@@ -2556,6 +2622,7 @@ class $$TransactionsTableTableManager
                 lastOccurrence: lastOccurrence,
                 currency: currency,
                 currencyCode: currencyCode,
+                accountId: accountId,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

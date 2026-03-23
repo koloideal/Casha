@@ -34,6 +34,7 @@ class BalanceCard extends ConsumerStatefulWidget {
   final Color? previewPrimary;
   final Color? previewSecondary;
   final GradientType? previewGradientType;
+  final String? accountName;
   
   const BalanceCard({
     super.key,
@@ -43,6 +44,7 @@ class BalanceCard extends ConsumerStatefulWidget {
     this.previewPrimary,
     this.previewSecondary,
     this.previewGradientType,
+    this.accountName,
   });
 
   @override
@@ -181,6 +183,25 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                 borderRadius: BorderRadius.circular(20),
                 child: Stack(
                   children: [
+                    if (widget.accountName != null)
+                      Positioned(
+                        top: 20,
+                        left: 24,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.accountName!,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
@@ -196,15 +217,17 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Text(
-                                  s.totalBalance,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    letterSpacing: 1.5,
-                                    color: Colors.white.withOpacity(0.6),
+                                if (widget.accountName == null)
+                                  Text(
+                                    s.totalBalance,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      letterSpacing: 1.5,
+                                      color: Colors.white.withOpacity(0.6),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 6),
+                                if (widget.accountName == null)
+                                  const SizedBox(height: 6),
                                 FittedBox(
                                   fit: BoxFit.scaleDown,
                                   alignment: Alignment.center,

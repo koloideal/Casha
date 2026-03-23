@@ -13,7 +13,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -23,11 +23,10 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(
           'INSERT INTO accounts (name, is_main, currency, sort_order, created_at) '
           'VALUES (?, ?, ?, ?, ?)',
-          ['Main', 1, 'USD', 0, DateTime.now().millisecondsSinceEpoch],
+          ['main', 1, 'USD', 0, DateTime.now().millisecondsSinceEpoch],
         );
       }
       if (from == 2) {
-        // Add currency column to existing accounts table
         await customStatement(
           'ALTER TABLE accounts ADD COLUMN currency TEXT NOT NULL DEFAULT "USD"',
         );

@@ -64,11 +64,8 @@ class AccountRepository {
             ..orderBy([(a) => OrderingTerm.asc(a.sortOrder)]))
           .get();
 
-      print('AccountRepository.getAll(): rows.length = ${rows.length}');
-
       // Fallback: insert default account if none exists
       if (rows.isEmpty) {
-        print('AccountRepository.getAll(): inserting default account');
         try {
           await _db.into(_db.accounts).insert(
                 AccountsCompanion.insert(
@@ -78,18 +75,16 @@ class AccountRepository {
                   sortOrder: const Value(0),
                 ),
               );
-          print('AccountRepository.getAll(): default account inserted');
         } catch (e) {
-          print('AccountRepository.getAll(): insert error: $e');
+          // Ignore if already exists
         }
         // Re-query after insert
         rows = await (_db.select(_db.accounts)
               ..orderBy([(a) => OrderingTerm.asc(a.sortOrder)]))
             .get();
-        print('AccountRepository.getAll(): after insert, rows.length = ${rows.length}');
       }
 
-      final accounts = rows
+      return rows
           .map((row) => model.Account(
                 id: row.id,
                 name: row.name,
@@ -99,12 +94,7 @@ class AccountRepository {
                 createdAt: row.createdAt,
               ))
           .toList();
-      
-      print('AccountRepository.getAll(): returning ${accounts.length} accounts');
-      return accounts;
-    } catch (e, stack) {
-      print('AccountRepository.getAll(): error: $e');
-      print('Stack: $stack');
+    } catch (e) {
       // Return empty list on error
       return [];
     }

@@ -16,6 +16,7 @@ class Transaction {
   final DateTime? lastOccurrence;
   final String currency;
   final String currencyCode;
+  final int accountId;
 
   const Transaction({
     required this.id,
@@ -28,6 +29,7 @@ class Transaction {
     this.lastOccurrence,
     this.currency = '\$',
     this.currencyCode = 'USD',
+    required this.accountId,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
@@ -50,6 +52,7 @@ class Transaction {
             : null,
         currency: json['currency'] as String? ?? '\$',
         currencyCode: json['currencyCode'] as String? ?? 'USD',
+        accountId: json['accountId'] as int,
       );
 
   Map<String, dynamic> toJson() => {
@@ -63,6 +66,7 @@ class Transaction {
         'lastOccurrence': lastOccurrence?.toIso8601String(),
         'currency': currency,
         'currencyCode': currencyCode,
+        'accountId': accountId,
       };
 
   Transaction copyWith({
@@ -76,6 +80,7 @@ class Transaction {
     DateTime? lastOccurrence,
     String? currency,
     String? currencyCode,
+    int? accountId,
   }) =>
       Transaction(
         id: id ?? this.id,
@@ -88,5 +93,6 @@ class Transaction {
         lastOccurrence: lastOccurrence ?? this.lastOccurrence,
         currency: currency ?? this.currency,
         currencyCode: currencyCode ?? this.currencyCode,
+        accountId: accountId ?? this.accountId,
       );
 }

@@ -148,6 +148,7 @@ class TransactionRepository {
       lastOccurrence: dbTransaction.lastOccurrence as DateTime?,
       currency: dbTransaction.currency as String,
       currencyCode: dbTransaction.currencyCode as String,
+      accountId: dbTransaction.accountId as int,
     );
   }
 
@@ -165,6 +166,7 @@ class TransactionRepository {
       lastOccurrence: Value(transaction.lastOccurrence),
       currency: Value(transaction.currency),
       currencyCode: Value(transaction.currencyCode),
+      accountId: Value(transaction.accountId),
       createdAt: Value(DateTime.now()),
     );
   }
@@ -182,6 +184,7 @@ class TransactionRepository {
       lastOccurrence: Value(transaction.lastOccurrence),
       currency: Value(transaction.currency),
       currencyCode: Value(transaction.currencyCode),
+      accountId: Value(transaction.accountId),
     );
   }
 
