@@ -153,36 +153,51 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         ? null
         : _noteController.text.trim();
 
-    // Get account ID: use active account or fallback to main
-    final activeAccount = ref.read(activeAccountProvider);
-    final accountId = activeAccount?.id ?? 
-        (await ref.read(accountRepositoryProvider).getMain()).id;
+    try {
+      // Get account ID: use active account or fallback to main
+      final activeAccount = ref.read(activeAccountProvider);
+      int accountId;
+      
+      if (activeAccount != null) {
+        accountId = activeAccount.id;
+      } else {
+        final mainAccount = await ref.read(accountRepositoryProvider).getMain();
+        accountId = mainAccount.id;
+      }
 
-    final tx = Transaction(
-      id: state.editingId ?? _uuid.v4(),
-      amount: amount,
-      category: state.category,
-      type: state.type,
-      date: finalDateTime,
-      note: note,
-      currency: state.overrideCurrency,
-      currencyCode: state.overrideCurrencyCode,
-      accountId: accountId,
-    );
+      final tx = Transaction(
+        id: state.editingId ?? _uuid.v4(),
+        amount: amount,
+        category: state.category,
+        type: state.type,
+        date: finalDateTime,
+        note: note,
+        currency: state.overrideCurrency,
+        currencyCode: state.overrideCurrencyCode,
+        accountId: accountId,
+      );
 
-    if (state.isEditing) {
-      await ref.read(transactionsProvider.notifier).update(tx);
-    } else {
-      await ref.read(transactionsProvider.notifier).add(tx);
+      if (state.isEditing) {
+        await ref.read(transactionsProvider.notifier).update(tx);
+      } else {
+        await ref.read(transactionsProvider.notifier).add(tx);
+      }
+
+      HapticService.medium();
+
+      if (mounted) context.pop();
+    } catch (e) {
+      // Handle error silently or show a snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving transaction: $e')),
+        );
+      }
+    } finally {
+      ref
+          .read(addTransactionProvider(widget.initial).notifier)
+          .setSubmitting(false);
     }
-
-    ref
-        .read(addTransactionProvider(widget.initial).notifier)
-        .setSubmitting(false);
-
-    HapticService.medium();
-
-    if (mounted) context.pop();
   }
 
   Future<void> _pickDate() async {
@@ -242,7 +257,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     
     // Get active account or fallback to main
     final activeAccount = ref.watch(activeAccountProvider);
-    final accountRepository = ref.watch(accountRepositoryProvider);
+    final accountsAsync = ref.watch(accountsProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -294,31 +309,137 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              FutureBuilder<String>(
-                future: activeAccount != null
-                    ? Future.value(activeAccount.name)
-                    : accountRepository.getMain().then((acc) => acc.name),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Text(
-                        'Account: ${snapshot.data}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              // Symmetrical Account + Type Toggle Row
+              Row(
+                children: [
+                  // Left: Account Indicator (50% width)
+                  Expanded(
+                    child: accountsAsync.when(
+                      data: (accounts) {
+                        final displayAccount = activeAccount ?? 
+                            accounts.firstWhere((a) => a.isMain, orElse: () => accounts.first);
+                        
+                        return Container(
+                          height: 56,
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF7C6DED).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF7C6DED).withOpacity(0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.account_balance_wallet_rounded,
+                                size: 18,
+                                color: const Color(0xFF7C6DED),
+                              ),
+                              const SizedBox(width: 10),
+                              Flexible(
+                                child: Text(
+                                  displayAccount.name,
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: const Color(0xFF7C6DED),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      loading: () => Container(
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-              _TypeToggle(
-                selected: state.type,
-                strings: s,
-                onChanged: (t) => ref
-                    .read(addTransactionProvider(widget.initial).notifier)
-                    .setType(t),
+                      error: (_, __) => Container(
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Right: Type Toggle (50% width)
+                  Expanded(
+                    child: Container(
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: isDark
+                            ? null
+                            : Border.all(color: const Color(0xFFDDDDEE), width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => ref
+                                  .read(addTransactionProvider(widget.initial).notifier)
+                                  .setType(TransactionType.income),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                decoration: BoxDecoration(
+                                  color: state.type == TransactionType.income
+                                      ? AppColors.income.withOpacity(0.15)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(11),
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.arrow_downward_rounded,
+                                    color: state.type == TransactionType.income
+                                        ? AppColors.income
+                                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => ref
+                                  .read(addTransactionProvider(widget.initial).notifier)
+                                  .setType(TransactionType.expense),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                decoration: BoxDecoration(
+                                  color: state.type == TransactionType.expense
+                                      ? AppColors.expense.withOpacity(0.15)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(11),
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.arrow_upward_rounded,
+                                    color: state.type == TransactionType.expense
+                                        ? AppColors.expense
+                                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 
