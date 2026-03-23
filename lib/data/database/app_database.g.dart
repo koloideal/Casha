@@ -122,7 +122,8 @@ class $TransactionsTable extends Transactions
     aliasedName,
     false,
     type: DriftSqlType.int,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
   );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
@@ -241,8 +242,6 @@ class $TransactionsTable extends Transactions
         _accountIdMeta,
         accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
       );
-    } else if (isInserting) {
-      context.missing(_accountIdMeta);
     }
     if (data.containsKey('created_at')) {
       context.handle(
@@ -567,15 +566,14 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.lastOccurrence = const Value.absent(),
     this.currency = const Value.absent(),
     this.currencyCode = const Value.absent(),
-    required int accountId,
+    this.accountId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        amount = Value(amount),
        category = Value(category),
        type = Value(type),
-       date = Value(date),
-       accountId = Value(accountId);
+       date = Value(date);
   static Insertable<Transaction> custom({
     Expression<String>? id,
     Expression<double>? amount,
@@ -2324,7 +2322,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<DateTime?> lastOccurrence,
       Value<String> currency,
       Value<String> currencyCode,
-      required int accountId,
+      Value<int> accountId,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -2608,7 +2606,7 @@ class $$TransactionsTableTableManager
                 Value<DateTime?> lastOccurrence = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
-                required int accountId,
+                Value<int> accountId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion.insert(

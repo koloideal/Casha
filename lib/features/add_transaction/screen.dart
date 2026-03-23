@@ -154,14 +154,19 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         : _noteController.text.trim();
 
     try {
-      // Get account ID: use active account or fallback to main
+      print('--- SUBMIT CLICKED ---');
+      print('Amount: $amount, Category: ${state.category}, Type: ${state.type.name}');
+      
       final activeAccount = ref.read(activeAccountProvider);
       int accountId;
       
       if (activeAccount != null) {
+        print('Using active account ID: ${activeAccount.id}, Name: ${activeAccount.name}');
         accountId = activeAccount.id;
       } else {
+        print('No active account. Fetching main account...');
         final mainAccount = await ref.read(accountRepositoryProvider).getMain();
+        print('Main account fetched: ID=${mainAccount.id}, Name: ${mainAccount.name}');
         accountId = mainAccount.id;
       }
 
@@ -176,21 +181,43 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         currencyCode: state.overrideCurrencyCode,
         accountId: accountId,
       );
+      
+      print('Transaction object created: ID=${tx.id}, AccId=${tx.accountId}');
+      print('Calling provider to save...');
 
       if (state.isEditing) {
         await ref.read(transactionsProvider.notifier).update(tx);
+        print('Update completed');
       } else {
-        await ref.read(transactionsProvider.notifier).add(tx);
+        final res = await ref.read(transactionsProvider.notifier).add(tx);
+        print('Add completed. Result: ${res.isSuccess ? "SUCCESS" : "FAILURE"}');
+        
+        if (res.isFailure) {
+          print('!!! Provider returned failure: ${res.errorOrNull}');
+          throw Exception(res.errorOrNull);
+        }
       }
 
+      print('Provider save completed successfully');
       HapticService.medium();
 
-      if (mounted) context.pop();
-    } catch (e) {
-      // Handle error silently or show a snackbar
+      if (mounted) {
+        print('Popping screen...');
+        context.pop();
+      }
+    } catch (e, stack) {
+      print('!!! SAVE CRASHED !!!');
+      print('Error: $e');
+      print('Stack trace:');
+      print(stack);
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving transaction: $e')),
+          SnackBar(
+            content: Text('Save error: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     } finally {

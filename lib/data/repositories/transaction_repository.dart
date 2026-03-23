@@ -56,12 +56,24 @@ class TransactionRepository {
   /// Add transaction
   Future<Result<void>> add(model.Transaction transaction) async {
     return asyncResultOf(() async {
+      print('--- SAVING TRANSACTION: START ---');
+      print('Transaction data: ID=${transaction.id}, Amount=${transaction.amount}, AccId=${transaction.accountId}');
+      print('Category=${transaction.category}, Type=${transaction.type.name}');
+      print('Date=${transaction.date}, Currency=${transaction.currencyCode}');
+      
       final companion = _toCompanion(transaction);
+      print('Companion created successfully');
+      print('Companion: $companion');
+      
       final result = await _db.insertTransaction(companion);
+      print('DB Insert finished. Result Success: ${result.isSuccess}');
 
       if (result.isFailure) {
+        print('!!! DB INSERT FAILED: ${result.errorOrNull}');
         throw Exception(result.errorOrNull);
       }
+      
+      print('--- SAVING TRANSACTION: END (SUCCESS) ---');
     });
   }
 
@@ -173,19 +185,29 @@ class TransactionRepository {
 
   /// Convert app model to companion for insert
   TransactionsCompanion _toCompanion(model.Transaction transaction) {
-    return TransactionsCompanion(
-      id: Value(transaction.id),
-      amount: Value(transaction.amount),
-      category: Value(transaction.category),
-      type: Value(transaction.type.name),
-      date: Value(transaction.date),
-      note: Value(transaction.note),
-      recurrence: Value(transaction.recurrence.name),
-      lastOccurrence: Value(transaction.lastOccurrence),
-      currency: Value(transaction.currency),
-      currencyCode: Value(transaction.currencyCode),
-      accountId: Value(transaction.accountId),
-    );
+    try {
+      print('_toCompanion: Creating companion for transaction ${transaction.id}');
+      final companion = TransactionsCompanion(
+        id: Value(transaction.id),
+        amount: Value(transaction.amount),
+        category: Value(transaction.category),
+        type: Value(transaction.type.name),
+        date: Value(transaction.date),
+        note: Value(transaction.note),
+        recurrence: Value(transaction.recurrence.name),
+        lastOccurrence: Value(transaction.lastOccurrence),
+        currency: Value(transaction.currency),
+        currencyCode: Value(transaction.currencyCode),
+        accountId: Value(transaction.accountId),
+      );
+      print('_toCompanion: Companion created successfully');
+      return companion;
+    } catch (e, stack) {
+      print('!!! _toCompanion FAILED !!!');
+      print('Error: $e');
+      print('Stack: $stack');
+      rethrow;
+    }
   }
 
   /// Parse recurrence type

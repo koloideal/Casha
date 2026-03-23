@@ -24,7 +24,7 @@ class AccountRepository {
         // Fallback: insert default account if none exists
         await _db.into(_db.accounts).insert(
               AccountsCompanion.insert(
-                name: 'Main',
+                name: 'main',
                 isMain: const Value(true),
                 currency: const Value('USD'),
                 sortOrder: const Value(0),
@@ -69,7 +69,7 @@ class AccountRepository {
         try {
           await _db.into(_db.accounts).insert(
                 AccountsCompanion.insert(
-                  name: 'Main',
+                  name: 'main',
                   isMain: const Value(true),
                   currency: const Value('USD'),
                   sortOrder: const Value(0),
@@ -103,15 +103,61 @@ class AccountRepository {
   Future<model.Account> getMain() async {
     final row = await (_db.select(_db.accounts)
           ..where((a) => a.isMain.equals(true)))
-        .getSingle();
+        .getSingleOrNull();
 
+    if (row != null) {
+      return model.Account(
+        id: row.id,
+        name: row.name,
+        isMain: row.isMain,
+        sortOrder: row.sortOrder,
+        currency: row.currency,
+        createdAt: row.createdAt,
+      );
+    }
+
+    // Fallback if no main account is found
+    final all = await getAll();
+    if (all.isNotEmpty) return all.first;
+
+    // Absolute fallback: create and return a default account
+    try {
+      await _db.into(_db.accounts).insert(
+            AccountsCompanion.insert(
+              name: 'main',
+              isMain: const Value(true),
+              currency: const Value('USD'),
+              sortOrder: const Value(0),
+            ),
+          );
+      
+      // Query the newly created account
+      final newRow = await (_db.select(_db.accounts)
+            ..where((a) => a.isMain.equals(true)))
+          .getSingleOrNull();
+      
+      if (newRow != null) {
+        return model.Account(
+          id: newRow.id,
+          name: newRow.name,
+          isMain: newRow.isMain,
+          sortOrder: newRow.sortOrder,
+          currency: newRow.currency,
+          createdAt: newRow.createdAt,
+        );
+      }
+    } catch (_) {
+      // Ignore insert errors
+    }
+
+    // Final fallback to prevent crashes
     return model.Account(
-      id: row.id,
-      name: row.name,
-      isMain: row.isMain,
-      sortOrder: row.sortOrder,
-      currency: row.currency,
-      createdAt: row.createdAt,
+      id: 1,
+      name: 'main',
+      isMain: true,
+      sortOrder: 0,
+      currency: 'USD',
+      createdAt: DateTime.now(),
     );
   }
 }

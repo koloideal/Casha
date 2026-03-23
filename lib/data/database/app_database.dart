@@ -13,12 +13,15 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (migrator, from, to) async {
+      print('--- DATABASE MIGRATION: from=$from to=$to ---');
+      
       if (from == 1) {
+        print('Migration: Creating accounts table');
         await migrator.createTable(accounts);
         await customStatement(
           'INSERT INTO accounts (name, is_main, currency, sort_order, created_at) '
@@ -26,11 +29,41 @@ class AppDatabase extends _$AppDatabase {
           ['main', 1, 'USD', 0, DateTime.now().millisecondsSinceEpoch],
         );
       }
+      
       if (from == 2) {
+        print('Migration: Adding currency column to accounts');
         await customStatement(
           'ALTER TABLE accounts ADD COLUMN currency TEXT NOT NULL DEFAULT "USD"',
         );
       }
+      
+      // Add account_id column to transactions if upgrading from version < 5
+      if (from < 5) {
+        print('Migration: Adding account_id column to transactions');
+        try {
+          // Check if column exists first
+          final result = await customSelect(
+            'PRAGMA table_info(transactions)',
+          ).get();
+          
+          final hasAccountId = result.any((row) => row.data['name'] == 'account_id');
+          
+          if (!hasAccountId) {
+            print('Migration: account_id column does not exist, adding it now');
+            await customStatement(
+              'ALTER TABLE transactions ADD COLUMN account_id INTEGER NOT NULL DEFAULT 1',
+            );
+            print('Migration: account_id column added successfully');
+          } else {
+            print('Migration: account_id column already exists, skipping');
+          }
+        } catch (e) {
+          print('Migration: Error adding account_id column: $e');
+          // If the column already exists, this will fail, which is fine
+        }
+      }
+      
+      print('--- DATABASE MIGRATION: COMPLETE ---');
     },
   );
 
