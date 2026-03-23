@@ -35,6 +35,7 @@ class BalanceCard extends ConsumerStatefulWidget {
   final Color? previewSecondary;
   final GradientType? previewGradientType;
   final String? accountName;
+  final CardColors? accountColors;
   
   const BalanceCard({
     super.key,
@@ -45,6 +46,7 @@ class BalanceCard extends ConsumerStatefulWidget {
     this.previewSecondary,
     this.previewGradientType,
     this.accountName,
+    this.accountColors,
   });
 
   @override
@@ -134,10 +136,14 @@ class BalanceCardState extends ConsumerState<BalanceCard>
     final s = ref.watch(stringsProvider);
     final rates = ref.read(exchangeRateServiceProvider);
     final fmt = ref.watch(amountFormatProvider);
-    final savedColors = ref.watch(cardColorsProvider);
+    
+    // Use account-specific colors if provided, otherwise use global colors
+    final globalColors = ref.watch(cardColorsProvider);
+    final savedColors = widget.accountColors ?? globalColors;
     final primary = widget.previewPrimary ?? savedColors.primary;
     final secondary = widget.previewSecondary ?? savedColors.secondary;
     final gradientType = widget.previewGradientType ?? savedColors.gradientType;
+    
     final allCurrencies = [
       ('USD', r'$'),
       ('EUR', '€'),

@@ -14,30 +14,50 @@ String _colorToHex(Color color) {
   return hex.substring(2);
 }
 
-class FullScreenBlurOverlay extends StatefulWidget {
+class AccountEditorOverlay extends StatefulWidget {
   final dynamic dashboardState;
   final BuildContext context;
 
-  const FullScreenBlurOverlay({
+  const AccountEditorOverlay({
     super.key,
     required this.dashboardState,
     required this.context,
   });
 
   @override
-  State<FullScreenBlurOverlay> createState() => _FullScreenBlurOverlayState();
+  State<AccountEditorOverlay> createState() => _AccountEditorOverlayState();
 }
 
-class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
+class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
   dynamic get dash => widget.dashboardState;
+  late TextEditingController _nameController;
+  late String _selectedCurrency;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: dash.tempAccountName);
+    _selectedCurrency = dash.tempAccountCurrency;
+    _nameController.addListener(() {
+      dash.tempAccountName = _nameController.text;
+    });
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(widget.context);
     final cardTop = mq.padding.top + kToolbarHeight + 16;
     const cardHeight = 220.0;
-    final panelTop = cardTop + cardHeight + 65;
-    const panelHeight = 410.0;
+    const editorPanelHeight = 140.0; // Increased to accommodate currency picker
+    final editorPanelTop = cardTop + cardHeight + 20;
+    final colorPanelTop = editorPanelTop + editorPanelHeight + 12;
+    const colorPanelHeight = 410.0;
 
     return Material(
       color: Colors.transparent,
@@ -51,11 +71,12 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
           ),
           Positioned.fill(
             child: GestureDetector(
-              onTap: () => dash.closeOverlay(apply: false),
+              onTap: () => dash.closeAccountOverlay(apply: false),
               behavior: HitTestBehavior.translucent,
               child: const SizedBox.expand(),
             ),
           ),
+          // Preview Card
           Positioned(
             top: cardTop,
             left: 20,
@@ -63,22 +84,68 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
             child: Consumer(
               builder: (ctx, ref, _) => BalanceCard(
                 balance: ref.read(totalBalanceProvider),
-                currencyInfo: ref.read(currencyProvider),
+                currencyInfo: CurrencyInfo(
+                  currencyMap[dash.tempAccountCurrency]?.symbol ?? '\$',
+                  dash.tempAccountCurrency,
+                ),
                 onLongPress: null,
+                accountName: dash.tempAccountName,
                 previewPrimary: dash.tempPrimary,
                 previewSecondary: dash.tempSecondary,
                 previewGradientType: dash.tempGradientType,
               ),
             ),
           ),
+          // Account Editor Panel
           Positioned(
-            top: panelTop,
+            top: editorPanelTop,
             left: 20,
             right: 20,
             child: GestureDetector(
               onTap: () {},
               behavior: HitTestBehavior.opaque,
-              child: _buildPanel(panelHeight),
+              child: _buildEditorPanel(editorPanelHeight),
+            ),
+          ),
+          // Color Picker Panel
+          Positioned(
+            top: colorPanelTop,
+            left: 20,
+            right: 20,
+            child: GestureDetector(
+              onTap: () {},
+              behavior: HitTestBehavior.opaque,
+              child: _buildColorPanel(colorPanelHeight),
+            ),
+          ),
+          // Close Button - Top Right
+          Positioned(
+            top: mq.padding.top + 8,
+            right: 20,
+            child: SafeArea(
+              child: GestureDetector(
+                onTap: () => dash.closeAccountOverlay(apply: false),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Theme.of(widget.context).colorScheme.surface,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 24,
+                    color: Theme.of(widget.context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -86,7 +153,134 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
     );
   }
 
-  Widget _buildPanel(double panelHeight) {
+  Widget _buildEditorPanel(double panelHeight) {
+    final currencies = [
+      ('USD', '\$'),
+      ('EUR', '€'),
+      ('BYN', 'Br'),
+      ('RUB', '₽'),
+    ];
+
+    return Container(
+      height: panelHeight,
+      decoration: BoxDecoration(
+        color: Theme.of(widget.context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.1),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Account Name',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _nameController,
+              maxLength: 17,
+              buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+              decoration: InputDecoration(
+                hintText: 'Enter account name',
+                filled: true,
+                fillColor: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.05),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Currency',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: currencies.map((c) {
+                final isSelected = c.$1 == _selectedCurrency;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedCurrency = c.$1;
+                        dash.tempAccountCurrency = c.$1;
+                      });
+                    },
+                    child: Container(
+                      margin: EdgeInsets.only(
+                        right: c.$1 == currencies.last.$1 ? 0 : 8,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFF7C6DED).withOpacity(0.15)
+                            : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF7C6DED)
+                              : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            c.$2,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? const Color(0xFF7C6DED)
+                                  : Theme.of(widget.context).colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            c.$1,
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildColorPanel(double panelHeight) {
     return Container(
       height: panelHeight,
       decoration: BoxDecoration(
@@ -135,112 +329,102 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
               mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: PanelTab(
-                        label: s.colorPrimary,
-                        isSelected: dash.editingPrimary,
-                        color: dash.tempPrimary,
-                        isDimmed: isSolid,
-                        onTap: () {
+                IntrinsicHeight(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: PanelTab(
+                          label: s.colorPrimary,
+                          isSelected: dash.editingPrimary,
+                          color: dash.tempPrimary,
+                          isDimmed: isSolid,
+                          onTap: () {
+                            dash.setState(() {
+                              if (isSolid) dash.tempGradientType = CardColorService.defaultGradient;
+                              dash.editingPrimary = true;
+                            });
+                            setPanelState(() {});
+                            dash.overlayEntry?.markNeedsBuild();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: PanelTab(
+                          label: s.colorSecondary,
+                          isSelected: !dash.editingPrimary,
+                          color: dash.tempSecondary,
+                          isDimmed: isSolid,
+                          onTap: () {
+                            dash.setState(() {
+                              if (isSolid) dash.tempGradientType = CardColorService.defaultGradient;
+                              dash.editingPrimary = false;
+                            });
+                            setPanelState(() {});
+                            dash.overlayEntry?.markNeedsBuild();
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Container(
+                          width: 1,
+                          color: Theme.of(widget.context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.15),
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: isSolid ? null : () {
                           dash.setState(() {
-                            if (isSolid) dash.tempGradientType = CardColorService.defaultGradient;
+                            dash.tempGradientType = GradientType.solid;
                             dash.editingPrimary = true;
                           });
                           setPanelState(() {});
                           dash.overlayEntry?.markNeedsBuild();
                         },
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: PanelTab(
-                        label: s.colorSecondary,
-                        isSelected: !dash.editingPrimary,
-                        color: dash.tempSecondary,
-                        isDimmed: isSolid,
-                        onTap: () {
-                          dash.setState(() {
-                            if (isSolid) dash.tempGradientType = CardColorService.defaultGradient;
-                            dash.editingPrimary = false;
-                          });
-                          setPanelState(() {});
-                          dash.overlayEntry?.markNeedsBuild();
-                        },
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Container(
-                        width: 1,
-                        height: 20,
-                        color: Theme.of(widget.context)
-                            .colorScheme
-                            .onSurface
-                            .withOpacity(0.15),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: isSolid ? null : () {
-                        dash.setState(() {
-                          dash.tempGradientType = GradientType.solid;
-                          dash.editingPrimary = true;
-                        });
-                        setPanelState(() {});
-                        dash.overlayEntry?.markNeedsBuild();
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: isSolid
-                              ? const Color(0xFF7C6DED).withOpacity(0.15)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
+                        child: Container(
+                          height: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
                             color: isSolid
-                                ? const Color(0xFF7C6DED)
-                                : Theme.of(widget.context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.2),
-                            width: 1.5,
+                                ? const Color(0xFF7C6DED).withOpacity(0.15)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isSolid
+                                  ? const Color(0xFF7C6DED)
+                                  : Theme.of(widget.context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withOpacity(0.2),
+                              width: 1.5,
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          s.colorSolid,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: isSolid
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                            color: isSolid
-                                ? const Color(0xFF7C6DED)
-                                : Theme.of(widget.context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.5),
+                          child: Center(
+                            child: Text(
+                              s.colorSolid,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: isSolid
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                color: isSolid
+                                    ? const Color(0xFF7C6DED)
+                                    : Theme.of(widget.context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withOpacity(0.5),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => dash.closeOverlay(apply: false),
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE05C6B).withOpacity(0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.close_rounded,
-                            size: 16, color: Color(0xFFE05C6B)),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Expanded(
@@ -268,7 +452,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           ),
                           const SizedBox(height: 8),
                           SizedBox(
-                            height: 36,  //
+                            height: 36,
                             child: ColorPickerSlider(
                               TrackType.hue,
                               currentHSV,
@@ -535,7 +719,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                        onPressed: () => dash.closeOverlay(apply: true),
+                        onPressed: () => dash.closeAccountOverlay(apply: true),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF7C6DED),
                           foregroundColor: Colors.white,

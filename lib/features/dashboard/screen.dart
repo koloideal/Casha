@@ -5,8 +5,10 @@ import 'package:intl/intl.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/card_color_service.dart';
 import '../../core/services/haptic_service.dart';
+import '../../shared/models/account.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
+import 'widgets/account_editor_overlay.dart';
 import 'widgets/balance_card_carousel.dart';
 import 'widgets/budget_progress.dart';
 import 'widgets/color_editor_overlay.dart';
@@ -39,6 +41,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   GradientType tempGradientType = CardColorService.defaultGradient;
   GradientType savedGradientType = CardColorService.defaultGradient;
   OverlayEntry? overlayEntry;
+
+  // Account editing state
+  Account? editingAccount;
+  String tempAccountName = '';
+  String tempAccountCurrency = 'USD';
 
   void _onCardLongPress() {
     final colors = ref.read(cardColorsProvider);
@@ -84,6 +91,77 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     overlayEntry?.remove();
     overlayEntry = null;
     setState(() => editingCard = false);
+  }
+
+  void _onAccountCardLongPress(Account account) {
+    final colors = ref.read(accountCardColorsProvider(account.id));
+    savedPrimary = colors.primary;
+    savedSecondary = colors.secondary;
+    savedPrimaryHSV = HSVColor.fromColor(colors.primary);
+    savedSecondaryHSV = HSVColor.fromColor(colors.secondary);
+    savedGradientType = colors.gradientType;
+    tempPrimary = colors.primary;
+    tempSecondary = colors.secondary;
+    tempPrimaryHSV = HSVColor.fromColor(colors.primary);
+    tempSecondaryHSV = HSVColor.fromColor(colors.secondary);
+    tempGradientType = colors.gradientType;
+    
+    setState(() {
+      editingAccount = account;
+      tempAccountName = account.name;
+      tempAccountCurrency = account.currency;
+      editingCard = true;
+      editingPrimary = true;
+    });
+    _showAccountOverlay();
+  }
+
+  void _showAccountOverlay() {
+    overlayEntry = OverlayEntry(
+      builder: (overlayContext) => AccountEditorOverlay(
+        dashboardState: this,
+        context: context,
+      ),
+    );
+    Overlay.of(context, rootOverlay: true).insert(overlayEntry!);
+  }
+
+  void closeAccountOverlay({required bool apply}) async {
+    if (apply && editingAccount != null) {
+      HapticService.medium();
+      
+      // Save colors
+      await ref.read(accountCardColorsProvider(editingAccount!.id).notifier).save(
+        tempPrimary,
+        tempSecondary,
+        tempGradientType,
+      );
+      
+      // Update account name and currency
+      final updatedAccount = Account(
+        id: editingAccount!.id,
+        name: tempAccountName,
+        isMain: editingAccount!.isMain,
+        sortOrder: editingAccount!.sortOrder,
+        currency: tempAccountCurrency,
+        createdAt: editingAccount!.createdAt,
+      );
+      
+      await ref.read(accountRepositoryProvider).update(updatedAccount);
+    } else {
+      setState(() {
+        tempPrimary = savedPrimary;
+        tempSecondary = savedSecondary;
+        tempGradientType = savedGradientType;
+      });
+    }
+    
+    overlayEntry?.remove();
+    overlayEntry = null;
+    setState(() {
+      editingCard = false;
+      editingAccount = null;
+    });
   }
 
   @override
@@ -187,6 +265,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       balance: balance,
                       currencyInfo: currencyInfo,
                       onLongPress: _onCardLongPress,
+                      onAccountLongPress: _onAccountCardLongPress,
                       previewPrimary: editingCard ? tempPrimary : null,
                       previewSecondary: editingCard ? tempSecondary : null,
                       previewGradientType: editingCard ? tempGradientType : null,

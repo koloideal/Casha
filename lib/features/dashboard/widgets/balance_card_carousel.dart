@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/card_color_service.dart';
 import '../../../core/services/haptic_service.dart';
+import '../../../shared/models/account.dart';
 import '../../../shared/models/transaction.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
@@ -11,6 +12,7 @@ class BalanceCardCarousel extends ConsumerStatefulWidget {
   final double balance;
   final CurrencyInfo currencyInfo;
   final VoidCallback? onLongPress;
+  final void Function(Account)? onAccountLongPress;
   final Color? previewPrimary;
   final Color? previewSecondary;
   final GradientType? previewGradientType;
@@ -20,6 +22,7 @@ class BalanceCardCarousel extends ConsumerStatefulWidget {
     required this.balance,
     required this.currencyInfo,
     this.onLongPress,
+    this.onAccountLongPress,
     this.previewPrimary,
     this.previewSecondary,
     this.previewGradientType,
@@ -87,11 +90,17 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                       );
                     } else if (index <= accounts.length) {
                       final account = accounts[index - 1];
+                      final accountColors = ref.watch(accountCardColorsProvider(account.id));
+                      
                       cardWidget = BalanceCard(
-                        balance: widget.balance, // TODO: Calculate per-account balance
-                        currencyInfo: widget.currencyInfo,
-                        onLongPress: null,
+                        balance: widget.balance,
+                        currencyInfo: CurrencyInfo(
+                          currencyMap[account.currency]?.symbol ?? '\$',
+                          account.currency,
+                        ),
+                        onLongPress: () => widget.onAccountLongPress?.call(account),
                         accountName: account.name,
+                        accountColors: accountColors,
                       );
                     } else {
                       cardWidget = AddAccountCard(

@@ -160,4 +160,15 @@ class AccountRepository {
       createdAt: DateTime.now(),
     );
   }
+
+  Future<void> update(model.Account account) async {
+    await _db.updateAccount(AccountsCompanion(
+      id: Value(account.id),
+      name: Value(account.name),
+      isMain: Value(account.isMain),
+      sortOrder: Value(account.sortOrder),
+      currency: Value(account.currency),
+      createdAt: Value(account.createdAt),
+    ));
+  }
 }

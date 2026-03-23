@@ -280,8 +280,18 @@ final cardColorsProvider =
       return notifier;
     });
 
+// Account-specific color provider
+final accountCardColorsProvider =
+    StateNotifierProvider.family<CardColorsNotifier, CardColors, int>((ref, accountId) {
+      final notifier = CardColorsNotifier(accountId: accountId);
+      notifier.setupThemeListener(ref);
+      return notifier;
+    });
+
 class CardColorsNotifier extends StateNotifier<CardColors> {
-  CardColorsNotifier()
+  final int? accountId;
+
+  CardColorsNotifier({this.accountId})
     : super(
         const CardColors(
           CardColorService.defaultPrimary,
@@ -301,7 +311,7 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
   }
 
   Future<void> _load() async {
-    final (c1, c2, g) = await CardColorService.load();
+    final (c1, c2, g) = await CardColorService.load(accountId: accountId);
     state = CardColors(c1, c2, g);
   }
 
@@ -311,7 +321,7 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
     GradientType gradient,
   ) async {
     state = CardColors(primary, secondary, gradient);
-    await CardColorService.save(primary, secondary, gradient);
+    await CardColorService.save(primary, secondary, gradient, accountId: accountId);
   }
 
   Future<void> reset(bool isDark) async {
@@ -326,6 +336,7 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
       primary,
       secondary,
       CardColorService.defaultGradient,
+      accountId: accountId,
     );
   }
 

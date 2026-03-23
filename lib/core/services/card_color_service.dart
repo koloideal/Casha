@@ -16,11 +16,15 @@ class CardColorService {
 
   static const defaultGradient = GradientType.sweep;
 
-  static Future<(Color, Color, GradientType)> load() async {
+  static Future<(Color, Color, GradientType)> load({int? accountId}) async {
     final prefs = await SharedPreferences.getInstance();
-    final c1 = prefs.getInt(_key1);
-    final c2 = prefs.getInt(_key2);
-    final g = prefs.getInt(_keyGradient);
+    final key1 = accountId != null ? '${_key1}_$accountId' : _key1;
+    final key2 = accountId != null ? '${_key2}_$accountId' : _key2;
+    final keyG = accountId != null ? '${_keyGradient}_$accountId' : _keyGradient;
+    
+    final c1 = prefs.getInt(key1);
+    final c2 = prefs.getInt(key2);
+    final g = prefs.getInt(keyG);
     return (
       c1 != null ? Color(c1) : defaultPrimary,
       c2 != null ? Color(c2) : defaultSecondary,
@@ -31,18 +35,27 @@ class CardColorService {
   static Future<void> save(
     Color primary,
     Color secondary,
-    GradientType gradient,
-  ) async {
+    GradientType gradient, {
+    int? accountId,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_key1, primary.value);
-    await prefs.setInt(_key2, secondary.value);
-    await prefs.setInt(_keyGradient, gradient.index);
+    final key1 = accountId != null ? '${_key1}_$accountId' : _key1;
+    final key2 = accountId != null ? '${_key2}_$accountId' : _key2;
+    final keyG = accountId != null ? '${_keyGradient}_$accountId' : _keyGradient;
+    
+    await prefs.setInt(key1, primary.value);
+    await prefs.setInt(key2, secondary.value);
+    await prefs.setInt(keyG, gradient.index);
   }
 
-  static Future<void> reset(bool isDark) async {
+  static Future<void> reset(bool isDark, {int? accountId}) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_key1);
-    await prefs.remove(_key2);
-    await prefs.remove(_keyGradient);
+    final key1 = accountId != null ? '${_key1}_$accountId' : _key1;
+    final key2 = accountId != null ? '${_key2}_$accountId' : _key2;
+    final keyG = accountId != null ? '${_keyGradient}_$accountId' : _keyGradient;
+    
+    await prefs.remove(key1);
+    await prefs.remove(key2);
+    await prefs.remove(keyG);
   }
 }

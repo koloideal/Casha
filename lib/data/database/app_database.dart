@@ -297,6 +297,15 @@ class AppDatabase extends _$AppDatabase {
 
     return totals;
   }
+
+  // ============================================================================
+  // ACCOUNTS
+  // ============================================================================
+
+  /// Update an account
+  Future<void> updateAccount(AccountsCompanion account) async {
+    await update(accounts).replace(account);
+  }
 }
 
 LazyDatabase _openConnection() {
