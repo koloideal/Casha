@@ -10,7 +10,7 @@ class AppStrings {
   String get appTitle => _ru ? 'Мои финансы' : 'My Finances';
   String get totalBalance => _ru ? 'ОБЩИЙ БАЛАНС' : 'TOTAL BALANCE';
   String get tapAndHoldToEdit => _ru ? 'удерживайте для редактирования' : 'tap and hold to edit';
-  String get add => _ru ? 'Добавить' : 'Add';
+  String get add => _ru ? 'Добавить счёт' : 'Add account';
   String get transactions => _ru ? 'Транзакции' : 'Transactions';
   String get searchHint => _ru ? 'Поиск транзакций...' : 'Search transactions...';
   String get filterAll => _ru ? 'Все' : 'All';

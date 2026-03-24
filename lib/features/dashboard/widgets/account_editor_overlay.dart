@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/services/card_color_service.dart';
+import '../../../core/services/haptic_service.dart';
 import '../../../shared/models/transaction.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
@@ -89,22 +90,24 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
       builder: (context, ref, _) {
         final exchangeService = ref.watch(exchangeRateServiceProvider);
         
-        // Calculate preview balance fresh from raw transactions
+        // Fix: If adding a new account, the balance is strictly 0.0
         double previewBalance = 0.0;
-        if (dash.editingAccount != null) {
-          final txs = ref.watch(accountFilteredTransactionsProvider);
-          final accountTxs = txs.where((t) => t.accountId == dash.editingAccount!.id);
-          previewBalance = accountTxs.fold(0.0, (sum, t) {
-            final converted = exchangeService.convert(
-              t.amount,
-              t.currencyCode,
-              dash.tempAccountCurrency, // convert directly from tx currency to selected dropdown currency
-            );
-            return t.type == TransactionType.income ? sum + converted : sum - converted;
-          });
-        } else {
-          // Fallback just in case, though editingAccount should never be null here
-          previewBalance = ref.read(totalBalanceProvider);
+        if (!dash.isAddingAccount) {
+          if (dash.editingAccount != null) {
+            final txs = ref.watch(accountFilteredTransactionsProvider);
+            final accountTxs = txs.where((t) => t.accountId == dash.editingAccount!.id);
+            previewBalance = accountTxs.fold(0.0, (sum, t) {
+              final converted = exchangeService.convert(
+                t.amount,
+                t.currencyCode,
+                dash.tempAccountCurrency, // convert directly from tx currency to selected dropdown currency
+              );
+              return t.type == TransactionType.income ? sum + converted : sum - converted;
+            });
+          } else {
+            // Fallback for edge cases
+            previewBalance = ref.read(totalBalanceProvider);
+          }
         }
 
         return Material(
@@ -863,7 +866,11 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                       child: ElevatedButton(
                         onPressed: _nameController.text.trim().isEmpty 
                             ? null 
-                            : () => dash.closeAccountOverlay(apply: true),
+                            : () {
+                                // Add haptic feedback here
+                                HapticService.light();
+                                dash.closeAccountOverlay(apply: true);
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF7C6DED),
                           foregroundColor: Colors.white,
@@ -880,7 +887,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                               borderRadius: BorderRadius.circular(12)),
                         ),
                         child: Text(
-                            dash.isAddingAccount ? 'Создать счёт' : s.apply,
+                            dash.isAddingAccount ? s.add : s.apply,
                             style: const TextStyle(
                                 fontWeight: FontWeight.w700, fontSize: 14)),
                       ),

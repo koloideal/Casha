@@ -180,12 +180,12 @@ class AddAccountCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 15), // makes it smaller
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10), // Reduced margins for larger size
         child: CustomPaint(
           painter: _DashedBorderPainter(),
           child: Container(
             width: double.infinity,
-            height: 190, // reduced from 220
+            height: 205, // Increased height
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
               borderRadius: BorderRadius.circular(20),
@@ -195,14 +195,14 @@ class AddAccountCard extends StatelessWidget {
               children: [
                 Icon(
                   Icons.add_rounded,
-                  size: 32,
+                  size: 36, // Slightly bigger icon
                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Add account',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 15,
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                     fontWeight: FontWeight.w500,
                   ),
