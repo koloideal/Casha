@@ -33,7 +33,6 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
   dynamic get dash => widget.dashboardState;
   late TextEditingController _nameController;
   late String _selectedCurrency;
-  late String _originalCurrency;
   bool _showCurrencyDropdown = false;
   bool _showLimitError = false;
 
@@ -42,7 +41,6 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
     super.initState();
     _nameController = TextEditingController(text: dash.tempAccountName);
     _selectedCurrency = dash.tempAccountCurrency;
-    _originalCurrency = dash.tempAccountCurrency;
     _nameController.addListener(() {
       final text = _nameController.text;
       
@@ -91,24 +89,23 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
       builder: (context, ref, _) {
         final exchangeService = ref.watch(exchangeRateServiceProvider);
         
-        // Get the original balance from the editing account
-        double originalBalance = ref.read(totalBalanceProvider);
+        // Calculate preview balance fresh from raw transactions
+        double previewBalance = 0.0;
         if (dash.editingAccount != null) {
-          // Get the account's actual balance
           final txs = ref.watch(accountFilteredTransactionsProvider);
           final accountTxs = txs.where((t) => t.accountId == dash.editingAccount!.id);
-          originalBalance = accountTxs.fold<double>(
-            0.0,
-            (sum, t) => sum + (t.type == TransactionType.income ? t.amount : -t.amount),
-          );
+          previewBalance = accountTxs.fold(0.0, (sum, t) {
+            final converted = exchangeService.convert(
+              t.amount,
+              t.currencyCode,
+              dash.tempAccountCurrency, // convert directly from tx currency to selected dropdown currency
+            );
+            return t.type == TransactionType.income ? sum + converted : sum - converted;
+          });
+        } else {
+          // Fallback just in case, though editingAccount should never be null here
+          previewBalance = ref.read(totalBalanceProvider);
         }
-        
-        // Convert to the preview currency
-        final previewBalance = exchangeService.convert(
-          originalBalance,
-          _originalCurrency,
-          dash.tempAccountCurrency,
-        );
 
         return Material(
           color: Colors.transparent,

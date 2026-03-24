@@ -135,7 +135,10 @@ final accountFilteredTransactionsProvider = Provider<List<Transaction>>((ref) {
 final totalBalanceProvider = Provider<double>((ref) {
   final txs = ref.watch(accountFilteredTransactionsProvider);
   final exchangeService = ref.watch(exchangeRateServiceProvider);
-  final targetCurrency = ref.watch(currencyProvider).code;
+  final activeAccount = ref.watch(activeAccountProvider);
+  final targetCurrency = activeAccount != null 
+      ? activeAccount.currency 
+      : ref.watch(currencyProvider).code;
 
   return txs.fold(0.0, (sum, t) {
     final converted = exchangeService.convert(
@@ -151,7 +154,10 @@ final totalIncomeProvider = Provider<double>((ref) {
   final txs = ref.watch(accountFilteredTransactionsProvider);
   final filtered = txs.where((t) => t.type == TransactionType.income);
   final exchangeService = ref.watch(exchangeRateServiceProvider);
-  final targetCurrency = ref.watch(currencyProvider).code;
+  final activeAccount = ref.watch(activeAccountProvider);
+  final targetCurrency = activeAccount != null 
+      ? activeAccount.currency 
+      : ref.watch(currencyProvider).code;
 
   return filtered.fold(0.0, (sum, t) {
     return sum +
@@ -163,7 +169,10 @@ final totalExpenseProvider = Provider<double>((ref) {
   final txs = ref.watch(accountFilteredTransactionsProvider);
   final filtered = txs.where((t) => t.type == TransactionType.expense);
   final exchangeService = ref.watch(exchangeRateServiceProvider);
-  final targetCurrency = ref.watch(currencyProvider).code;
+  final activeAccount = ref.watch(activeAccountProvider);
+  final targetCurrency = activeAccount != null 
+      ? activeAccount.currency 
+      : ref.watch(currencyProvider).code;
 
   return filtered.fold(0.0, (sum, t) {
     return sum +
@@ -181,7 +190,10 @@ final currentMonthExpenseProvider = Provider<double>((ref) {
         t.date.month == now.month,
   );
   final exchangeService = ref.watch(exchangeRateServiceProvider);
-  final targetCurrency = ref.watch(currencyProvider).code;
+  final activeAccount = ref.watch(activeAccountProvider);
+  final targetCurrency = activeAccount != null 
+      ? activeAccount.currency 
+      : ref.watch(currencyProvider).code;
 
   return filtered.fold(0.0, (sum, t) {
     return sum +

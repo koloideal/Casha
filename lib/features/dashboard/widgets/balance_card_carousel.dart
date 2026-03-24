@@ -92,8 +92,21 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                       final account = accounts[index - 1];
                       final accountColors = ref.watch(accountCardColorsProvider(account.id));
                       
+                      // Calculate this specific account's balance
+                      final txs = ref.watch(transactionsProvider).valueOrNull ?? [];
+                      final accountTxs = txs.where((t) => t.accountId == account.id).toList();
+                      final exchangeService = ref.watch(exchangeRateServiceProvider);
+                      final accountBalance = accountTxs.fold(0.0, (sum, t) {
+                        final converted = exchangeService.convert(
+                          t.amount,
+                          t.currencyCode,
+                          account.currency, // target is the account's own currency
+                        );
+                        return t.type == TransactionType.income ? sum + converted : sum - converted;
+                      });
+                      
                       cardWidget = BalanceCard(
-                        balance: widget.balance,
+                        balance: accountBalance, // Use the dynamically calculated balance!
                         currencyInfo: CurrencyInfo(
                           currencyMap[account.currency]?.symbol ?? '\$',
                           account.currency,
