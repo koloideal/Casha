@@ -171,4 +171,20 @@ class AccountRepository {
       createdAt: Value(account.createdAt),
     ));
   }
+
+  Future<void> add(model.Account account) async {
+    await _db.into(_db.accounts).insert(
+      AccountsCompanion.insert(
+        id: Value(account.id),
+        name: account.name,
+        isMain: Value(account.isMain),
+        currency: Value(account.currency),
+        sortOrder: Value(account.sortOrder),
+      ),
+    );
+  }
+
+  Future<void> delete(int id) async {
+    await (_db.delete(_db.accounts)..where((a) => a.id.equals(id))).go();
+  }
 }

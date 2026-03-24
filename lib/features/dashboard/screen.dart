@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:drift/drift.dart' as drift;
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/card_color_service.dart';
 import '../../core/services/haptic_service.dart';
-import '../../data/database/app_database.dart' hide Account;
 import '../../shared/models/account.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
@@ -163,23 +161,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
       if (isAddingAccount) {
         // Create new account
-        final newId = DateTime.now().millisecondsSinceEpoch;
-
-        // Insert the new account using Drift's insert method
-        final db = ref.read(appDatabaseProvider);
-        await db.into(db.accounts).insert(
-          AccountsCompanion.insert(
-            id: drift.Value(newId),
-            name: tempAccountName.trim(),
-            isMain: const drift.Value(false),
-            currency: drift.Value(tempAccountCurrency),
-            sortOrder: const drift.Value(99),
-          ),
+        final newAccount = Account(
+          id: DateTime.now().millisecondsSinceEpoch,
+          name: tempAccountName.trim(),
+          isMain: false,
+          sortOrder: 99,
+          currency: tempAccountCurrency,
+          createdAt: DateTime.now(),
         );
 
-        // Save the chosen colors for the newly created account
+        await ref.read(accountRepositoryProvider).add(newAccount);
+
+        // FIX: Fetch the actual ID assigned by the database to save colors correctly
+        final accounts = await ref.read(accountRepositoryProvider).getAll();
+        final actualNewAccount = accounts.lastWhere((a) => a.name == tempAccountName.trim());
+
         await ref
-            .read(accountCardColorsProvider(newId).notifier)
+            .read(accountCardColorsProvider(actualNewAccount.id).notifier)
             .save(tempPrimary, tempSecondary, tempGradientType);
       } else if (editingAccount != null) {
         // Existing edit logic

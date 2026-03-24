@@ -36,6 +36,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
   late String _selectedCurrency;
   bool _showCurrencyDropdown = false;
   bool _showLimitError = false;
+  bool _showDeleteDialog = false;
 
   @override
   void initState() {
@@ -260,36 +261,117 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                     ),
                   ),
                 ),
-              // Close Button - Top Right
+              // Top Right Buttons (Delete & Close)
               Positioned(
                 top: mq.padding.top + 8,
                 right: 20,
                 child: SafeArea(
-                  child: GestureDetector(
-                    onTap: () => dash.closeAccountOverlay(apply: false),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Theme.of(widget.context).colorScheme.surface,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!dash.isAddingAccount && (ref.watch(accountsProvider).valueOrNull?.length ?? 0) > 1) ...[
+                        GestureDetector(
+                          onTap: () => setState(() => _showDeleteDialog = true),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Theme.of(widget.context).colorScheme.surface,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.red.withOpacity(0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.delete_outline_rounded,
+                              size: 22,
+                              color: Colors.red,
+                            ),
                           ),
-                        ],
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      GestureDetector(
+                        onTap: () => dash.closeAccountOverlay(apply: false),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Theme.of(widget.context).colorScheme.surface,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 24,
+                            color: Theme.of(widget.context).colorScheme.onSurface,
+                          ),
+                        ),
                       ),
-                      child: Icon(
-                        Icons.close_rounded,
-                        size: 24,
-                        color: Theme.of(widget.context).colorScheme.onSurface,
+                    ],
+                  ),
+                ),
+              ),
+              // Custom Dialog Overlay
+              if (_showDeleteDialog)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.4),
+                    child: Center(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: AlertDialog(
+                          backgroundColor: Theme.of(widget.context).colorScheme.surface,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          title: const Text('Delete Account?'),
+                          content: const Text(
+                            'Are you sure you want to delete this account? All associated transactions will also be permanently deleted.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => setState(() => _showDeleteDialog = false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                if (dash.editingAccount == null) return;
+
+                                final accountId = dash.editingAccount!.id;
+
+                                dash.closeAccountOverlay(apply: false);
+
+                                final txs = ref.read(transactionsProvider).valueOrNull ?? [];
+                                final accountTxs = txs.where((t) => t.accountId == accountId).toList();
+                                for (final t in accountTxs) {
+                                  await ref.read(transactionsProvider.notifier).delete(t.id);
+                                }
+
+                                await ref.read(accountRepositoryProvider).delete(accountId);
+
+                                if (ref.read(hapticEnabledProvider)) {
+                                  HapticService.medium();
+                                }
+                              },
+                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         );
@@ -298,45 +380,47 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
   }
 
   Widget _buildEditorPanel(double panelHeight) {
-    return Container(
-      height: panelHeight,
-      decoration: BoxDecoration(
-        color: Theme.of(widget.context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.1),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Account Settings',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.6),
-              ),
+    return Consumer(
+      builder: (context, ref, _) {
+        return Container(
+          height: panelHeight,
+          decoration: BoxDecoration(
+            color: Theme.of(widget.context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.1),
+              width: 1.5,
             ),
-            const SizedBox(height: 8),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: TextField(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Account Settings',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: TextField(
                       controller: _nameController,
                       buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
                       style: const TextStyle(fontSize: 13),
@@ -422,6 +506,8 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 
@@ -521,48 +607,50 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                           margin: const EdgeInsets.symmetric(vertical: 4),
                         ),
                       ),
-                      GestureDetector(
-                        onTap: isSolid ? null : () {
-                          dash.setState(() {
-                            dash.tempGradientType = GradientType.solid;
-                            dash.editingPrimary = true;
-                          });
-                          setPanelState(() {});
-                          dash.overlayEntry?.markNeedsBuild();
-                        },
-                        child: Container(
-                          height: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isSolid
-                                ? const Color(0xFF7C6DED).withOpacity(0.15)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: isSolid ? null : () {
+                            dash.setState(() {
+                              dash.tempGradientType = GradientType.solid;
+                              dash.editingPrimary = true;
+                            });
+                            setPanelState(() {});
+                            dash.overlayEntry?.markNeedsBuild();
+                          },
+                          child: Container(
+                            height: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 6),
+                            decoration: BoxDecoration(
                               color: isSolid
-                                  ? const Color(0xFF7C6DED)
-                                  : Theme.of(widget.context)
-                                      .colorScheme
-                                      .onSurface
-                                      .withOpacity(0.2),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              s.colorSolid,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isSolid
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
+                                  ? const Color(0xFF7C6DED).withOpacity(0.15)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
                                 color: isSolid
                                     ? const Color(0xFF7C6DED)
                                     : Theme.of(widget.context)
                                         .colorScheme
                                         .onSurface
-                                        .withOpacity(0.5),
+                                        .withOpacity(0.2),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                s.colorSolid,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: isSolid
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                  color: isSolid
+                                      ? const Color(0xFF7C6DED)
+                                      : Theme.of(widget.context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withOpacity(0.5),
+                                ),
                               ),
                             ),
                           ),
@@ -937,7 +1025,7 @@ class PanelTab extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           decoration: BoxDecoration(
             color: isSelected ? const Color(0xFF7C6DED).withOpacity(0.15) : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
