@@ -33,11 +33,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Color tempPrimary = CardColorService.defaultPrimary;
   Color tempSecondary = CardColorService.defaultSecondary;
   HSVColor tempPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
-  HSVColor tempSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
+  HSVColor tempSecondaryHSV = HSVColor.fromColor(
+    CardColorService.defaultSecondary,
+  );
   Color savedPrimary = CardColorService.defaultPrimary;
   Color savedSecondary = CardColorService.defaultSecondary;
-  HSVColor savedPrimaryHSV = HSVColor.fromColor(CardColorService.defaultPrimary);
-  HSVColor savedSecondaryHSV = HSVColor.fromColor(CardColorService.defaultSecondary);
+  HSVColor savedPrimaryHSV = HSVColor.fromColor(
+    CardColorService.defaultPrimary,
+  );
+  HSVColor savedSecondaryHSV = HSVColor.fromColor(
+    CardColorService.defaultSecondary,
+  );
   GradientType tempGradientType = CardColorService.defaultGradient;
   GradientType savedGradientType = CardColorService.defaultGradient;
   OverlayEntry? overlayEntry;
@@ -59,7 +65,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     tempPrimaryHSV = HSVColor.fromColor(colors.primary);
     tempSecondaryHSV = HSVColor.fromColor(colors.secondary);
     tempGradientType = colors.gradientType;
-    
+
     setState(() {
       editingCard = true;
       editingPrimary = true;
@@ -69,10 +75,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   void _showOverlay() {
     overlayEntry = OverlayEntry(
-      builder: (overlayContext) => FullScreenBlurOverlay(
-        dashboardState: this,
-        context: context,
-      ),
+      builder: (overlayContext) =>
+          FullScreenBlurOverlay(dashboardState: this, context: context),
     );
     Overlay.of(context, rootOverlay: true).insert(overlayEntry!);
   }
@@ -80,7 +84,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void closeOverlay({required bool apply}) {
     if (apply) {
       HapticService.medium();
-      ref.read(cardColorsProvider.notifier).save(tempPrimary, tempSecondary, tempGradientType);
+      ref
+          .read(cardColorsProvider.notifier)
+          .save(tempPrimary, tempSecondary, tempGradientType);
     } else {
       setState(() {
         tempPrimary = savedPrimary;
@@ -105,7 +111,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     tempPrimaryHSV = HSVColor.fromColor(colors.primary);
     tempSecondaryHSV = HSVColor.fromColor(colors.secondary);
     tempGradientType = colors.gradientType;
-    
+
     setState(() {
       editingAccount = account;
       tempAccountName = account.name;
@@ -118,10 +124,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   void _showAccountOverlay() {
     overlayEntry = OverlayEntry(
-      builder: (overlayContext) => AccountEditorOverlay(
-        dashboardState: this,
-        context: context,
-      ),
+      builder: (overlayContext) =>
+          AccountEditorOverlay(dashboardState: this, context: context),
     );
     Overlay.of(context, rootOverlay: true).insert(overlayEntry!);
   }
@@ -129,14 +133,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void closeAccountOverlay({required bool apply}) async {
     if (apply && editingAccount != null) {
       HapticService.medium();
-      
+
       // Save colors
-      await ref.read(accountCardColorsProvider(editingAccount!.id).notifier).save(
-        tempPrimary,
-        tempSecondary,
-        tempGradientType,
-      );
-      
+      await ref
+          .read(accountCardColorsProvider(editingAccount!.id).notifier)
+          .save(tempPrimary, tempSecondary, tempGradientType);
+
       // Update account name and currency
       final updatedAccount = Account(
         id: editingAccount!.id,
@@ -146,16 +148,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         currency: tempAccountCurrency,
         createdAt: editingAccount!.createdAt,
       );
-      
+
       await ref.read(accountRepositoryProvider).update(updatedAccount);
     } else {
+      // Restore original values on cancel
       setState(() {
         tempPrimary = savedPrimary;
         tempSecondary = savedSecondary;
         tempGradientType = savedGradientType;
+        if (editingAccount != null) {
+          tempAccountName = editingAccount!.name;
+          tempAccountCurrency = editingAccount!.currency;
+        }
       });
     }
-    
+
     overlayEntry?.remove();
     overlayEntry = null;
     setState(() {
@@ -224,12 +231,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             child: Center(
               child: Builder(
                 builder: (context) {
-                  final raw = DateFormat('LLLL, yyyy', s.dateLocale).format(DateTime.now());
-                  final capitalized = raw.isNotEmpty ? '${raw[0].toUpperCase()}${raw.substring(1)}' : raw;
+                  final raw = DateFormat(
+                    'LLLL, yyyy',
+                    s.dateLocale,
+                  ).format(DateTime.now());
+                  final capitalized = raw.isNotEmpty
+                      ? '${raw[0].toUpperCase()}${raw.substring(1)}'
+                      : raw;
                   return Text(
                     capitalized,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.5),
                       fontWeight: FontWeight.w500,
                     ),
                   );
@@ -268,7 +282,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       onAccountLongPress: _onAccountCardLongPress,
                       previewPrimary: editingCard ? tempPrimary : null,
                       previewSecondary: editingCard ? tempSecondary : null,
-                      previewGradientType: editingCard ? tempGradientType : null,
+                      previewGradientType: editingCard
+                          ? tempGradientType
+                          : null,
                     ),
                     const SizedBox(height: 16),
                     SummaryRow(

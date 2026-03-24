@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/services/card_color_service.dart';
+import '../../../shared/models/transaction.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
 import 'balance_card.dart';
@@ -32,15 +33,35 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
   dynamic get dash => widget.dashboardState;
   late TextEditingController _nameController;
   late String _selectedCurrency;
+  late String _originalCurrency;
   bool _showCurrencyDropdown = false;
+  bool _showLimitError = false;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: dash.tempAccountName);
     _selectedCurrency = dash.tempAccountCurrency;
+    _originalCurrency = dash.tempAccountCurrency;
     _nameController.addListener(() {
-      dash.tempAccountName = _nameController.text;
+      final text = _nameController.text;
+      if (text.length > 17) {
+        _nameController.text = text.substring(0, 17);
+        _nameController.selection = TextSelection.fromPosition(
+          const TextPosition(offset: 17),
+        );
+        setState(() => _showLimitError = true);
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) setState(() => _showLimitError = false);
+        });
+        return; // Skip updating dash to avoid out-of-bounds
+      }
+      
+      // Real-time update on card
+      dash.setState(() {
+        dash.tempAccountName = _nameController.text;
+      });
+      dash.overlayEntry?.markNeedsBuild();
     });
   }
 
@@ -60,90 +81,107 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
     final colorPanelTop = editorPanelTop + editorPanelHeight + 12;
     const colorPanelHeight = 410.0;
 
-    return Material(
-      color: Colors.transparent,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(color: Colors.black.withOpacity(0.6)),
-            ),
-          ),
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () {
-                if (_showCurrencyDropdown) {
-                  setState(() {
-                    _showCurrencyDropdown = false;
-                  });
-                } else {
-                  dash.closeAccountOverlay(apply: false);
-                }
-              },
-              behavior: HitTestBehavior.translucent,
-              child: const SizedBox.expand(),
-            ),
-          ),
-          // Preview Card
-          Positioned(
-            top: cardTop,
-            left: 20,
-            right: 20,
-            child: Consumer(
-              builder: (ctx, ref, _) => BalanceCard(
-                balance: ref.read(totalBalanceProvider),
-                currencyInfo: CurrencyInfo(
-                  currencyMap[dash.tempAccountCurrency]?.symbol ?? '\$',
-                  dash.tempAccountCurrency,
+    return Consumer(
+      builder: (context, ref, _) {
+        final exchangeService = ref.watch(exchangeRateServiceProvider);
+        
+        // Get the original balance from the editing account
+        double originalBalance = ref.read(totalBalanceProvider);
+        if (dash.editingAccount != null) {
+          // Get the account's actual balance
+          final txs = ref.watch(accountFilteredTransactionsProvider);
+          final accountTxs = txs.where((t) => t.accountId == dash.editingAccount!.id);
+          originalBalance = accountTxs.fold<double>(
+            0.0,
+            (sum, t) => sum + (t.type == TransactionType.income ? t.amount : -t.amount),
+          );
+        }
+        
+        // Convert to the preview currency
+        final previewBalance = exchangeService.convert(
+          originalBalance,
+          _originalCurrency,
+          dash.tempAccountCurrency,
+        );
+
+        return Material(
+          color: Colors.transparent,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(color: Colors.black.withOpacity(0.6)),
                 ),
-                onLongPress: null,
-                accountName: dash.tempAccountName,
-                previewPrimary: dash.tempPrimary,
-                previewSecondary: dash.tempSecondary,
-                previewGradientType: dash.tempGradientType,
               ),
-            ),
-          ),
-          // Account Editor Panel
-          Positioned(
-            top: editorPanelTop,
-            left: 20,
-            right: 20,
-            child: GestureDetector(
-              onTap: () {},
-              behavior: HitTestBehavior.opaque,
-              child: _buildEditorPanel(editorPanelHeight),
-            ),
-          ),
-          // Color Picker Panel
-          Positioned(
-            top: colorPanelTop,
-            left: 20,
-            right: 20,
-            child: GestureDetector(
-              onTap: () {
-                if (_showCurrencyDropdown) {
-                  setState(() {
-                    _showCurrencyDropdown = false;
-                  });
-                }
-              },
-              behavior: HitTestBehavior.opaque,
-              child: _buildColorPanel(colorPanelHeight),
-            ),
-          ),
-          // Currency Dropdown - Above everything
-          if (_showCurrencyDropdown)
-            Positioned(
-              top: editorPanelTop + 58, // Position below the currency button
-              left: 20 + 14 + (MediaQuery.of(context).size.width - 40 - 28) * 0.75 + 8, // Align with currency button
-              width: (MediaQuery.of(context).size.width - 40 - 28) * 0.25, // Same width as currency button
-              child: Consumer(
-                builder: (context, ref, _) {
-                  final exchangeService = ref.read(exchangeRateServiceProvider);
-                  
-                  return Material(
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () {
+                    if (_showCurrencyDropdown) {
+                      setState(() {
+                        _showCurrencyDropdown = false;
+                      });
+                    } else {
+                      dash.closeAccountOverlay(apply: false);
+                    }
+                  },
+                  behavior: HitTestBehavior.translucent,
+                  child: const SizedBox.expand(),
+                ),
+              ),
+              // Preview Card
+              Positioned(
+                top: cardTop,
+                left: 20,
+                right: 20,
+                child: BalanceCard(
+                  balance: previewBalance,
+                  currencyInfo: CurrencyInfo(
+                    currencyMap[dash.tempAccountCurrency]?.symbol ?? '\$',
+                    dash.tempAccountCurrency,
+                  ),
+                  onLongPress: null,
+                  accountName: dash.tempAccountName,
+                  previewPrimary: dash.tempPrimary,
+                  previewSecondary: dash.tempSecondary,
+                  previewGradientType: dash.tempGradientType,
+                ),
+              ),
+              // Account Editor Panel
+              Positioned(
+                top: editorPanelTop,
+                left: 20,
+                right: 20,
+                child: GestureDetector(
+                  onTap: () {},
+                  behavior: HitTestBehavior.opaque,
+                  child: _buildEditorPanel(editorPanelHeight),
+                ),
+              ),
+              // Color Picker Panel
+              Positioned(
+                top: colorPanelTop,
+                left: 20,
+                right: 20,
+                child: GestureDetector(
+                  onTap: () {
+                    if (_showCurrencyDropdown) {
+                      setState(() {
+                        _showCurrencyDropdown = false;
+                      });
+                    }
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: _buildColorPanel(colorPanelHeight),
+                ),
+              ),
+              // Currency Dropdown - Above everything
+              if (_showCurrencyDropdown)
+                Positioned(
+                  top: editorPanelTop + 62,
+                  right: 34, // 20 (panel padding) + 14 (inner padding)
+                  width: (MediaQuery.of(context).size.width - 68) * 0.25, // 25% of the inner row width
+                  child: Material(
                     elevation: 12,
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
@@ -166,18 +204,15 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                           final isSelected = entry.$1 == _selectedCurrency;
                           return InkWell(
                             onTap: () {
-                              final oldCurrency = _selectedCurrency;
-                              final newCurrency = entry.$1;
-                              
                               setState(() {
-                                _selectedCurrency = newCurrency;
-                                dash.tempAccountCurrency = newCurrency;
+                                _selectedCurrency = entry.$1;
+                                // Update temp currency for preview
+                                dash.setState(() {
+                                  dash.tempAccountCurrency = entry.$1;
+                                });
+                                dash.overlayEntry?.markNeedsBuild();
                                 _showCurrencyDropdown = false;
                               });
-                              
-                              // Note: Currency conversion will happen automatically
-                              // when the account is saved, as the exchangeRateServiceProvider
-                              // will handle the conversion in the balance calculations
                             },
                             borderRadius: BorderRadius.circular(12),
                             child: Padding(
@@ -217,42 +252,42 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                         }).toList(),
                       ),
                     ),
-                  );
-                },
-              ),
-            ),
-          // Close Button - Top Right
-          Positioned(
-            top: mq.padding.top + 8,
-            right: 20,
-            child: SafeArea(
-              child: GestureDetector(
-                onTap: () => dash.closeAccountOverlay(apply: false),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Theme.of(widget.context).colorScheme.surface,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
                   ),
-                  child: Icon(
-                    Icons.close_rounded,
-                    size: 24,
-                    color: Theme.of(widget.context).colorScheme.onSurface,
+                ),
+              // Close Button - Top Right
+              Positioned(
+                top: mq.padding.top + 8,
+                right: 20,
+                child: SafeArea(
+                  child: GestureDetector(
+                    onTap: () => dash.closeAccountOverlay(apply: false),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Theme.of(widget.context).colorScheme.surface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 24,
+                        color: Theme.of(widget.context).colorScheme.onSurface,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -289,87 +324,94 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
               ),
             ),
             const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: TextField(
-                    controller: _nameController,
-                    maxLength: 17,
-                    buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
-                    style: const TextStyle(fontSize: 13),
-                    decoration: InputDecoration(
-                      hintText: 'Account name',
-                      hintStyle: TextStyle(fontSize: 13, color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.4)),
-                      filled: true,
-                      fillColor: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.05),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.15),
-                          width: 1.5,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.15),
-                          width: 1.5,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF7C6DED),
-                          width: 1.5,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _showCurrencyDropdown = !_showCurrencyDropdown;
-                      });
-                    },
-                    child: Container(
-                      height: 44, // Increased to match TextField height
-                      decoration: BoxDecoration(
-                        color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _showCurrencyDropdown
-                              ? const Color(0xFF7C6DED)
-                              : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.15),
-                          width: 1.5,
-                        ),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            [('USD', '\$'), ('EUR', '€'), ('BYN', 'Br'), ('RUB', '₽')]
-                                .firstWhere((c) => c.$1 == _selectedCurrency).$2,
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextField(
+                      controller: _nameController,
+                      buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+                      style: const TextStyle(fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Account name',
+                        hintStyle: TextStyle(fontSize: 13, color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.4)),
+                        filled: true,
+                        fillColor: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.05),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: _showLimitError 
+                                ? Colors.red 
+                                : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.15),
+                            width: 1.5,
                           ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            _showCurrencyDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                            size: 20,
-                            color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: _showLimitError 
+                                ? Colors.red 
+                                : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.15),
+                            width: 1.5,
                           ),
-                        ],
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: _showLimitError 
+                                ? Colors.red 
+                                : const Color(0xFF7C6DED),
+                            width: 1.5,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _showCurrencyDropdown = !_showCurrencyDropdown;
+                        });
+                      },
+                      child: Container(
+                        height: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _showCurrencyDropdown
+                                ? const Color(0xFF7C6DED)
+                                : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.15),
+                            width: 1.5,
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              [('USD', '\$'), ('EUR', '€'), ('BYN', 'Br'), ('RUB', '₽')]
+                                  .firstWhere((c) => c.$1 == _selectedCurrency).$2,
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              _showCurrencyDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                              size: 20,
+                              color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
