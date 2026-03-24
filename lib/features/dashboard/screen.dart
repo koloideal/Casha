@@ -8,7 +8,7 @@ import '../../core/services/haptic_service.dart';
 import '../../shared/models/account.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
-import 'widgets/account_editor_overlay.dart';
+import 'widgets/account_editor_overlay/account_editor_overlay.dart';
 import 'widgets/balance_card_carousel.dart';
 import 'widgets/budget_progress.dart';
 import 'widgets/color_editor_overlay.dart';
@@ -315,7 +315,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         backgroundColor: const Color(0xFF7C6DED),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: Text(s.addTransactionDashboard, style: const TextStyle(fontWeight: FontWeight.w600)),
+        label: Text(
+          s.addTransactionDashboard,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
