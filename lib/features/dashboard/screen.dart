@@ -139,6 +139,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           .read(accountCardColorsProvider(editingAccount!.id).notifier)
           .save(tempPrimary, tempSecondary, tempGradientType);
 
+      // Check if currency was changed and convert transactions
+      if (tempAccountCurrency != editingAccount!.currency) {
+        final exchangeService = ref.read(exchangeRateServiceProvider);
+        final txRepo = ref.read(transactionRepositoryProvider);
+        
+        // Fetch all transactions
+        final allTxsResult = await txRepo.getAll();
+        if (allTxsResult.isSuccess) {
+          final accountTxs = allTxsResult.dataOrNull!
+              .where((t) => t.accountId == editingAccount!.id)
+              .toList();
+          
+          // Convert and update each transaction
+          for (final tx in accountTxs) {
+            final convertedAmount = exchangeService.convert(
+              tx.amount,
+              editingAccount!.currency, // old currency
+              tempAccountCurrency, // new currency
+            );
+            
+            final updatedTx = tx.copyWith(
+              amount: convertedAmount,
+              currency: currencyMap[tempAccountCurrency]?.symbol ?? '\$',
+              currencyCode: tempAccountCurrency,
+            );
+            
+            await txRepo.update(updatedTx);
+          }
+          
+          // Refresh transactions provider so the UI updates
+          ref.read(transactionsProvider.notifier).refresh();
+        }
+      }
+
       // Update account name and currency
       final updatedAccount = Account(
         id: editingAccount!.id,

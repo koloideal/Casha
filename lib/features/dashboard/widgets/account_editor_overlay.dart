@@ -45,15 +45,21 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
     _originalCurrency = dash.tempAccountCurrency;
     _nameController.addListener(() {
       final text = _nameController.text;
-      if (text.length > 17) {
-        _nameController.text = text.substring(0, 17);
-        _nameController.selection = TextSelection.fromPosition(
-          const TextPosition(offset: 17),
-        );
+      
+      // Check if empty or exceeds limit
+      if (text.trim().isEmpty || text.length > 20) {
         setState(() => _showLimitError = true);
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) setState(() => _showLimitError = false);
         });
+      }
+      
+      // Truncate if exceeds 20 characters
+      if (text.length > 20) {
+        _nameController.text = text.substring(0, 20);
+        _nameController.selection = TextSelection.fromPosition(
+          const TextPosition(offset: 20),
+        );
         return; // Skip updating dash to avoid out-of-bounds
       }
       
@@ -858,10 +864,20 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                        onPressed: () => dash.closeAccountOverlay(apply: true),
+                        onPressed: _nameController.text.trim().isEmpty 
+                            ? null 
+                            : () => dash.closeAccountOverlay(apply: true),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF7C6DED),
                           foregroundColor: Colors.white,
+                          disabledBackgroundColor: Theme.of(widget.context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.12),
+                          disabledForegroundColor: Theme.of(widget.context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.38),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
