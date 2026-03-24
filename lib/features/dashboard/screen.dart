@@ -160,7 +160,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       HapticService.medium();
 
       if (isAddingAccount) {
-        // Create new account (the id: 0 is a placeholder, SQLite ignores it on insert)
         final newAccount = Account(
           id: 0,
           name: tempAccountName.trim(),
@@ -170,13 +169,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           createdAt: DateTime.now(),
         );
 
-        // Get the ACTUAL generated ID directly from the database insert
         final newId = await ref.read(accountRepositoryProvider).add(newAccount);
 
-        // Save colors securely using the exact database ID
-        await ref
-            .read(accountCardColorsProvider(newId).notifier)
-            .save(tempPrimary, tempSecondary, tempGradientType);
+        await CardColorService.save(
+          tempPrimary,
+          tempSecondary,
+          tempGradientType,
+          accountId: newId,
+        );
       } else if (editingAccount != null) {
         // Existing edit logic
         // Save colors
@@ -315,7 +315,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         backgroundColor: const Color(0xFF7C6DED),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: Text(s.add, style: const TextStyle(fontWeight: FontWeight.w600)),
+        label: Text(s.addTransactionDashboard, style: const TextStyle(fontWeight: FontWeight.w600)),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(

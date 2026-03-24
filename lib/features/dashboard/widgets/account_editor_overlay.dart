@@ -973,7 +973,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                               borderRadius: BorderRadius.circular(12)),
                         ),
                         child: Text(
-                            dash.isAddingAccount ? s.add : s.apply,
+                            dash.isAddingAccount ? s.addAccount : s.apply,
                             style: const TextStyle(
                                 fontWeight: FontWeight.w700, fontSize: 14)),
                       ),
