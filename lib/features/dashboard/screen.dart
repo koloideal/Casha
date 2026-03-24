@@ -160,9 +160,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       HapticService.medium();
 
       if (isAddingAccount) {
-        // Create new account
+        // Create new account (the id: 0 is a placeholder, SQLite ignores it on insert)
         final newAccount = Account(
-          id: DateTime.now().millisecondsSinceEpoch, // temporary
+          id: 0,
           name: tempAccountName.trim(),
           isMain: false,
           sortOrder: 99,
@@ -170,19 +170,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           createdAt: DateTime.now(),
         );
 
-        // Insert into database
-        await ref.read(accountRepositoryProvider).add(newAccount);
+        // Get the ACTUAL generated ID directly from the database insert
+        final newId = await ref.read(accountRepositoryProvider).add(newAccount);
 
-        // SECURE FIX: Fetch the actual ID assigned by SQLite, avoiding add() return issues
-        final allAccounts = await ref.read(accountRepositoryProvider).getAll();
-        final actualAccount = allAccounts.lastWhere(
-          (a) => a.name == tempAccountName.trim() && a.currency == tempAccountCurrency,
-          orElse: () => allAccounts.last,
-        );
-
-        // Save colors using the guaranteed correct database ID
+        // Save colors securely using the exact database ID
         await ref
-            .read(accountCardColorsProvider(actualAccount.id).notifier)
+            .read(accountCardColorsProvider(newId).notifier)
             .save(tempPrimary, tempSecondary, tempGradientType);
       } else if (editingAccount != null) {
         // Existing edit logic
