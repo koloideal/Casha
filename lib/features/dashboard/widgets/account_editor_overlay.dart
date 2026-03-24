@@ -263,40 +263,14 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                 ),
               // Top Right Buttons (Delete & Close)
               Positioned(
-                top: mq.padding.top + 8,
+                top: cardTop - 20, // Center buttons exactly on the top edge of the card
                 right: 20,
-                child: SafeArea(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (!dash.isAddingAccount && (ref.watch(accountsProvider).valueOrNull?.length ?? 0) > 1) ...[
-                        GestureDetector(
-                          onTap: () => setState(() => _showDeleteDialog = true),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Theme.of(widget.context).colorScheme.surface,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.red.withOpacity(0.2),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.delete_outline_rounded,
-                              size: 22,
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                      ],
+                child: Row( // REMOVED SafeArea to fix the vertical offset
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!dash.isAddingAccount && (ref.watch(accountsProvider).valueOrNull?.length ?? 0) > 1) ...[
                       GestureDetector(
-                        onTap: () => dash.closeAccountOverlay(apply: false),
+                        onTap: () => setState(() => _showDeleteDialog = true),
                         child: Container(
                           width: 40,
                           height: 40,
@@ -305,21 +279,45 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
+                                color: Colors.red.withOpacity(0.2),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
                             ],
                           ),
-                          child: Icon(
-                            Icons.close_rounded,
-                            size: 24,
-                            color: Theme.of(widget.context).colorScheme.onSurface,
+                          child: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 22,
+                            color: Colors.red,
                           ),
                         ),
                       ),
+                      const SizedBox(width: 12),
                     ],
-                  ),
+                    GestureDetector(
+                      onTap: () => dash.closeAccountOverlay(apply: false),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Theme.of(widget.context).colorScheme.surface,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 24,
+                          color: Theme.of(widget.context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               // Custom Dialog Overlay

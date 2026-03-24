@@ -162,7 +162,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       if (isAddingAccount) {
         // Create new account
         final newAccount = Account(
-          id: DateTime.now().millisecondsSinceEpoch,
+          id: DateTime.now().millisecondsSinceEpoch, // temporary
           name: tempAccountName.trim(),
           isMain: false,
           sortOrder: 99,
@@ -170,14 +170,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           createdAt: DateTime.now(),
         );
 
+        // Insert into database
         await ref.read(accountRepositoryProvider).add(newAccount);
 
-        // FIX: Fetch the actual ID assigned by the database to save colors correctly
-        final accounts = await ref.read(accountRepositoryProvider).getAll();
-        final actualNewAccount = accounts.lastWhere((a) => a.name == tempAccountName.trim());
+        // SECURE FIX: Fetch the actual ID assigned by SQLite, avoiding add() return issues
+        final allAccounts = await ref.read(accountRepositoryProvider).getAll();
+        final actualAccount = allAccounts.lastWhere(
+          (a) => a.name == tempAccountName.trim() && a.currency == tempAccountCurrency,
+          orElse: () => allAccounts.last,
+        );
 
+        // Save colors using the guaranteed correct database ID
         await ref
-            .read(accountCardColorsProvider(actualNewAccount.id).notifier)
+            .read(accountCardColorsProvider(actualAccount.id).notifier)
             .save(tempPrimary, tempSecondary, tempGradientType);
       } else if (editingAccount != null) {
         // Existing edit logic

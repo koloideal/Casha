@@ -172,14 +172,14 @@ class AccountRepository {
     ));
   }
 
-  Future<void> add(model.Account account) async {
-    await _db.into(_db.accounts).insert(
+  Future<int> add(model.Account account) async {
+    return await _db.into(_db.accounts).insert(
       AccountsCompanion.insert(
-        id: Value(account.id),
         name: account.name,
         isMain: Value(account.isMain),
-        currency: Value(account.currency),
         sortOrder: Value(account.sortOrder),
+        currency: Value(account.currency),
+        createdAt: Value(account.createdAt),
       ),
     );
   }
