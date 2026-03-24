@@ -6,6 +6,7 @@ import '../../../core/l10n/app_strings.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/services/card_color_service.dart';
 import '../../../core/services/haptic_service.dart';
+import '../../../shared/models/account.dart';
 import '../../../shared/models/transaction.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
@@ -37,6 +38,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
   bool _showCurrencyDropdown = false;
   bool _showLimitError = false;
   bool _showDeleteDialog = false;
+  bool _showDuplicateError = false;
 
   @override
   void initState() {
@@ -45,7 +47,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
     _selectedCurrency = dash.tempAccountCurrency;
     _nameController.addListener(() {
       final text = _nameController.text;
-      
+
       // Check if empty or exceeds limit
       if (text.trim().isEmpty || text.length > 20) {
         setState(() => _showLimitError = true);
@@ -53,7 +55,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
           if (mounted) setState(() => _showLimitError = false);
         });
       }
-      
+
       // Truncate if exceeds 20 characters
       if (text.length > 20) {
         _nameController.text = text.substring(0, 20);
@@ -62,7 +64,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
         );
         return; // Skip updating dash to avoid out-of-bounds
       }
-      
+
       // Real-time update on card
       dash.setState(() {
         dash.tempAccountName = _nameController.text;
@@ -75,6 +77,17 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  bool _isDuplicateName(List<Account> accounts, String name) {
+    final trimmed = name.trim().toLowerCase();
+    return accounts.any((a) {
+      // When editing: ignore the account being edited itself
+      if (dash.editingAccount != null && a.id == dash.editingAccount!.id) {
+        return false;
+      }
+      return a.name.trim().toLowerCase() == trimmed;
+    });
   }
 
   @override
@@ -90,20 +103,24 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
     return Consumer(
       builder: (context, ref, _) {
         final exchangeService = ref.watch(exchangeRateServiceProvider);
-        
+
         // Fix: If adding a new account, the balance is strictly 0.0
         double previewBalance = 0.0;
         if (!dash.isAddingAccount) {
           if (dash.editingAccount != null) {
             final txs = ref.watch(accountFilteredTransactionsProvider);
-            final accountTxs = txs.where((t) => t.accountId == dash.editingAccount!.id);
+            final accountTxs = txs.where(
+              (t) => t.accountId == dash.editingAccount!.id,
+            );
             previewBalance = accountTxs.fold(0.0, (sum, t) {
               final converted = exchangeService.convert(
                 t.amount,
                 t.currencyCode,
                 dash.tempAccountCurrency, // convert directly from tx currency to selected dropdown currency
               );
-              return t.type == TransactionType.income ? sum + converted : sum - converted;
+              return t.type == TransactionType.income
+                  ? sum + converted
+                  : sum - converted;
             });
           } else {
             // Fallback for edge cases
@@ -136,6 +153,57 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                   child: const SizedBox.expand(),
                 ),
               ),
+              // Duplicate Name Error Alert (Top)
+              if (_showDuplicateError)
+                Positioned(
+                  top: mq.padding.top + 8,
+                  left: 20,
+                  right: 20,
+                  child: GestureDetector(
+                    onTap: () {}, // Prevent tap-through
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.red.shade400,
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.red.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            color: Colors.red.shade700,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Account name already exists',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.red.shade900,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               // Preview Card
               Positioned(
                 top: cardTop,
@@ -187,7 +255,9 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                 Positioned(
                   top: editorPanelTop + 62,
                   right: 34, // 20 (panel padding) + 14 (inner padding)
-                  width: (MediaQuery.of(context).size.width - 68) * 0.25, // 25% of the inner row width
+                  width:
+                      (MediaQuery.of(context).size.width - 68) *
+                      0.25, // 25% of the inner row width
                   child: Material(
                     elevation: 12,
                     borderRadius: BorderRadius.circular(12),
@@ -196,79 +266,95 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                         color: Theme.of(widget.context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.15),
+                          color: Theme.of(
+                            widget.context,
+                          ).colorScheme.onSurface.withOpacity(0.15),
                           width: 1.5,
                         ),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ('USD', '\$'),
-                          ('EUR', '€'),
-                          ('BYN', 'Br'),
-                          ('RUB', '₽'),
-                        ].map((entry) {
-                          final isSelected = entry.$1 == _selectedCurrency;
-                          return InkWell(
-                            onTap: () {
-                              setState(() {
-                                _selectedCurrency = entry.$1;
-                                // Update temp currency for preview
-                                dash.setState(() {
-                                  dash.tempAccountCurrency = entry.$1;
-                                });
-                                dash.overlayEntry?.markNeedsBuild();
-                                _showCurrencyDropdown = false;
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    entry.$2,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: isSelected ? const Color(0xFF7C6DED) : null,
-                                    ),
+                        children:
+                            [
+                              ('USD', '\$'),
+                              ('EUR', '€'),
+                              ('BYN', 'Br'),
+                              ('RUB', '₽'),
+                            ].map((entry) {
+                              final isSelected = entry.$1 == _selectedCurrency;
+                              return InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedCurrency = entry.$1;
+                                    // Update temp currency for preview
+                                    dash.setState(() {
+                                      dash.tempAccountCurrency = entry.$1;
+                                    });
+                                    dash.overlayEntry?.markNeedsBuild();
+                                    _showCurrencyDropdown = false;
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    entry.$1,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: isSelected 
-                                        ? const Color(0xFF7C6DED) 
-                                        : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.6),
-                                    ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        entry.$2,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: isSelected
+                                              ? const Color(0xFF7C6DED)
+                                              : null,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        entry.$1,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: isSelected
+                                              ? const Color(0xFF7C6DED)
+                                              : Theme.of(widget.context)
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.6),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      if (isSelected)
+                                        const Icon(
+                                          Icons.check_rounded,
+                                          size: 14,
+                                          color: Color(0xFF7C6DED),
+                                        ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 4),
-                                  if (isSelected)
-                                    const Icon(
-                                      Icons.check_rounded,
-                                      size: 14,
-                                      color: Color(0xFF7C6DED),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                                ),
+                              );
+                            }).toList(),
                       ),
                     ),
                   ),
                 ),
               // Top Right Buttons (Delete & Close)
               Positioned(
-                top: cardTop - 20, // Center buttons exactly on the top edge of the card
+                top:
+                    cardTop -
+                    20, // Center buttons exactly on the top edge of the card
                 right: 20,
-                child: Row( // REMOVED SafeArea to fix the vertical offset
+                child: Row(
+                  // REMOVED SafeArea to fix the vertical offset
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (!dash.isAddingAccount && (ref.watch(accountsProvider).valueOrNull?.length ?? 0) > 1) ...[
+                    if (!dash.isAddingAccount &&
+                        (ref.watch(accountsProvider).valueOrNull?.length ?? 0) >
+                            1) ...[
                       GestureDetector(
                         onTap: () => setState(() => _showDeleteDialog = true),
                         child: Container(
@@ -329,7 +415,9 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                       child: Material(
                         color: Colors.transparent,
                         child: AlertDialog(
-                          backgroundColor: Theme.of(widget.context).colorScheme.surface,
+                          backgroundColor: Theme.of(
+                            widget.context,
+                          ).colorScheme.surface,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -339,7 +427,8 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                           ),
                           actions: [
                             TextButton(
-                              onPressed: () => setState(() => _showDeleteDialog = false),
+                              onPressed: () =>
+                                  setState(() => _showDeleteDialog = false),
                               child: const Text('Cancel'),
                             ),
                             TextButton(
@@ -350,19 +439,32 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
 
                                 dash.closeAccountOverlay(apply: false);
 
-                                final txs = ref.read(transactionsProvider).valueOrNull ?? [];
-                                final accountTxs = txs.where((t) => t.accountId == accountId).toList();
+                                final txs =
+                                    ref
+                                        .read(transactionsProvider)
+                                        .valueOrNull ??
+                                    [];
+                                final accountTxs = txs
+                                    .where((t) => t.accountId == accountId)
+                                    .toList();
                                 for (final t in accountTxs) {
-                                  await ref.read(transactionsProvider.notifier).delete(t.id);
+                                  await ref
+                                      .read(transactionsProvider.notifier)
+                                      .delete(t.id);
                                 }
 
-                                await ref.read(accountRepositoryProvider).delete(accountId);
+                                await ref
+                                    .read(accountRepositoryProvider)
+                                    .delete(accountId);
 
                                 if (ref.read(hapticEnabledProvider)) {
                                   HapticService.medium();
                                 }
                               },
-                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                              child: const Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
                             ),
                           ],
                         ),
@@ -386,7 +488,9 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
             color: Theme.of(widget.context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.1),
+              color: Theme.of(
+                widget.context,
+              ).colorScheme.onSurface.withOpacity(0.1),
               width: 1.5,
             ),
             boxShadow: [
@@ -408,7 +512,9 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(
+                      widget.context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -419,92 +525,140 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                       Expanded(
                         flex: 3,
                         child: TextField(
-                      controller: _nameController,
-                      buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
-                      style: const TextStyle(fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'Account name',
-                        hintStyle: TextStyle(fontSize: 13, color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.4)),
-                        filled: true,
-                        fillColor: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.05),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: (_showLimitError || _nameController.text.trim().isEmpty) 
-                                ? Colors.red 
-                                : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.15),
-                            width: 1.5,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: (_showLimitError || _nameController.text.trim().isEmpty) 
-                                ? Colors.red 
-                                : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.15),
-                            width: 1.5,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: (_showLimitError || _nameController.text.trim().isEmpty) 
-                                ? Colors.red 
-                                : const Color(0xFF7C6DED),
-                            width: 1.5,
-                          ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _showCurrencyDropdown = !_showCurrencyDropdown;
-                        });
-                      },
-                      child: Container(
-                        height: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _showCurrencyDropdown
-                                ? const Color(0xFF7C6DED)
-                                : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.15),
-                            width: 1.5,
-                          ),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              [('USD', '\$'), ('EUR', '€'), ('BYN', 'Br'), ('RUB', '₽')]
-                                  .firstWhere((c) => c.$1 == _selectedCurrency).$2,
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                          controller: _nameController,
+                          buildCounter:
+                              (
+                                context, {
+                                required currentLength,
+                                required isFocused,
+                                maxLength,
+                              }) => null,
+                          style: const TextStyle(fontSize: 13),
+                          decoration: InputDecoration(
+                            hintText: 'Account name',
+                            hintStyle: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(
+                                widget.context,
+                              ).colorScheme.onSurface.withOpacity(0.4),
                             ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              _showCurrencyDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                              size: 20,
-                              color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.6),
+                            filled: true,
+                            fillColor: Theme.of(
+                              widget.context,
+                            ).colorScheme.onSurface.withOpacity(0.05),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color:
+                                    (_showLimitError ||
+                                        _showDuplicateError ||
+                                        _nameController.text.trim().isEmpty)
+                                    ? Colors.red
+                                    : Theme.of(
+                                        widget.context,
+                                      ).colorScheme.onSurface.withOpacity(0.15),
+                                width: 1.5,
+                              ),
                             ),
-                          ],
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color:
+                                    (_showLimitError ||
+                                        _showDuplicateError ||
+                                        _nameController.text.trim().isEmpty)
+                                    ? Colors.red
+                                    : Theme.of(
+                                        widget.context,
+                                      ).colorScheme.onSurface.withOpacity(0.15),
+                                width: 1.5,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color:
+                                    (_showLimitError ||
+                                        _showDuplicateError ||
+                                        _nameController.text.trim().isEmpty)
+                                    ? Colors.red
+                                    : const Color(0xFF7C6DED),
+                                width: 1.5,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 12,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _showCurrencyDropdown = !_showCurrencyDropdown;
+                            });
+                          },
+                          child: Container(
+                            height: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                widget.context,
+                              ).colorScheme.onSurface.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _showCurrencyDropdown
+                                    ? const Color(0xFF7C6DED)
+                                    : Theme.of(
+                                        widget.context,
+                                      ).colorScheme.onSurface.withOpacity(0.15),
+                                width: 1.5,
+                              ),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  [
+                                        ('USD', '\$'),
+                                        ('EUR', '€'),
+                                        ('BYN', 'Br'),
+                                        ('RUB', '₽'),
+                                      ]
+                                      .firstWhere(
+                                        (c) => c.$1 == _selectedCurrency,
+                                      )
+                                      .$2,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  _showCurrencyDropdown
+                                      ? Icons.arrow_drop_up
+                                      : Icons.arrow_drop_down,
+                                  size: 20,
+                                  color: Theme.of(
+                                    widget.context,
+                                  ).colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
       },
     );
   }
@@ -516,7 +670,9 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
         color: Theme.of(widget.context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.1),
+          color: Theme.of(
+            widget.context,
+          ).colorScheme.onSurface.withOpacity(0.1),
           width: 1.5,
         ),
         boxShadow: [
@@ -532,7 +688,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
           final s = AppStrings(
             ProviderScope.containerOf(widget.context).read(localeProvider),
           );
-          
+
           void onHSVChanged(HSVColor hsv) {
             setPanelState(() {});
             dash.setState(() {
@@ -569,7 +725,9 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                           isDimmed: isSolid,
                           onTap: () {
                             dash.setState(() {
-                              if (isSolid) dash.tempGradientType = CardColorService.defaultGradient;
+                              if (isSolid)
+                                dash.tempGradientType =
+                                    CardColorService.defaultGradient;
                               dash.editingPrimary = true;
                             });
                             setPanelState(() {});
@@ -586,7 +744,9 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                           isDimmed: isSolid,
                           onTap: () {
                             dash.setState(() {
-                              if (isSolid) dash.tempGradientType = CardColorService.defaultGradient;
+                              if (isSolid)
+                                dash.tempGradientType =
+                                    CardColorService.defaultGradient;
                               dash.editingPrimary = false;
                             });
                             setPanelState(() {});
@@ -598,27 +758,30 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Container(
                           width: 1,
-                          color: Theme.of(widget.context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.15),
+                          color: Theme.of(
+                            widget.context,
+                          ).colorScheme.onSurface.withOpacity(0.15),
                           margin: const EdgeInsets.symmetric(vertical: 4),
                         ),
                       ),
                       Expanded(
                         child: GestureDetector(
-                          onTap: isSolid ? null : () {
-                            dash.setState(() {
-                              dash.tempGradientType = GradientType.solid;
-                              dash.editingPrimary = true;
-                            });
-                            setPanelState(() {});
-                            dash.overlayEntry?.markNeedsBuild();
-                          },
+                          onTap: isSolid
+                              ? null
+                              : () {
+                                  dash.setState(() {
+                                    dash.tempGradientType = GradientType.solid;
+                                    dash.editingPrimary = true;
+                                  });
+                                  setPanelState(() {});
+                                  dash.overlayEntry?.markNeedsBuild();
+                                },
                           child: Container(
                             height: double.infinity,
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 4, vertical: 6),
+                              horizontal: 4,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: isSolid
                                   ? const Color(0xFF7C6DED).withOpacity(0.15)
@@ -627,10 +790,9 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                               border: Border.all(
                                 color: isSolid
                                     ? const Color(0xFF7C6DED)
-                                    : Theme.of(widget.context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withOpacity(0.2),
+                                    : Theme.of(
+                                        widget.context,
+                                      ).colorScheme.onSurface.withOpacity(0.2),
                                 width: 1.5,
                               ),
                             ),
@@ -645,9 +807,9 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                   color: isSolid
                                       ? const Color(0xFF7C6DED)
                                       : Theme.of(widget.context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withOpacity(0.5),
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.5),
                                 ),
                               ),
                             ),
@@ -662,9 +824,8 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                   child: LayoutBuilder(
                     builder: (lbCtx, constraints) {
                       const reservedBelow = 78.0;
-                      final spectrumH =
-                          (constraints.maxHeight - reservedBelow).clamp(
-                              40.0, double.infinity);
+                      final spectrumH = (constraints.maxHeight - reservedBelow)
+                          .clamp(40.0, double.infinity);
 
                       return Column(
                         mainAxisSize: MainAxisSize.min,
@@ -704,7 +865,8 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                     GestureDetector(
                                       onTap: () {
                                         dash.setState(
-                                            () => dash.editingPrimary = true);
+                                          () => dash.editingPrimary = true,
+                                        );
                                         setPanelState(() {});
                                         dash.overlayEntry?.markNeedsBuild();
                                       },
@@ -721,10 +883,12 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                               border: dash.editingPrimary
                                                   ? Border.all(
                                                       color: Colors.white,
-                                                      width: 2)
+                                                      width: 2,
+                                                    )
                                                   : Border.all(
                                                       color: Colors.transparent,
-                                                      width: 2),
+                                                      width: 2,
+                                                    ),
                                             ),
                                           ),
                                           const SizedBox(width: 5),
@@ -740,9 +904,10 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                                   .colorScheme
                                                   .onSurface
                                                   .withOpacity(
-                                                      dash.editingPrimary
-                                                          ? 0.8
-                                                          : 0.4),
+                                                    dash.editingPrimary
+                                                        ? 0.8
+                                                        : 0.4,
+                                                  ),
                                             ),
                                           ),
                                         ],
@@ -752,8 +917,9 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                     if (!isSolid)
                                       GestureDetector(
                                         onTap: () {
-                                          dash.setState(() =>
-                                              dash.editingPrimary = false);
+                                          dash.setState(
+                                            () => dash.editingPrimary = false,
+                                          );
                                           setPanelState(() {});
                                           dash.overlayEntry?.markNeedsBuild();
                                         },
@@ -772,9 +938,10 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                                     .colorScheme
                                                     .onSurface
                                                     .withOpacity(
-                                                        !dash.editingPrimary
-                                                            ? 0.8
-                                                            : 0.4),
+                                                      !dash.editingPrimary
+                                                          ? 0.8
+                                                          : 0.4,
+                                                    ),
                                               ),
                                             ),
                                             const SizedBox(width: 5),
@@ -788,11 +955,13 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                                 border: !dash.editingPrimary
                                                     ? Border.all(
                                                         color: Colors.white,
-                                                        width: 2)
+                                                        width: 2,
+                                                      )
                                                     : Border.all(
                                                         color:
                                                             Colors.transparent,
-                                                        width: 2),
+                                                        width: 2,
+                                                      ),
                                               ),
                                             ),
                                           ],
@@ -818,86 +987,94 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                       children: GradientType.values
                           .where((t) => t != GradientType.solid)
                           .map((type) {
-                        final isSelected = dash.tempGradientType == type;
-                        final label = switch (type) {
-                          GradientType.linear => s.gradientLinear,
-                          GradientType.linearReverse => s.gradientReverse,
-                          GradientType.radial => s.gradientRadial,
-                          GradientType.sweep => s.gradientSweep,
-                          GradientType.solid => '',
-                        };
-                        final icon = switch (type) {
-                          GradientType.linear => Icons.trending_flat_rounded,
-                          GradientType.linearReverse =>
-                            Icons.swap_horiz_rounded,
-                          GradientType.radial => Icons.blur_circular_rounded,
-                          GradientType.sweep => Icons.rotate_right_rounded,
-                          GradientType.solid => Icons.square_rounded,
-                        };
-                        return Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: GestureDetector(
-                              onTap: () {
-                                dash.setState(
-                                    () => dash.tempGradientType = type);
-                                setPanelState(() {});
-                                dash.overlayEntry?.markNeedsBuild();
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 150),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? const Color(0xFF7C6DED)
-                                          .withOpacity(0.15)
-                                      : Theme.of(widget.context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? const Color(0xFF7C6DED)
-                                        : Colors.transparent,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(icon,
-                                        size: 15,
-                                        color: isSelected
-                                            ? const Color(0xFF7C6DED)
-                                            : Theme.of(widget.context)
+                            final isSelected = dash.tempGradientType == type;
+                            final label = switch (type) {
+                              GradientType.linear => s.gradientLinear,
+                              GradientType.linearReverse => s.gradientReverse,
+                              GradientType.radial => s.gradientRadial,
+                              GradientType.sweep => s.gradientSweep,
+                              GradientType.solid => '',
+                            };
+                            final icon = switch (type) {
+                              GradientType.linear =>
+                                Icons.trending_flat_rounded,
+                              GradientType.linearReverse =>
+                                Icons.swap_horiz_rounded,
+                              GradientType.radial =>
+                                Icons.blur_circular_rounded,
+                              GradientType.sweep => Icons.rotate_right_rounded,
+                              GradientType.solid => Icons.square_rounded,
+                            };
+                            return Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    dash.setState(
+                                      () => dash.tempGradientType = type,
+                                    );
+                                    setPanelState(() {});
+                                    dash.overlayEntry?.markNeedsBuild();
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? const Color(
+                                              0xFF7C6DED,
+                                            ).withOpacity(0.15)
+                                          : Theme.of(widget.context)
                                                 .colorScheme
                                                 .onSurface
-                                                .withOpacity(0.45)),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      label,
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.normal,
+                                                .withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
                                         color: isSelected
                                             ? const Color(0xFF7C6DED)
-                                            : Theme.of(widget.context)
-                                                .colorScheme
-                                                .onSurface
-                                                .withOpacity(0.45),
+                                            : Colors.transparent,
+                                        width: 1.5,
                                       ),
                                     ),
-                                  ],
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          icon,
+                                          size: 15,
+                                          color: isSelected
+                                              ? const Color(0xFF7C6DED)
+                                              : Theme.of(widget.context)
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.45),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          label,
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: isSelected
+                                                ? FontWeight.w600
+                                                : FontWeight.normal,
+                                            color: isSelected
+                                                ? const Color(0xFF7C6DED)
+                                                : Theme.of(widget.context)
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withOpacity(0.45),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                            );
+                          })
+                          .toList(),
                     ),
                   ),
                 ),
@@ -909,7 +1086,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                         onPressed: () {
                           final isDarkTheme =
                               Theme.of(widget.context).brightness ==
-                                  Brightness.dark;
+                              Brightness.dark;
                           final defP = isDarkTheme
                               ? CardColorService.defaultPrimary
                               : CardColorService.defaultPrimaryLight;
@@ -921,28 +1098,30 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                             dash.tempSecondary = defS;
                             dash.tempPrimaryHSV = HSVColor.fromColor(defP);
                             dash.tempSecondaryHSV = HSVColor.fromColor(defS);
-                            dash.tempGradientType = CardColorService.defaultGradient;
+                            dash.tempGradientType =
+                                CardColorService.defaultGradient;
                           });
                           setPanelState(() {});
                           dash.overlayEntry?.markNeedsBuild();
                         },
                         icon: const Icon(Icons.restart_alt_rounded, size: 15),
-                        label: Text(s.reset,
-                            style: const TextStyle(fontSize: 13)),
+                        label: Text(
+                          s.reset,
+                          style: const TextStyle(fontSize: 13),
+                        ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(widget.context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.7),
+                          foregroundColor: Theme.of(
+                            widget.context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
                           side: BorderSide(
-                            color: Theme.of(widget.context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.2),
+                            color: Theme.of(
+                              widget.context,
+                            ).colorScheme.onSurface.withOpacity(0.2),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
@@ -950,32 +1129,56 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                        onPressed: _nameController.text.trim().isEmpty 
-                            ? null 
+                        onPressed: _nameController.text.trim().isEmpty
+                            ? null
                             : () {
-                                // Add haptic feedback here
+                                final accounts =
+                                    ProviderScope.containerOf(
+                                      widget.context,
+                                    ).read(accountsProvider).valueOrNull ??
+                                    [];
+
+                                if (_isDuplicateName(
+                                  accounts,
+                                  _nameController.text,
+                                )) {
+                                  setState(() => _showDuplicateError = true);
+                                  Future.delayed(
+                                    const Duration(seconds: 3),
+                                    () {
+                                      if (mounted)
+                                        setState(
+                                          () => _showDuplicateError = false,
+                                        );
+                                    },
+                                  );
+                                  return; // block saving
+                                }
+
                                 HapticService.light();
                                 dash.closeAccountOverlay(apply: true);
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF7C6DED),
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor: Theme.of(widget.context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.12),
-                          disabledForegroundColor: Theme.of(widget.context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.38),
+                          disabledBackgroundColor: Theme.of(
+                            widget.context,
+                          ).colorScheme.onSurface.withOpacity(0.12),
+                          disabledForegroundColor: Theme.of(
+                            widget.context,
+                          ).colorScheme.onSurface.withOpacity(0.38),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: Text(
-                            dash.isAddingAccount ? s.addAccount : s.apply,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 14)),
+                          dash.isAddingAccount ? s.addAccount : s.apply,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -1008,12 +1211,14 @@ class PanelTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor = isSelected 
+    final borderColor = isSelected
         ? const Color(0xFF7C6DED)
         : (isDark ? Colors.white24 : const Color(0xFFCCCCDD));
     final textColor = isSelected
         ? const Color(0xFF7C6DED)
-        : (isDark ? Colors.white60 : Theme.of(context).colorScheme.onSurface.withOpacity(0.5));
+        : (isDark
+              ? Colors.white60
+              : Theme.of(context).colorScheme.onSurface.withOpacity(0.5));
 
     return GestureDetector(
       onTap: onTap,
@@ -1025,12 +1230,11 @@ class PanelTab extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF7C6DED).withOpacity(0.15) : Colors.transparent,
+            color: isSelected
+                ? const Color(0xFF7C6DED).withOpacity(0.15)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: borderColor,
-              width: 1.5,
-            ),
+            border: Border.all(color: borderColor, width: 1.5),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -1057,8 +1261,9 @@ class PanelTab extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
                     color: textColor,
                   ),
                 ),

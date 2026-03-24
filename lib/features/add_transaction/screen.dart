@@ -18,12 +18,12 @@ const _uuid = Uuid();
 // Provider to get the account for new transactions
 final transactionAccountProvider = Provider<({int id, String name})>((ref) {
   final activeAccount = ref.watch(activeAccountProvider);
-  
+
   if (activeAccount != null) {
     // User is on a specific account page
     return (id: activeAccount.id, name: activeAccount.name);
   }
-  
+
   // User is on Total Balance page, use Main account
   // This will be resolved in the widget
   return (id: 0, name: ''); // Placeholder, will be replaced
@@ -77,10 +77,16 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
       _noteController.text = widget.initial!.note ?? '';
     } else {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        final activeAccount = ref.read(activeAccountProvider);
         final curr = ref.read(currencyProvider);
+
+        // Use active account's currency if available, otherwise use global currency
+        final currencyCode = activeAccount?.currency ?? curr.code;
+        final currencySymbol = currencyMap[currencyCode]?.symbol ?? curr.symbol;
+
         ref
             .read(addTransactionProvider(null).notifier)
-            .setCurrency(curr.symbol, curr.code);
+            .setCurrency(currencySymbol, currencyCode);
       });
     }
   }
@@ -155,18 +161,24 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
 
     try {
       print('--- SUBMIT CLICKED ---');
-      print('Amount: $amount, Category: ${state.category}, Type: ${state.type.name}');
-      
+      print(
+        'Amount: $amount, Category: ${state.category}, Type: ${state.type.name}',
+      );
+
       final activeAccount = ref.read(activeAccountProvider);
       int accountId;
-      
+
       if (activeAccount != null) {
-        print('Using active account ID: ${activeAccount.id}, Name: ${activeAccount.name}');
+        print(
+          'Using active account ID: ${activeAccount.id}, Name: ${activeAccount.name}',
+        );
         accountId = activeAccount.id;
       } else {
         print('No active account. Fetching main account...');
         final mainAccount = await ref.read(accountRepositoryProvider).getMain();
-        print('Main account fetched: ID=${mainAccount.id}, Name: ${mainAccount.name}');
+        print(
+          'Main account fetched: ID=${mainAccount.id}, Name: ${mainAccount.name}',
+        );
         accountId = mainAccount.id;
       }
 
@@ -181,7 +193,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         currencyCode: state.overrideCurrencyCode,
         accountId: accountId,
       );
-      
+
       print('Transaction object created: ID=${tx.id}, AccId=${tx.accountId}');
       print('Calling provider to save...');
 
@@ -190,8 +202,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         print('Update completed');
       } else {
         final res = await ref.read(transactionsProvider.notifier).add(tx);
-        print('Add completed. Result: ${res.isSuccess ? "SUCCESS" : "FAILURE"}');
-        
+        print(
+          'Add completed. Result: ${res.isSuccess ? "SUCCESS" : "FAILURE"}',
+        );
+
         if (res.isFailure) {
           print('!!! Provider returned failure: ${res.errorOrNull}');
           throw Exception(res.errorOrNull);
@@ -210,7 +224,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
       print('Error: $e');
       print('Stack trace:');
       print(stack);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -281,7 +295,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     final categories = ref.watch(availableCategoriesProvider(widget.initial));
     final overrideCurrency = state.overrideCurrency;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     // Get active account or fallback to main
     final activeAccount = ref.watch(activeAccountProvider);
     final accountsAsync = ref.watch(accountsProvider);
@@ -343,9 +357,13 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                   Expanded(
                     child: accountsAsync.when(
                       data: (accounts) {
-                        final displayAccount = activeAccount ?? 
-                            accounts.firstWhere((a) => a.isMain, orElse: () => accounts.first);
-                        
+                        final displayAccount =
+                            activeAccount ??
+                            accounts.firstWhere(
+                              (a) => a.isMain,
+                              orElse: () => accounts.first,
+                            );
+
                         return Container(
                           height: 56,
                           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -369,11 +387,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                               Flexible(
                                 child: Text(
                                   displayAccount.name,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: const Color(0xFF7C6DED),
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: const Color(0xFF7C6DED),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
                                   overflow: TextOverflow.ellipsis,
                                   textAlign: TextAlign.center,
                                 ),
@@ -408,14 +427,21 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                         borderRadius: BorderRadius.circular(12),
                         border: isDark
                             ? null
-                            : Border.all(color: const Color(0xFFDDDDEE), width: 1),
+                            : Border.all(
+                                color: const Color(0xFFDDDDEE),
+                                width: 1,
+                              ),
                       ),
                       child: Row(
                         children: [
                           Expanded(
                             child: GestureDetector(
                               onTap: () => ref
-                                  .read(addTransactionProvider(widget.initial).notifier)
+                                  .read(
+                                    addTransactionProvider(
+                                      widget.initial,
+                                    ).notifier,
+                                  )
                                   .setType(TransactionType.income),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
@@ -430,7 +456,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                                     Icons.arrow_downward_rounded,
                                     color: state.type == TransactionType.income
                                         ? AppColors.income
-                                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                        : Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(0.4),
                                     size: 20,
                                   ),
                                 ),
@@ -440,7 +469,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                           Expanded(
                             child: GestureDetector(
                               onTap: () => ref
-                                  .read(addTransactionProvider(widget.initial).notifier)
+                                  .read(
+                                    addTransactionProvider(
+                                      widget.initial,
+                                    ).notifier,
+                                  )
                                   .setType(TransactionType.expense),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
@@ -455,7 +488,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                                     Icons.arrow_upward_rounded,
                                     color: state.type == TransactionType.expense
                                         ? AppColors.expense
-                                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                        : Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(0.4),
                                     size: 20,
                                   ),
                                 ),
