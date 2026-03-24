@@ -134,11 +134,20 @@ final accountFilteredTransactionsProvider = Provider<List<Transaction>>((ref) {
 
 final totalBalanceProvider = Provider<double>((ref) {
   final txs = ref.watch(accountFilteredTransactionsProvider);
+  
+  final index = ref.watch(activeAccountIndexProvider);
+  final accountsAsync = ref.watch(accountsProvider);
+  final globalCurrency = ref.watch(currencyProvider).code;
+  
+  String targetCurrency = globalCurrency;
+  if (index > 0) {
+    final accounts = accountsAsync.valueOrNull ?? [];
+    if (index <= accounts.length) {
+      targetCurrency = accounts[index - 1].currency;
+    }
+  }
+  
   final exchangeService = ref.watch(exchangeRateServiceProvider);
-  final activeAccount = ref.watch(activeAccountProvider);
-  final targetCurrency = activeAccount != null 
-      ? activeAccount.currency 
-      : ref.watch(currencyProvider).code;
 
   return txs.fold(0.0, (sum, t) {
     final converted = exchangeService.convert(
@@ -151,32 +160,51 @@ final totalBalanceProvider = Provider<double>((ref) {
 });
 
 final totalIncomeProvider = Provider<double>((ref) {
+  // Watch the filtered transactions directly
   final txs = ref.watch(accountFilteredTransactionsProvider);
   final filtered = txs.where((t) => t.type == TransactionType.income);
+  
+  // Watch the dependencies that change on swipe!
+  final index = ref.watch(activeAccountIndexProvider);
+  final accountsAsync = ref.watch(accountsProvider);
+  final globalCurrency = ref.watch(currencyProvider).code;
+  
+  // Resolve target currency synchronously based on the current swipe index
+  String targetCurrency = globalCurrency;
+  if (index > 0) {
+    final accounts = accountsAsync.valueOrNull ?? [];
+    if (index <= accounts.length) {
+      targetCurrency = accounts[index - 1].currency;
+    }
+  }
+  
   final exchangeService = ref.watch(exchangeRateServiceProvider);
-  final activeAccount = ref.watch(activeAccountProvider);
-  final targetCurrency = activeAccount != null 
-      ? activeAccount.currency 
-      : ref.watch(currencyProvider).code;
-
+  
   return filtered.fold(0.0, (sum, t) {
-    return sum +
-        exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
+    return sum + exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
   });
 });
 
 final totalExpenseProvider = Provider<double>((ref) {
   final txs = ref.watch(accountFilteredTransactionsProvider);
   final filtered = txs.where((t) => t.type == TransactionType.expense);
+  
+  final index = ref.watch(activeAccountIndexProvider);
+  final accountsAsync = ref.watch(accountsProvider);
+  final globalCurrency = ref.watch(currencyProvider).code;
+  
+  String targetCurrency = globalCurrency;
+  if (index > 0) {
+    final accounts = accountsAsync.valueOrNull ?? [];
+    if (index <= accounts.length) {
+      targetCurrency = accounts[index - 1].currency;
+    }
+  }
+  
   final exchangeService = ref.watch(exchangeRateServiceProvider);
-  final activeAccount = ref.watch(activeAccountProvider);
-  final targetCurrency = activeAccount != null 
-      ? activeAccount.currency 
-      : ref.watch(currencyProvider).code;
-
+  
   return filtered.fold(0.0, (sum, t) {
-    return sum +
-        exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
+    return sum + exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
   });
 });
 
@@ -189,15 +217,23 @@ final currentMonthExpenseProvider = Provider<double>((ref) {
         t.date.year == now.year &&
         t.date.month == now.month,
   );
+  
+  final index = ref.watch(activeAccountIndexProvider);
+  final accountsAsync = ref.watch(accountsProvider);
+  final globalCurrency = ref.watch(currencyProvider).code;
+  
+  String targetCurrency = globalCurrency;
+  if (index > 0) {
+    final accounts = accountsAsync.valueOrNull ?? [];
+    if (index <= accounts.length) {
+      targetCurrency = accounts[index - 1].currency;
+    }
+  }
+  
   final exchangeService = ref.watch(exchangeRateServiceProvider);
-  final activeAccount = ref.watch(activeAccountProvider);
-  final targetCurrency = activeAccount != null 
-      ? activeAccount.currency 
-      : ref.watch(currencyProvider).code;
-
+  
   return filtered.fold(0.0, (sum, t) {
-    return sum +
-        exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
+    return sum + exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
   });
 });
 
