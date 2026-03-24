@@ -345,7 +345,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                            color: _showLimitError 
+                            color: (_showLimitError || _nameController.text.trim().isEmpty) 
                                 ? Colors.red 
                                 : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.15),
                             width: 1.5,
@@ -354,7 +354,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                            color: _showLimitError 
+                            color: (_showLimitError || _nameController.text.trim().isEmpty) 
                                 ? Colors.red 
                                 : Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.15),
                             width: 1.5,
@@ -363,7 +363,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                            color: _showLimitError 
+                            color: (_showLimitError || _nameController.text.trim().isEmpty) 
                                 ? Colors.red 
                                 : const Color(0xFF7C6DED),
                             width: 1.5,
@@ -879,7 +879,8 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text(s.apply,
+                        child: Text(
+                            dash.isAddingAccount ? 'Создать счёт' : s.apply,
                             style: const TextStyle(
                                 fontWeight: FontWeight.w700, fontSize: 14)),
                       ),

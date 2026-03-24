@@ -13,6 +13,7 @@ class BalanceCardCarousel extends ConsumerStatefulWidget {
   final CurrencyInfo currencyInfo;
   final VoidCallback? onLongPress;
   final void Function(Account)? onAccountLongPress;
+  final VoidCallback? onAddAccountTap;
   final Color? previewPrimary;
   final Color? previewSecondary;
   final GradientType? previewGradientType;
@@ -23,6 +24,7 @@ class BalanceCardCarousel extends ConsumerStatefulWidget {
     required this.currencyInfo,
     this.onLongPress,
     this.onAccountLongPress,
+    this.onAddAccountTap,
     this.previewPrimary,
     this.previewSecondary,
     this.previewGradientType,
@@ -117,7 +119,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                       );
                     } else {
                       cardWidget = AddAccountCard(
-                        onTap: () {},
+                        onTap: widget.onAddAccountTap,
                       );
                     }
 
@@ -177,33 +179,36 @@ class AddAccountCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: CustomPaint(
-        painter: _DashedBorderPainter(),
-        child: Container(
-          width: double.infinity,
-          height: 220,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.add_rounded,
-                size: 32,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Add account',
-                style: TextStyle(
-                  fontSize: 14,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 15), // makes it smaller
+        child: CustomPaint(
+          painter: _DashedBorderPainter(),
+          child: Container(
+            width: double.infinity,
+            height: 190, // reduced from 220
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.add_rounded,
+                  size: 32,
                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                  fontWeight: FontWeight.w500,
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  'Add account',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
