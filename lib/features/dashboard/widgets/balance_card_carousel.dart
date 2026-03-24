@@ -42,7 +42,11 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
   void initState() {
     super.initState();
     // 0.92 позволяет видеть края предыдущей/следующей карточки
-    _pageController = PageController(viewportFraction: 0.92);
+    final savedIndex = ref.read(activeAccountIndexProvider);
+    _pageController = PageController(
+      viewportFraction: 0.92,
+      initialPage: savedIndex,
+    );
   }
 
   @override
@@ -70,7 +74,8 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                 maxWidth: MediaQuery.of(context).size.width,
                 child: PageView.builder(
                   controller: _pageController,
-                  clipBehavior: Clip.none, // Не обрезает карточку при 3D-наклоне
+                  clipBehavior:
+                      Clip.none, // Не обрезает карточку при 3D-наклоне
                   itemCount: totalPages,
                   onPageChanged: (index) {
                     ref.read(activeAccountIndexProvider.notifier).state = index;
@@ -92,28 +97,40 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                       );
                     } else if (index <= accounts.length) {
                       final account = accounts[index - 1];
-                      final accountColors = ref.watch(accountCardColorsProvider(account.id));
-                      
+                      final accountColors = ref.watch(
+                        accountCardColorsProvider(account.id),
+                      );
+
                       // Calculate this specific account's balance
-                      final txs = ref.watch(transactionsProvider).valueOrNull ?? [];
-                      final accountTxs = txs.where((t) => t.accountId == account.id).toList();
-                      final exchangeService = ref.watch(exchangeRateServiceProvider);
+                      final txs =
+                          ref.watch(transactionsProvider).valueOrNull ?? [];
+                      final accountTxs = txs
+                          .where((t) => t.accountId == account.id)
+                          .toList();
+                      final exchangeService = ref.watch(
+                        exchangeRateServiceProvider,
+                      );
                       final accountBalance = accountTxs.fold(0.0, (sum, t) {
                         final converted = exchangeService.convert(
                           t.amount,
                           t.currencyCode,
-                          account.currency, // target is the account's own currency
+                          account
+                              .currency, // target is the account's own currency
                         );
-                        return t.type == TransactionType.income ? sum + converted : sum - converted;
+                        return t.type == TransactionType.income
+                            ? sum + converted
+                            : sum - converted;
                       });
-                      
+
                       cardWidget = BalanceCard(
-                        balance: accountBalance, // Use the dynamically calculated balance!
+                        balance:
+                            accountBalance, // Use the dynamically calculated balance!
                         currencyInfo: CurrencyInfo(
                           currencyMap[account.currency]?.symbol ?? '\$',
                           account.currency,
                         ),
-                        onLongPress: () => widget.onAccountLongPress?.call(account),
+                        onLongPress: () =>
+                            widget.onAccountLongPress?.call(account),
                         accountName: account.name,
                         accountColors: accountColors,
                       );
@@ -133,10 +150,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
               ),
             ),
             const SizedBox(height: 12),
-            _DotIndicators(
-              count: totalPages,
-              activeIndex: activeIndex,
-            ),
+            _DotIndicators(count: totalPages, activeIndex: activeIndex),
           ],
         );
       },
@@ -159,10 +173,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
               ),
             ),
             const SizedBox(height: 12),
-            const _DotIndicators(
-              count: 1,
-              activeIndex: 0,
-            ),
+            const _DotIndicators(count: 1, activeIndex: 0),
           ],
         );
       },
@@ -180,7 +191,10 @@ class AddAccountCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10), // Reduced margins for larger size
+        margin: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 10,
+        ), // Reduced margins for larger size
         child: CustomPaint(
           painter: _DashedBorderPainter(),
           child: Container(
@@ -196,14 +210,18 @@ class AddAccountCard extends StatelessWidget {
                 Icon(
                   Icons.add_rounded,
                   size: 36, // Slightly bigger icon
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.5),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Add account',
                   style: TextStyle(
                     fontSize: 15,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.5),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -240,10 +258,7 @@ class _DashedBorderPainter extends CustomPainter {
     for (final metric in pathMetrics) {
       double distance = 0;
       while (distance < metric.length) {
-        final segment = metric.extractPath(
-          distance,
-          distance + dashWidth,
-        );
+        final segment = metric.extractPath(distance, distance + dashWidth);
         canvas.drawPath(segment, paint);
         distance += dashWidth + dashSpace;
       }
@@ -258,10 +273,7 @@ class _DotIndicators extends StatelessWidget {
   final int count;
   final int activeIndex;
 
-  const _DotIndicators({
-    required this.count,
-    required this.activeIndex,
-  });
+  const _DotIndicators({required this.count, required this.activeIndex});
 
   @override
   Widget build(BuildContext context) {
