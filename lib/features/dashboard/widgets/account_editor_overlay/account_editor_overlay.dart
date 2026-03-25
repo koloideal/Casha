@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/account.dart';
 import '../../../../shared/models/transaction.dart';
+import '../../../../shared/widgets/byn_sign.dart';
 import '../../../settings/provider.dart';
 import '../../provider.dart';
 import '../balance_card.dart';
@@ -308,16 +309,25 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text(
-                                        entry.$2,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: isSelected
-                                              ? const Color(0xFF7C6DED)
-                                              : null,
-                                        ),
-                                      ),
+                                      entry.$1 == 'BYN'
+                                          ? BynSign(
+                                              fontSize: 14,
+                                              color: isSelected
+                                                  ? const Color(0xFF7C6DED)
+                                                  : Theme.of(
+                                                      widget.context,
+                                                    ).colorScheme.onSurface,
+                                            )
+                                          : Text(
+                                              entry.$2,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: isSelected
+                                                    ? const Color(0xFF7C6DED)
+                                                    : null,
+                                              ),
+                                            ),
                                       const SizedBox(width: 4),
                                       Flexible(
                                         child: Text(

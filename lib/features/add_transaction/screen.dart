@@ -388,6 +388,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                   AmountInput(
                     controller: _amountController,
                     currencySymbol: overrideCurrency,
+                    currencyCode: state.overrideCurrencyCode,
                     showError: _showError,
                     borderColorAnimation: _borderColorAnimation,
                     isDark: isDark,

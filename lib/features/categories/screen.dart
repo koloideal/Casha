@@ -6,6 +6,7 @@ import '../../core/constants.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../shared/utils/currency_utils.dart';
 import '../../shared/providers/amount_format_provider.dart';
+import '../../shared/widgets/byn_sign.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
 
@@ -42,9 +43,9 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
         title: Text(
           s.categories,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         actions: [
           _ChartToggle(
@@ -78,7 +79,9 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                           border: Border.all(
                             color: !_showIncome
                                 ? AppColors.accent
-                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.2),
                             width: 1.5,
                           ),
                         ),
@@ -90,7 +93,9 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                             fontWeight: FontWeight.w600,
                             color: !_showIncome
                                 ? Colors.white
-                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.6),
                           ),
                         ),
                       ),
@@ -113,7 +118,9 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                           border: Border.all(
                             color: _showIncome
                                 ? AppColors.accent
-                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.2),
                             width: 1.5,
                           ),
                         ),
@@ -125,7 +132,9 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                             fontWeight: FontWeight.w600,
                             color: _showIncome
                                 ? Colors.white
-                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.6),
                           ),
                         ),
                       ),
@@ -149,11 +158,15 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                           currency: currencyInfo.symbol,
                         )
                       else
-                        _BarChartCard(monthlyData: monthlyData, currency: currencyInfo.symbol),
+                        _BarChartCard(
+                          monthlyData: monthlyData,
+                          currency: currencyInfo.symbol,
+                        ),
                       const SizedBox(height: 20),
                       Text(
                         s.rankedByAmount,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
@@ -235,12 +248,16 @@ class _ToggleButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accent.withOpacity(0.15) : Colors.transparent,
+          color: isSelected
+              ? AppColors.accent.withOpacity(0.15)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
           icon,
-          color: isSelected ? AppColors.accent : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          color: isSelected
+              ? AppColors.accent
+              : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
           size: 20,
         ),
       ),
@@ -301,7 +318,8 @@ class _PieChartCard extends ConsumerWidget {
                       final isTouched = i == touchedIndex;
                       final cat = entries[i].key;
                       final val = entries[i].value;
-                      final color = AppCategories.colors[cat] ?? AppColors.accent;
+                      final color =
+                          AppCategories.colors[cat] ?? AppColors.accent;
                       return PieChartSectionData(
                         color: color,
                         value: val,
@@ -324,15 +342,17 @@ class _PieChartCard extends ConsumerWidget {
                     Text(
                       s.total,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                          ),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                      ),
                     ),
                     Text(
                       formatAmount(currency, total, fmt),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -354,7 +374,9 @@ class _BarChartCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
     final fmt = ref.watch(amountFormatProvider);
-    final maxY = monthlyData.map((e) => e.amount).reduce((a, b) => a > b ? a : b);
+    final maxY = monthlyData
+        .map((e) => e.amount)
+        .reduce((a, b) => a > b ? a : b);
     final adjustedMaxY = maxY * 1.2;
 
     return Container(
@@ -369,9 +391,9 @@ class _BarChartCard extends ConsumerWidget {
           Text(
             s.lastSixMonths,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                  fontWeight: FontWeight.w600,
-                ),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -400,14 +422,17 @@ class _BarChartCard extends ConsumerWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
-                        if (value.toInt() >= 0 && value.toInt() < monthlyData.length) {
+                        if (value.toInt() >= 0 &&
+                            value.toInt() < monthlyData.length) {
                           final month = monthlyData[value.toInt()].month;
                           return Padding(
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
                               DateFormat('MMM').format(month),
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
                                 fontSize: 11,
                               ),
                             ),
@@ -501,15 +526,21 @@ class _CategoryRow extends ConsumerWidget {
                 height: 28,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: rank <= 3 ? color.withOpacity(0.2) : Theme.of(context).dividerColor,
+                  color: rank <= 3
+                      ? color.withOpacity(0.2)
+                      : Theme.of(context).dividerColor,
                   shape: BoxShape.circle,
                 ),
                 child: Text(
                   '$rank',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: rank <= 3 ? color : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: rank <= 3
+                        ? color
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -526,9 +557,9 @@ class _CategoryRow extends ConsumerWidget {
                 child: Text(
                   s.categoryLabel(category),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ),
               Column(
@@ -537,15 +568,17 @@ class _CategoryRow extends ConsumerWidget {
                   Text(
                     formatAmount(currency, amount, fmt),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isIncome ? AppColors.income : AppColors.expense,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: isIncome ? AppColors.income : AppColors.expense,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   Text(
                     '${(pct * 100).toStringAsFixed(1)}%',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                        ),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                    ),
                   ),
                 ],
               ),
@@ -594,16 +627,16 @@ class _EmptyState extends ConsumerWidget {
           Text(
             isIncome ? s.noIncomeData : s.noExpenseData,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: Theme.of(context).colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             isIncome ? s.addIncomeToSeeBreakdown : s.addExpensesToSeeBreakdown,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                ),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            ),
           ),
         ],
       ),

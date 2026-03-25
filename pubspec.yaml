@@ -59,6 +59,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   fonts:
+    - family: BynSymbol
+      fonts:
+        - asset: assets/fonts/nbrb.ttf
     - family: NunitoCyrillic
       fonts:
         - asset: assets/fonts/nunito/Nunito-Medium.ttf

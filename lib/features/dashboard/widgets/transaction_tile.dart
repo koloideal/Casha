@@ -9,6 +9,7 @@ import '../../../core/l10n/locale_provider.dart';
 import '../../../shared/models/transaction.dart';
 import '../../../shared/providers/amount_format_provider.dart';
 import '../../../shared/utils/currency_utils.dart';
+import '../../../shared/widgets/byn_sign.dart';
 import '../provider.dart';
 
 class TransactionTile extends ConsumerWidget {
@@ -117,13 +118,36 @@ class TransactionTile extends ConsumerWidget {
                 ],
               ),
             ),
-            Text(
-              '${isIncome ? '+ ' : '- '}${formatAmount(transaction.currency, transaction.amount, fmt)}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            transaction.currencyCode == 'BYN'
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        isIncome ? '+ ' : '- ',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: color,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      BynSign(fontSize: 14, color: color),
+                      const SizedBox(width: 2),
+                      Text(
+                        formatAmount('', transaction.amount, fmt),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: color,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    '${isIncome ? '+ ' : '- '}${formatAmount(transaction.currency, transaction.amount, fmt)}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
           ],
         ),
       ),

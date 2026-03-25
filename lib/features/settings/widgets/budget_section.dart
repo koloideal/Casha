@@ -5,6 +5,7 @@ import '../../../core/constants.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../shared/providers/amount_format_provider.dart';
 import '../../../shared/utils/currency_utils.dart';
+import '../../../shared/widgets/byn_sign.dart';
 import '../provider.dart';
 
 class BudgetSection extends ConsumerStatefulWidget {
@@ -59,7 +60,9 @@ class _BudgetSectionState extends ConsumerState<BudgetSection> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
+        border: isDark
+            ? null
+            : Border.all(color: const Color(0xFFDDDDEE), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,15 +86,17 @@ class _BudgetSectionState extends ConsumerState<BudgetSection> {
                 child: Text(
                   s.monthlyBudgetSetting,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ),
               if (!_isEditing)
                 IconButton(
                   icon: const Icon(Icons.edit_rounded, size: 20),
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
                   onPressed: () => setState(() => _isEditing = true),
                 ),
             ],
@@ -103,14 +108,32 @@ class _BudgetSectionState extends ConsumerState<BudgetSection> {
               children: [
                 TextFormField(
                   controller: _budgetController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d+\.?\d{0,2}'),
+                    ),
                   ],
                   decoration: InputDecoration(
-                    prefixText: currencyInfo.symbol == 'Br' || currencyInfo.symbol == '₽'
-                        ? '${currencyInfo.symbol} '
-                        : currencyInfo.symbol,
+                    prefix: currencyInfo.code == 'BYN'
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              BynSign(
+                                fontSize: 16,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                          )
+                        : null,
+                    prefixText: currencyInfo.code != 'BYN'
+                        ? (currencyInfo.symbol == '₽'
+                              ? '${currencyInfo.symbol} '
+                              : currencyInfo.symbol)
+                        : null,
                     hintText: '0.00',
                     helperText: s.leaveEmptyToRemove,
                   ),
@@ -123,7 +146,8 @@ class _BudgetSectionState extends ConsumerState<BudgetSection> {
                     TextButton(
                       onPressed: () {
                         final budget = ref.read(budgetProvider);
-                        _budgetController.text = budget?.toStringAsFixed(2) ?? '';
+                        _budgetController.text =
+                            budget?.toStringAsFixed(2) ?? '';
                         setState(() => _isEditing = false);
                       },
                       child: Text(s.cancel),
@@ -144,23 +168,47 @@ class _BudgetSectionState extends ConsumerState<BudgetSection> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  budget != null
-                      ? formatAmount(currencyInfo.symbol, budget, fmt)
-                      : s.budgetNone,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: budget != null ? AppColors.accent : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                        fontWeight: FontWeight.w700,
+                budget != null && currencyInfo.code == 'BYN'
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          BynSign(fontSize: 24, color: AppColors.accent),
+                          const SizedBox(width: 2),
+                          Text(
+                            formatAmount('', budget, fmt),
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  color: AppColors.accent,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        budget != null
+                            ? formatAmount(currencyInfo.symbol, budget, fmt)
+                            : s.budgetNone,
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              color: budget != null
+                                  ? AppColors.accent
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.6),
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
-                ),
                 const SizedBox(height: 8),
                 Text(
                   budget != null
                       ? s.yourMonthlySpendingLimit
                       : s.setMonthlySpendingLimit,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
                 ),
               ],
             ),

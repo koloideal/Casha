@@ -46,7 +46,7 @@ class CurrencyInfo {
 const Map<String, CurrencyInfo> currencyMap = {
   'USD': CurrencyInfo('\$', 'USD'),
   'EUR': CurrencyInfo('€', 'EUR'),
-  'BYN': CurrencyInfo('Br', 'BYN'),
+  'BYN': CurrencyInfo('', 'BYN'),
   'RUB': CurrencyInfo('₽', 'RUB'),
 };
 

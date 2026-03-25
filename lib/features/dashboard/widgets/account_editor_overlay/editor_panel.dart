@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../shared/widgets/byn_sign.dart';
 
 class AccountEditorPanel extends ConsumerWidget {
   final TextEditingController nameController;
@@ -160,18 +161,29 @@ class AccountEditorPanel extends ConsumerWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              [
-                                ('USD', '\$'),
-                                ('EUR', '€'),
-                                ('BYN', 'Br'),
-                                ('RUB', '₽'),
-                              ].firstWhere((c) => c.$1 == selectedCurrency).$2,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            selectedCurrency == 'BYN'
+                                ? BynSign(
+                                    fontSize: 15,
+                                    color: Theme.of(
+                                      dashboardContext,
+                                    ).colorScheme.onSurface,
+                                  )
+                                : Text(
+                                    [
+                                          ('USD', '\$'),
+                                          ('EUR', '€'),
+                                          ('BYN', 'Br'),
+                                          ('RUB', '₽'),
+                                        ]
+                                        .firstWhere(
+                                          (c) => c.$1 == selectedCurrency,
+                                        )
+                                        .$2,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                             const SizedBox(width: 4),
                             Icon(
                               showCurrencyDropdown

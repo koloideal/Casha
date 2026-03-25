@@ -7,12 +7,13 @@ import '../../../core/l10n/locale_provider.dart';
 import '../../../core/services/card_color_service.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../shared/providers/amount_format_provider.dart';
+import '../../../shared/widgets/byn_sign.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
 
 String _smartBalance(double amount, AmountFormat fmt, String symbol) {
   const spaceAfter = {'Br'};
-  final sep = spaceAfter.contains(symbol) ? ' ' : '';
+  final sep = spaceAfter.contains(symbol) || symbol.isEmpty ? ' ' : '';
   final isWhole = amount == amount.floorToDouble();
 
   String formatted;
@@ -24,7 +25,7 @@ String _smartBalance(double amount, AmountFormat fmt, String symbol) {
   } else {
     formatted = fmt.format(amount);
   }
-  return '$symbol$sep$formatted';
+  return symbol.isEmpty ? formatted : '$symbol$sep$formatted';
 }
 
 class BalanceCard extends ConsumerStatefulWidget {
@@ -242,19 +243,45 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                                 FittedBox(
                                   fit: BoxFit.scaleDown,
                                   alignment: Alignment.center,
-                                  child: Text(
-                                    _smartBalance(
-                                      widget.balance,
-                                      fmt,
-                                      widget.currencyInfo.symbol,
-                                    ),
-                                    style: TextStyle(
-                                      fontSize: 48,
-                                      fontWeight: FontWeight.w700,
-                                      color: onCard,
-                                    ),
-                                    maxLines: 1,
-                                  ),
+                                  child: widget.currencyInfo.code == 'BYN'
+                                      ? Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            BynSign(
+                                              fontSize: 48,
+                                              color: onCard,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              _smartBalance(
+                                                widget.balance,
+                                                fmt,
+                                                '',
+                                              ),
+                                              style: TextStyle(
+                                                fontSize: 48,
+                                                fontWeight: FontWeight.w700,
+                                                color: onCard,
+                                              ),
+                                              maxLines: 1,
+                                            ),
+                                          ],
+                                        )
+                                      : Text(
+                                          _smartBalance(
+                                            widget.balance,
+                                            fmt,
+                                            widget.currencyInfo.symbol,
+                                          ),
+                                          style: TextStyle(
+                                            fontSize: 48,
+                                            fontWeight: FontWeight.w700,
+                                            color: onCard,
+                                          ),
+                                          maxLines: 1,
+                                        ),
                                 ),
                               ],
                             ),
@@ -285,15 +312,49 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
                                       alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        _smartBalance(converted, fmt, c.$2),
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: onCard.withOpacity(0.65),
-                                        ),
-                                        maxLines: 1,
-                                      ),
+                                      child: c.$1 == 'BYN'
+                                          ? Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                BynSign(
+                                                  fontSize: 14,
+                                                  color: onCard.withOpacity(
+                                                    0.65,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 2),
+                                                Text(
+                                                  _smartBalance(
+                                                    converted,
+                                                    fmt,
+                                                    '',
+                                                  ),
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: onCard.withOpacity(
+                                                      0.65,
+                                                    ),
+                                                  ),
+                                                  maxLines: 1,
+                                                ),
+                                              ],
+                                            )
+                                          : Text(
+                                              _smartBalance(
+                                                converted,
+                                                fmt,
+                                                c.$2,
+                                              ),
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: onCard.withOpacity(0.65),
+                                              ),
+                                              maxLines: 1,
+                                            ),
                                     ),
                                   );
                                 }).toList(),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/byn_sign.dart';
 
 class CurrencyPicker extends StatelessWidget {
   final String selected;
@@ -45,16 +46,23 @@ class CurrencyPicker extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Text(
-                    c.$2,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected
-                          ? const Color(0xFF7C6DED)
-                          : colorScheme.onSurface,
-                    ),
-                  ),
+                  c.$1 == 'BYN'
+                      ? BynSign(
+                          fontSize: 16,
+                          color: isSelected
+                              ? const Color(0xFF7C6DED)
+                              : colorScheme.onSurface,
+                        )
+                      : Text(
+                          c.$2,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected
+                                ? const Color(0xFF7C6DED)
+                                : colorScheme.onSurface,
+                          ),
+                        ),
                   Text(
                     c.$1,
                     style: TextStyle(

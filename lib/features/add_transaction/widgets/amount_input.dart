@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/byn_sign.dart';
 
 class AmountInput extends StatelessWidget {
   final TextEditingController controller;
   final String currencySymbol;
+  final String currencyCode;
   final bool showError;
   final Animation<Color?> borderColorAnimation;
   final bool isDark;
@@ -12,6 +14,7 @@ class AmountInput extends StatelessWidget {
     super.key,
     required this.controller,
     required this.currencySymbol,
+    required this.currencyCode,
     required this.showError,
     required this.borderColorAnimation,
     required this.isDark,
@@ -41,15 +44,22 @@ class AmountInput extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Text(
-                  currencySymbol,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.7),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: currencyCode == 'BYN'
+                    ? BynSign(
+                        fontSize: 18,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.7),
+                      )
+                    : Text(
+                        currencySymbol,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
               Expanded(
                 child: TextField(

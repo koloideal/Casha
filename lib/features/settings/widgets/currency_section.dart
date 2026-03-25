@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
 import '../../../core/l10n/locale_provider.dart';
+import '../../../shared/widgets/byn_sign.dart';
 import '../provider.dart';
 
 class CurrencySection extends ConsumerWidget {
@@ -18,7 +19,9 @@ class CurrencySection extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
+        border: isDark
+            ? null
+            : Border.all(color: const Color(0xFFDDDDEE), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,9 +45,9 @@ class CurrencySection extends ConsumerWidget {
                 child: Text(
                   s.currency,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ),
             ],
@@ -61,7 +64,9 @@ class CurrencySection extends ConsumerWidget {
                     onTap: () {
                       final oldCode = ref.read(currencyProvider).code;
                       final rates = ref.read(exchangeRateServiceProvider);
-                      ref.read(budgetProvider.notifier).onCurrencyChanged(oldCode, code, rates);
+                      ref
+                          .read(budgetProvider.notifier)
+                          .onCurrencyChanged(oldCode, code, rates);
                       ref.read(currencyProvider.notifier).setCurrency(code);
                     },
                     child: Container(
@@ -71,25 +76,52 @@ class CurrencySection extends ConsumerWidget {
                             ? AppColors.accent.withOpacity(0.2)
                             : Theme.of(context).scaffoldBackgroundColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: isSelected 
+                        border: isSelected
                             ? Border.all(color: AppColors.accent, width: 1.5)
-                            : (isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
+                            : (isDark
+                                  ? null
+                                  : Border.all(
+                                      color: const Color(0xFFDDDDEE),
+                                      width: 1,
+                                    )),
                       ),
                       child: Column(
                         children: [
-                          Text(
-                            info.symbol,
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: isSelected ? AppColors.accent : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                          code == 'BYN'
+                              ? BynSign(
+                                  fontSize: 28,
+                                  color: isSelected
+                                      ? AppColors.accent
+                                      : Theme.of(context).colorScheme.onSurface
+                                            .withOpacity(0.6),
+                                )
+                              : Text(
+                                  info.symbol,
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(
+                                        color: isSelected
+                                            ? AppColors.accent
+                                            : Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withOpacity(0.6),
+                                        fontWeight: isSelected
+                                            ? FontWeight.w700
+                                            : FontWeight.normal,
+                                      ),
                                 ),
-                          ),
                           const SizedBox(height: 2),
                           Text(
                             code,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: isSelected ? AppColors.accent : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: isSelected
+                                      ? AppColors.accent
+                                      : Theme.of(context).colorScheme.onSurface
+                                            .withOpacity(0.6),
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
                                 ),
                           ),
                         ],

@@ -20,7 +20,9 @@ class AmountFormatSection extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1),
+        border: isDark
+            ? null
+            : Border.all(color: const Color(0xFFDDDDEE), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,9 +46,9 @@ class AmountFormatSection extends ConsumerWidget {
                 child: Text(
                   s.amountFormat,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ),
             ],
@@ -57,9 +59,13 @@ class AmountFormatSection extends ConsumerWidget {
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: GestureDetector(
-                onTap: () => ref.read(amountFormatProvider.notifier).set(format),
+                onTap: () =>
+                    ref.read(amountFormatProvider.notifier).set(format),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.accent.withOpacity(0.2)
@@ -67,7 +73,12 @@ class AmountFormatSection extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: isSelected
                         ? Border.all(color: AppColors.accent, width: 1.5)
-                        : (isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
+                        : (isDark
+                              ? null
+                              : Border.all(
+                                  color: const Color(0xFFDDDDEE),
+                                  width: 1,
+                                )),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -75,14 +86,25 @@ class AmountFormatSection extends ConsumerWidget {
                       Text(
                         format.label,
                         style: TextStyle(
-                          color: isSelected ? AppColors.accent : Theme.of(context).colorScheme.onSurface,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isSelected
+                              ? AppColors.accent
+                              : Theme.of(context).colorScheme.onSurface,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                         ),
                       ),
                       Text(
-                        format.example.replaceFirst('SYM', currencyInfo.symbol),
+                        format.example.replaceFirst(
+                          'SYM',
+                          currencyInfo.symbol.isEmpty
+                              ? 'Br'
+                              : currencyInfo.symbol,
+                        ),
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
                           fontSize: 12,
                         ),
                       ),
