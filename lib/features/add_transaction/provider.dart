@@ -12,6 +12,7 @@ class AddTransactionState {
   final String? editingId;
   final String overrideCurrency;
   final String overrideCurrencyCode;
+  final int? selectedAccountId;
 
   const AddTransactionState({
     this.amount,
@@ -23,6 +24,7 @@ class AddTransactionState {
     this.editingId,
     this.overrideCurrency = '\$',
     this.overrideCurrencyCode = 'USD',
+    this.selectedAccountId,
   });
 
   factory AddTransactionState.fromTransaction(Transaction tx) {
@@ -35,11 +37,12 @@ class AddTransactionState {
       editingId: tx.id,
       overrideCurrency: tx.currency,
       overrideCurrencyCode: tx.currencyCode,
+      selectedAccountId: tx.accountId,
     );
   }
 
   factory AddTransactionState.empty() {
-    return AddTransactionState(date: DateTime.now());
+    return AddTransactionState(date: DateTime.now(), selectedAccountId: null);
   }
 
   AddTransactionState copyWith({
@@ -52,57 +55,67 @@ class AddTransactionState {
     String? editingId,
     String? overrideCurrency,
     String? overrideCurrencyCode,
-  }) =>
-      AddTransactionState(
-        amount: amount ?? this.amount,
-        category: category ?? this.category,
-        type: type ?? this.type,
-        date: date ?? this.date,
-        note: note ?? this.note,
-        isSubmitting: isSubmitting ?? this.isSubmitting,
-        editingId: editingId ?? this.editingId,
-        overrideCurrency: overrideCurrency ?? this.overrideCurrency,
-        overrideCurrencyCode: overrideCurrencyCode ?? this.overrideCurrencyCode,
-      );
+    int? selectedAccountId,
+  }) => AddTransactionState(
+    amount: amount ?? this.amount,
+    category: category ?? this.category,
+    type: type ?? this.type,
+    date: date ?? this.date,
+    note: note ?? this.note,
+    isSubmitting: isSubmitting ?? this.isSubmitting,
+    editingId: editingId ?? this.editingId,
+    overrideCurrency: overrideCurrency ?? this.overrideCurrency,
+    overrideCurrencyCode: overrideCurrencyCode ?? this.overrideCurrencyCode,
+    selectedAccountId: selectedAccountId ?? this.selectedAccountId,
+  );
 
   bool get isEditing => editingId != null;
 }
 
 class AddTransactionNotifier extends StateNotifier<AddTransactionState> {
   AddTransactionNotifier(Transaction? initial)
-      : super(initial != null
+    : super(
+        initial != null
             ? AddTransactionState.fromTransaction(initial)
-            : AddTransactionState.empty());
+            : AddTransactionState.empty(),
+      );
 
   void setAmount(double? v) => state = state.copyWith(amount: v);
-  
+
   void setCategory(String v) => state = state.copyWith(category: v);
-  
+
   void setType(TransactionType v) {
     final newCategory = AppCategories.forType(v).first;
     state = state.copyWith(type: v, category: newCategory);
   }
-  
+
   void setDate(DateTime v) => state = state.copyWith(date: v);
-  
+
   void setNote(String v) => state = state.copyWith(note: v);
-  
+
   void setSubmitting(bool v) => state = state.copyWith(isSubmitting: v);
-  
+
   void setCurrency(String symbol, String code) {
-    state = state.copyWith(overrideCurrency: symbol, overrideCurrencyCode: code);
+    state = state.copyWith(
+      overrideCurrency: symbol,
+      overrideCurrencyCode: code,
+    );
   }
-  
+
+  void setAccountId(int id) => state = state.copyWith(selectedAccountId: id);
+
   void reset() => state = AddTransactionState.empty();
 }
 
 final addTransactionProvider = StateNotifierProvider.autoDispose
     .family<AddTransactionNotifier, AddTransactionState, Transaction?>(
-  (ref, initial) => AddTransactionNotifier(initial),
-);
+      (ref, initial) => AddTransactionNotifier(initial),
+    );
 
-final availableCategoriesProvider =
-    Provider.autoDispose.family<List<String>, Transaction?>((ref, initial) {
-  final type = ref.watch(addTransactionProvider(initial).select((s) => s.type));
-  return AppCategories.forType(type);
-});
+final availableCategoriesProvider = Provider.autoDispose
+    .family<List<String>, Transaction?>((ref, initial) {
+      final type = ref.watch(
+        addTransactionProvider(initial).select((s) => s.type),
+      );
+      return AppCategories.forType(type);
+    });
