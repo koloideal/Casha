@@ -122,23 +122,38 @@ final accountFilteredTransactionsProvider = Provider<List<Transaction>>((ref) {
   final txsAsync = ref.watch(transactionsProvider);
   final txs = txsAsync.valueOrNull ?? [];
   final activeAccount = ref.watch(activeAccountProvider);
-  
+
   // If activeAccount is null (Total Balance page), return all transactions
   if (activeAccount == null) {
     return txs;
   }
-  
+
   // Filter by account ID
   return txs.where((t) => t.accountId == activeAccount.id).toList();
 });
 
+final globalTotalBalanceProvider = Provider<double>((ref) {
+  final txs = ref.watch(transactionsProvider).valueOrNull ?? [];
+  final exchangeService = ref.watch(exchangeRateServiceProvider);
+  final targetCurrency = ref.watch(currencyProvider).code;
+
+  return txs.fold(0.0, (sum, t) {
+    final converted = exchangeService.convert(
+      t.amount,
+      t.currencyCode,
+      targetCurrency,
+    );
+    return t.type == TransactionType.income ? sum + converted : sum - converted;
+  });
+});
+
 final totalBalanceProvider = Provider<double>((ref) {
   final txs = ref.watch(accountFilteredTransactionsProvider);
-  
+
   final index = ref.watch(activeAccountIndexProvider);
   final accountsAsync = ref.watch(accountsProvider);
   final globalCurrency = ref.watch(currencyProvider).code;
-  
+
   String targetCurrency = globalCurrency;
   if (index > 0) {
     final accounts = accountsAsync.valueOrNull ?? [];
@@ -146,7 +161,7 @@ final totalBalanceProvider = Provider<double>((ref) {
       targetCurrency = accounts[index - 1].currency;
     }
   }
-  
+
   final exchangeService = ref.watch(exchangeRateServiceProvider);
 
   return txs.fold(0.0, (sum, t) {
@@ -163,12 +178,12 @@ final totalIncomeProvider = Provider<double>((ref) {
   // Watch the filtered transactions directly
   final txs = ref.watch(accountFilteredTransactionsProvider);
   final filtered = txs.where((t) => t.type == TransactionType.income);
-  
+
   // Watch the dependencies that change on swipe!
   final index = ref.watch(activeAccountIndexProvider);
   final accountsAsync = ref.watch(accountsProvider);
   final globalCurrency = ref.watch(currencyProvider).code;
-  
+
   // Resolve target currency synchronously based on the current swipe index
   String targetCurrency = globalCurrency;
   if (index > 0) {
@@ -177,22 +192,23 @@ final totalIncomeProvider = Provider<double>((ref) {
       targetCurrency = accounts[index - 1].currency;
     }
   }
-  
+
   final exchangeService = ref.watch(exchangeRateServiceProvider);
-  
+
   return filtered.fold(0.0, (sum, t) {
-    return sum + exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
+    return sum +
+        exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
   });
 });
 
 final totalExpenseProvider = Provider<double>((ref) {
   final txs = ref.watch(accountFilteredTransactionsProvider);
   final filtered = txs.where((t) => t.type == TransactionType.expense);
-  
+
   final index = ref.watch(activeAccountIndexProvider);
   final accountsAsync = ref.watch(accountsProvider);
   final globalCurrency = ref.watch(currencyProvider).code;
-  
+
   String targetCurrency = globalCurrency;
   if (index > 0) {
     final accounts = accountsAsync.valueOrNull ?? [];
@@ -200,11 +216,12 @@ final totalExpenseProvider = Provider<double>((ref) {
       targetCurrency = accounts[index - 1].currency;
     }
   }
-  
+
   final exchangeService = ref.watch(exchangeRateServiceProvider);
-  
+
   return filtered.fold(0.0, (sum, t) {
-    return sum + exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
+    return sum +
+        exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
   });
 });
 
@@ -217,11 +234,11 @@ final currentMonthExpenseProvider = Provider<double>((ref) {
         t.date.year == now.year &&
         t.date.month == now.month,
   );
-  
+
   final index = ref.watch(activeAccountIndexProvider);
   final accountsAsync = ref.watch(accountsProvider);
   final globalCurrency = ref.watch(currencyProvider).code;
-  
+
   String targetCurrency = globalCurrency;
   if (index > 0) {
     final accounts = accountsAsync.valueOrNull ?? [];
@@ -229,11 +246,12 @@ final currentMonthExpenseProvider = Provider<double>((ref) {
       targetCurrency = accounts[index - 1].currency;
     }
   }
-  
+
   final exchangeService = ref.watch(exchangeRateServiceProvider);
-  
+
   return filtered.fold(0.0, (sum, t) {
-    return sum + exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
+    return sum +
+        exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
   });
 });
 
@@ -298,9 +316,9 @@ final activeAccountIndexProvider = StateProvider<int>((ref) => 0);
 final activeAccountProvider = Provider<Account?>((ref) {
   final index = ref.watch(activeAccountIndexProvider);
   final accountsAsync = ref.watch(accountsProvider);
-  
+
   if (index == 0) return null; // 0 means "Total Balance"
-  
+
   return accountsAsync.when(
     data: (accounts) {
       if (index > 0 && index <= accounts.length) {
@@ -330,7 +348,10 @@ final cardColorsProvider =
 
 // Account-specific color provider
 final accountCardColorsProvider =
-    StateNotifierProvider.family<CardColorsNotifier, CardColors, int>((ref, accountId) {
+    StateNotifierProvider.family<CardColorsNotifier, CardColors, int>((
+      ref,
+      accountId,
+    ) {
       final notifier = CardColorsNotifier(accountId: accountId);
       notifier.setupThemeListener(ref);
       return notifier;
@@ -369,7 +390,12 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
     GradientType gradient,
   ) async {
     state = CardColors(primary, secondary, gradient);
-    await CardColorService.save(primary, secondary, gradient, accountId: accountId);
+    await CardColorService.save(
+      primary,
+      secondary,
+      gradient,
+      accountId: accountId,
+    );
   }
 
   Future<void> reset(bool isDark) async {

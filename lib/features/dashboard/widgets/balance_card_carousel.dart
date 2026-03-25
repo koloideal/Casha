@@ -87,9 +87,13 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                     Widget cardWidget;
 
                     if (index == 0) {
+                      final totalBalance = ref.watch(
+                        globalTotalBalanceProvider,
+                      );
+                      final globalCurrency = ref.watch(currencyProvider);
                       cardWidget = BalanceCard(
-                        balance: widget.balance,
-                        currencyInfo: widget.currencyInfo,
+                        balance: totalBalance,
+                        currencyInfo: globalCurrency,
                         onLongPress: widget.onLongPress,
                         previewPrimary: widget.previewPrimary,
                         previewSecondary: widget.previewSecondary,
