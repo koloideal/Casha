@@ -127,7 +127,7 @@ class AppCurrencies {
     CurrencyOption(symbol: '\$', name: 'US Dollar', code: 'USD'),
     CurrencyOption(symbol: '€', name: 'Euro', code: 'EUR'),
     CurrencyOption(symbol: '£', name: 'British Pound', code: 'GBP'),
-    CurrencyOption(symbol: 'Br', name: 'Belarusian Ruble', code: 'BYN'),
+    CurrencyOption(symbol: '', name: 'Belarusian Ruble', code: 'BYN'),
     CurrencyOption(symbol: '₽', name: 'Russian Ruble', code: 'RUB'),
     CurrencyOption(symbol: '₴', name: 'Ukrainian Hryvnia', code: 'UAH'),
   ];
@@ -139,3 +139,11 @@ class AppCurrencies {
     );
   }
 }
+
+/// `(code, textSymbol)` for pickers and conversion rows. BYN uses `''` — use BynSign in UI.
+const List<(String, String)> kDisplayCurrencies = [
+  ('USD', r'$'),
+  ('EUR', '€'),
+  ('BYN', ''),
+  ('RUB', '₽'),
+];

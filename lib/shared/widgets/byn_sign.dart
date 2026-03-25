@@ -14,9 +14,9 @@ class BynSign extends StatelessWidget {
         '\uE901',
         style: TextStyle(
           fontFamily: 'BynSymbol',
-          fontSize: fontSize,
+          fontSize: fontSize * 1.1,
           color: color,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w900,
           height: 1.0,
         ),
       ),

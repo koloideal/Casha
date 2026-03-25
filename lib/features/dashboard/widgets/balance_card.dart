@@ -12,8 +12,6 @@ import '../../settings/provider.dart';
 import '../provider.dart';
 
 String _smartBalance(double amount, AmountFormat fmt, String symbol) {
-  const spaceAfter = {'Br'};
-  final sep = spaceAfter.contains(symbol) || symbol.isEmpty ? ' ' : '';
   final isWhole = amount == amount.floorToDouble();
 
   String formatted;
@@ -25,7 +23,7 @@ String _smartBalance(double amount, AmountFormat fmt, String symbol) {
   } else {
     formatted = fmt.format(amount);
   }
-  return symbol.isEmpty ? formatted : '$symbol$sep$formatted';
+  return symbol.isEmpty ? formatted : '$symbol$formatted';
 }
 
 class BalanceCard extends ConsumerStatefulWidget {
@@ -139,13 +137,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
     final secondary = widget.previewSecondary ?? savedColors.secondary;
     final gradientType = widget.previewGradientType ?? savedColors.gradientType;
 
-    final allCurrencies = [
-      ('USD', r'$'),
-      ('EUR', '€'),
-      ('BYN', 'Br'),
-      ('RUB', '₽'),
-    ];
-    final others = allCurrencies
+    final others = kDisplayCurrencies
         .where((c) => c.$1 != widget.currencyInfo.code)
         .toList();
 
@@ -253,7 +245,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                                               fontSize: 48,
                                               color: onCard,
                                             ),
-                                            const SizedBox(width: 4),
+                                            const SizedBox(width: 2),
                                             Text(
                                               _smartBalance(
                                                 widget.balance,

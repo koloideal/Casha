@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants.dart';
 import '../../../../shared/widgets/byn_sign.dart';
 
 class AccountEditorPanel extends ConsumerWidget {
@@ -169,12 +170,7 @@ class AccountEditorPanel extends ConsumerWidget {
                                     ).colorScheme.onSurface,
                                   )
                                 : Text(
-                                    [
-                                          ('USD', '\$'),
-                                          ('EUR', '€'),
-                                          ('BYN', 'Br'),
-                                          ('RUB', '₽'),
-                                        ]
+                                    kDisplayCurrencies
                                         .firstWhere(
                                           (c) => c.$1 == selectedCurrency,
                                         )

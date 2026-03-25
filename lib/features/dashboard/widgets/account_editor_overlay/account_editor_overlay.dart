@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants.dart';
 import '../../../../shared/models/account.dart';
 import '../../../../shared/models/transaction.dart';
 import '../../../../shared/widgets/byn_sign.dart';
@@ -281,13 +282,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        children:
-                            [
-                              ('USD', '\$'),
-                              ('EUR', '€'),
-                              ('BYN', 'Br'),
-                              ('RUB', '₽'),
-                            ].map((entry) {
+                        children: kDisplayCurrencies.map((entry) {
                               final isSelected = entry.$1 == _selectedCurrency;
                               return InkWell(
                                 onTap: () {

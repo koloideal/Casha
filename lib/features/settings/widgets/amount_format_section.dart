@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../shared/providers/amount_format_provider.dart';
+import '../../../shared/widgets/byn_sign.dart';
 import '../provider.dart';
 
 class AmountFormatSection extends ConsumerWidget {
@@ -94,20 +95,45 @@ class AmountFormatSection extends ConsumerWidget {
                               : FontWeight.w500,
                         ),
                       ),
-                      Text(
-                        format.example.replaceFirst(
-                          'SYM',
-                          currencyInfo.symbol.isEmpty
-                              ? 'Br'
-                              : currencyInfo.symbol,
-                        ),
-                        style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.6),
-                          fontSize: 12,
-                        ),
-                      ),
+                      currencyInfo.code == 'BYN'
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                BynSign(
+                                  fontSize: 12,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withOpacity(0.6),
+                                ),
+                                Text(
+                                  format.example.replaceFirst(
+                                    RegExp(r'SYM\s*'),
+                                    '',
+                                  ),
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withOpacity(0.6),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              format.example.replaceFirst(
+                                'SYM',
+                                currencyInfo.symbol,
+                              ),
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                                fontSize: 12,
+                              ),
+                            ),
                     ],
                   ),
                 ),

@@ -199,7 +199,6 @@ class ExportService {
   Future<String> exportToCSV() async {
     final transactionsAsync = _ref.read(transactionsProvider);
     final transactions = transactionsAsync.valueOrNull ?? [];
-    final currency = _ref.read(currencyProvider);
     final fmt = _ref.read(amountFormatProvider);
 
     final buffer = StringBuffer();
@@ -209,7 +208,8 @@ class ExportService {
       final date = DateFormat('yyyy-MM-dd').format(tx.date);
       final type = tx.type.name;
       final category = tx.category;
-      final amount = formatAmount(tx.currency, tx.amount, fmt);
+      final sym = currencyMap[tx.currencyCode]?.symbol ?? '';
+      final amount = formatAmount(sym, tx.amount, fmt);
       final note = tx.note?.replaceAll(',', ';') ?? '';
       buffer.writeln('$date,$type,$category,$amount,${tx.currencyCode},$note');
     }

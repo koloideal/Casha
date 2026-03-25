@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants.dart';
 import '../../../shared/widgets/byn_sign.dart';
 
 class CurrencyPicker extends StatelessWidget {
@@ -13,12 +14,7 @@ class CurrencyPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencies = [
-      ('USD', '\$'),
-      ('EUR', '€'),
-      ('BYN', 'Br'),
-      ('RUB', '₽'),
-    ];
+    final currencies = kDisplayCurrencies;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Row(
