@@ -174,5 +174,15 @@ class AppStrings {
   String get reset => _ru ? 'Сброс' : 'Reset';
   String get apply => _ru ? 'Применить' : 'Apply';
 
+  String get accountsInfoTitle => _ru ? 'Счета' : 'Accounts';
+  String get accountsInfoBalance => _ru
+      ? 'У каждого счёта свой баланс, валюта и цвет карточки.'
+      : 'Each account has its own balance, currency and card color.';
+  String get accountsInfoCustomize => _ru
+      ? 'Удерживайте карточку для настройки градиента, названия и валюты.'
+      : 'Long-press any card to customize its gradient, name and currency.';
+  String get accountsInfoLimit =>
+      _ru ? 'Максимум 5 счетов.' : 'Maximum 5 accounts.';
+
   String get dateLocale => _ru ? 'ru_RU' : 'en_US';
 }

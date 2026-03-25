@@ -264,6 +264,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           )
         : globalCurrencyInfo;
 
+    final activeIndex = ref.watch(activeAccountIndexProvider);
+    final accountsAsync = ref.watch(accountsProvider);
+    final accountCount = accountsAsync.valueOrNull?.length ?? 0;
+    final isOnAddAccountPage =
+        accountCount < 5 && activeIndex == accountCount + 1;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -307,19 +313,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          HapticService.medium();
-          context.push('/add');
-        },
-        backgroundColor: const Color(0xFF7C6DED),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: Text(
-          s.addTransactionDashboard,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-      ),
+      floatingActionButton: isOnAddAccountPage
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () {
+                HapticService.medium();
+                context.push('/add');
+              },
+              backgroundColor: const Color(0xFF7C6DED),
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add),
+              label: Text(
+                s.addTransactionDashboard,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: CustomScrollView(
@@ -345,66 +353,152 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           : null,
                     ),
                     const SizedBox(height: 16),
-                    SummaryRow(
-                      income: income,
-                      expense: expense,
-                      currencyInfo: currencyInfo,
-                      strings: s,
-                    ),
-                    if (budget != null) ...[
-                      const SizedBox(height: 16),
-                      BudgetProgress(
-                        spent: monthExpense,
-                        budget: budget,
+                    if (!isOnAddAccountPage) ...[
+                      SummaryRow(
+                        income: income,
+                        expense: expense,
                         currencyInfo: currencyInfo,
                         strings: s,
                       ),
-                    ],
-                    const SizedBox(height: 24),
-                    custom.SearchBar(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      onTap: _scrollToSearch,
-                      ref: ref,
-                      strings: s,
-                    ),
-                    const SizedBox(height: 12),
-                    FilterChips(strings: s),
-                    const SizedBox(height: 20),
-                    Text(
-                      s.transactions,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
+                      if (budget != null) ...[
+                        const SizedBox(height: 16),
+                        BudgetProgress(
+                          spent: monthExpense,
+                          budget: budget,
+                          currencyInfo: currencyInfo,
+                          strings: s,
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      custom.SearchBar(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        onTap: _scrollToSearch,
+                        ref: ref,
+                        strings: s,
                       ),
-                    ),
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
+                      FilterChips(strings: s),
+                      const SizedBox(height: 20),
+                      Text(
+                        s.transactions,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                   ],
                 ),
               ),
             ),
-            if (recent.isEmpty)
-              SliverFillRemaining(
+            if (isOnAddAccountPage) ...[
+              const SliverFillRemaining(
                 hasScrollBody: false,
-                child: EmptyState(strings: s),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                sliver: SliverList.builder(
-                  itemCount: recent.length,
-                  itemBuilder: (context, i) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: RepaintBoundary(
-                      child: TransactionTile(transaction: recent[i]),
+                child: Center(child: _AccountsInfoBlock()),
+              ),
+            ] else ...[
+              if (recent.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: EmptyState(strings: s),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                  sliver: SliverList.builder(
+                    itemCount: recent.length,
+                    itemBuilder: (context, i) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: RepaintBoundary(
+                        child: TransactionTile(transaction: recent[i]),
+                      ),
                     ),
                   ),
                 ),
-              ),
+            ],
             const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AccountsInfoBlock extends ConsumerWidget {
+  const _AccountsInfoBlock();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 60), 
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 260), 
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.account_balance_wallet_rounded,
+                  size: 18,
+                  color: Color(0xFF7C6DED),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  s.accountsInfoTitle,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: onSurface,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _InfoRow(icon: Icons.swap_horiz_rounded, text: s.accountsInfoBalance),
+            const SizedBox(height: 8),
+            _InfoRow(icon: Icons.touch_app_rounded, text: s.accountsInfoCustomize),
+            const SizedBox(height: 8),
+            _InfoRow(icon: Icons.lock_outline_rounded, text: s.accountsInfoLimit),
+          ],
+        ),
+      ),
+    );
+  }
+  }
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _InfoRow({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 15, color: onSurface.withOpacity(0.4)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: onSurface.withOpacity(0.5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
