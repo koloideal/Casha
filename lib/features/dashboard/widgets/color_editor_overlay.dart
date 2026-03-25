@@ -171,8 +171,13 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                       Expanded(
                         child: PanelTab(
                           label: s.colorPrimary,
-                          isSelected: dash.editingPrimary,
-                          color: dash.tempPrimary,
+                          isSelected: dash.editingPrimary && !isSolid,
+                          color: isSolid
+                              ? Theme.of(widget.context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withOpacity(0.12)
+                              : dash.tempPrimary,
                           isDimmed: isSolid,
                           onTap: () {
                             dash.setState(() {
@@ -188,7 +193,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                       Expanded(
                         child: PanelTab(
                           label: s.colorSecondary,
-                          isSelected: !dash.editingPrimary,
+                          isSelected: !dash.editingPrimary && !isSolid,
                           color: dash.tempSecondary,
                           isDimmed: isSolid,
                           onTap: () {
@@ -240,22 +245,48 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                               width: 1.5,
                             ),
                           ),
-                          child: Center(
-                            child: Text(
-                              s.colorSolid,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isSolid
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                                color: isSolid
-                                    ? const Color(0xFF7C6DED)
-                                    : Theme.of(widget.context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withOpacity(0.5),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: dash.tempPrimary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Theme.of(widget.context)
+                                                .brightness ==
+                                            Brightness.dark
+                                        ? Colors.white30
+                                        : Colors.black12,
+                                    width: 1,
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  s.colorSolid,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: isSolid
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                    color: isSolid
+                                        ? const Color(0xFF7C6DED)
+                                        : Theme.of(widget.context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.5),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

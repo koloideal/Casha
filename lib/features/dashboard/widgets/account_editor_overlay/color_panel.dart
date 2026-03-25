@@ -84,8 +84,14 @@ class AccountColorPanel extends StatelessWidget {
                       Expanded(
                         child: PanelTab(
                           label: s.colorPrimary,
-                          isSelected: dashboardState.editingPrimary,
-                          color: dashboardState.tempPrimary,
+                          isSelected:
+                              dashboardState.editingPrimary && !isSolid,
+                          color: isSolid
+                              ? Theme.of(dashboardContext)
+                                  .colorScheme
+                                  .onSurface
+                                  .withOpacity(0.12)
+                              : dashboardState.tempPrimary,
                           isDimmed: isSolid,
                           onTap: () {
                             dashboardState.setState(() {
@@ -103,7 +109,8 @@ class AccountColorPanel extends StatelessWidget {
                       Expanded(
                         child: PanelTab(
                           label: s.colorSecondary,
-                          isSelected: !dashboardState.editingPrimary,
+                          isSelected:
+                              !dashboardState.editingPrimary && !isSolid,
                           color: dashboardState.tempSecondary,
                           isDimmed: isSolid,
                           onTap: () {
@@ -161,22 +168,48 @@ class AccountColorPanel extends StatelessWidget {
                                 width: 1.5,
                               ),
                             ),
-                            child: Center(
-                              child: Text(
-                                s.colorSolid,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: isSolid
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                  color: isSolid
-                                      ? const Color(0xFF7C6DED)
-                                      : Theme.of(dashboardContext)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.5),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: dashboardState.tempPrimary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Theme.of(dashboardContext)
+                                                  .brightness ==
+                                              Brightness.dark
+                                          ? Colors.white30
+                                          : Colors.black12,
+                                      width: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    s.colorSolid,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: isSolid
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                      color: isSolid
+                                          ? const Color(0xFF7C6DED)
+                                          : Theme.of(dashboardContext)
+                                                .colorScheme
+                                                .onSurface
+                                                .withOpacity(0.5),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
