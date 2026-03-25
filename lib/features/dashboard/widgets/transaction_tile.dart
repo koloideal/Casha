@@ -10,6 +10,7 @@ import '../../../shared/models/transaction.dart';
 import '../../../shared/providers/amount_format_provider.dart';
 import '../../../shared/utils/currency_utils.dart';
 import '../../../shared/widgets/byn_sign.dart';
+import '../../settings/provider.dart';
 import '../provider.dart';
 
 class TransactionTile extends ConsumerWidget {
@@ -37,6 +38,20 @@ class TransactionTile extends ConsumerWidget {
 
     // Check if we're on Total Balance page
     final activeAccount = ref.watch(activeAccountProvider);
+    final displayCurrency = activeAccount?.currency ??
+        ref.watch(currencyProvider).code;
+    final showConverted =
+        transaction.currencyCode != displayCurrency;
+    final exchangeService = ref.watch(exchangeRateServiceProvider);
+    final convertedAmount = showConverted
+        ? exchangeService.convert(
+            transaction.amount,
+            transaction.currencyCode,
+            displayCurrency,
+          )
+        : 0.0;
+    final displaySymbol =
+        currencyMap[displayCurrency]?.symbol ?? '';
 
     // Look up the account name by matching transaction.accountId
     final accounts = ref.watch(accountsProvider).valueOrNull ?? [];
@@ -118,36 +133,86 @@ class TransactionTile extends ConsumerWidget {
                 ],
               ),
             ),
-            transaction.currencyCode == 'BYN'
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        isIncome ? '+ ' : '- ',
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                transaction.currencyCode == 'BYN'
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            isIncome ? '+ ' : '- ',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                              color: color,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          BynSign(fontSize: 14, color: color),
+                          const SizedBox(width: 2),
+                          Text(
+                            formatAmount('', transaction.amount, fmt),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                              color: color,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        '${isIncome ? '+ ' : '- '}${formatAmount(transaction.currency, transaction.amount, fmt)}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: color,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      BynSign(fontSize: 14, color: color),
-                      const SizedBox(width: 2),
-                      Text(
-                        formatAmount('', transaction.amount, fmt),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: color,
-                          fontWeight: FontWeight.w700,
+                if (showConverted) ...[
+                  if (displayCurrency == 'BYN')
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          '≈ ',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: color.withOpacity(0.5),
+                            fontWeight: FontWeight.w400,
+                            height: 1.3,
+                          ),
                         ),
+                        BynSign(
+                          fontSize: 11,
+                          color: color.withOpacity(0.5),
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          formatAmount('', convertedAmount, fmt),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: color.withOpacity(0.5),
+                            fontWeight: FontWeight.w400,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Text(
+                      '≈ ${formatAmount(displaySymbol, convertedAmount, fmt)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: color.withOpacity(0.5),
+                        fontWeight: FontWeight.w400,
+                        height: 1.3,
                       ),
-                    ],
-                  )
-                : Text(
-                    '${isIncome ? '+ ' : '- '}${formatAmount(transaction.currency, transaction.amount, fmt)}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w700,
                     ),
-                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),
