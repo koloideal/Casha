@@ -8,13 +8,13 @@ class CardColorService {
   static const _key2 = 'card_color_secondary';
   static const _keyGradient = 'card_gradient_type';
 
-  static const defaultPrimary = Color(0xFFFCD34D);
-  static const defaultSecondary = Color(0xFFDC2626);
+  static const defaultPrimary = Color(0xFFBEF264);
+  static const defaultSecondary = Color(0xFF4D7C0F);
 
   static const defaultPrimaryLight = Color(0xFF6A6482);
   static const defaultSecondaryLight = Color(0xFF000000);
 
-  static const defaultGradient = GradientType.linear;
+  static const defaultGradient = GradientType.radial;
 
   static Future<(Color, Color, GradientType)> load({int? accountId}) async {
     final prefs = await SharedPreferences.getInstance();

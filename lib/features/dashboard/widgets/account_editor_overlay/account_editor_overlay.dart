@@ -302,7 +302,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                 borderRadius: BorderRadius.circular(12),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
+                                    horizontal: 8,
                                     vertical: 8,
                                   ),
                                   child: Row(
@@ -318,26 +318,30 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                               : null,
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        entry.$1,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: isSelected
-                                              ? const Color(0xFF7C6DED)
-                                              : Theme.of(widget.context)
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withOpacity(0.6),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          entry.$1,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: isSelected
+                                                ? const Color(0xFF7C6DED)
+                                                : Theme.of(widget.context)
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withOpacity(0.6),
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      const SizedBox(width: 4),
-                                      if (isSelected)
+                                      if (isSelected) ...[
+                                        const SizedBox(width: 4),
                                         const Icon(
                                           Icons.check_rounded,
                                           size: 14,
                                           color: Color(0xFF7C6DED),
                                         ),
+                                      ],
                                     ],
                                   ),
                                 ),
