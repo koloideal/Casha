@@ -184,5 +184,10 @@ class AppStrings {
   String get accountsInfoLimit =>
       _ru ? 'Максимум 5 счетов.' : 'Maximum 5 accounts.';
 
+  String get currencyConversions =>
+      _ru ? 'Конвертация валют' : 'Currency conversions';
+  String get showConversionsOnCard =>
+      _ru ? 'Показывать на карточке' : 'Show on balance card';
+
   String get dateLocale => _ru ? 'ru_RU' : 'en_US';
 }

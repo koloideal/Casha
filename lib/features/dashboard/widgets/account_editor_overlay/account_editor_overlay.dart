@@ -368,6 +368,16 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                           decoration: BoxDecoration(
                             color: Theme.of(widget.context).colorScheme.surface,
                             shape: BoxShape.circle,
+                            border:
+                                Theme.of(widget.context).brightness ==
+                                    Brightness.dark
+                                ? Border.all(
+                                    color: Theme.of(
+                                      widget.context,
+                                    ).colorScheme.onSurface.withOpacity(0.3),
+                                    width: 1,
+                                  )
+                                : null,
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.red.withOpacity(0.2),
@@ -393,6 +403,16 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                         decoration: BoxDecoration(
                           color: Theme.of(widget.context).colorScheme.surface,
                           shape: BoxShape.circle,
+                          border:
+                              Theme.of(widget.context).brightness ==
+                                  Brightness.dark
+                              ? Border.all(
+                                  color: Theme.of(
+                                    widget.context,
+                                  ).colorScheme.onSurface.withOpacity(0.3),
+                                  width: 1,
+                                )
+                              : null,
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.3),

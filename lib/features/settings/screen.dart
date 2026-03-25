@@ -9,6 +9,7 @@ import 'provider.dart';
 import 'widgets/theme_section.dart';
 import 'widgets/card_text_color_section.dart';
 import 'widgets/haptic_section.dart';
+import 'widgets/currency_conversions_section.dart';
 import 'widgets/language_section.dart';
 import 'widgets/currency_section.dart';
 import 'widgets/amount_format_section.dart';
@@ -128,6 +129,8 @@ class SettingsScreen extends ConsumerWidget {
           const CardTextColorSection(),
           const SizedBox(height: 16),
           const HapticSection(),
+          const SizedBox(height: 16),
+          const CurrencyConversionsSection(),
           const SizedBox(height: 16),
           const _BiometricSection(),
           const LanguageSection(),

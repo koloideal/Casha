@@ -130,8 +130,8 @@ class BalanceCardState extends ConsumerState<BalanceCard>
     final s = ref.watch(stringsProvider);
     final rates = ref.read(exchangeRateServiceProvider);
     final fmt = ref.watch(amountFormatProvider);
+    final showConversions = ref.watch(showCurrencyConversionsProvider);
 
-    // Use account-specific colors if provided, otherwise use global colors
     final globalColors = ref.watch(cardColorsProvider);
     final savedColors = widget.accountColors ?? globalColors;
     final primary = widget.previewPrimary ?? savedColors.primary;
@@ -259,7 +259,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                               ],
                             ),
                           ),
-                          if (widget.balance != 0) ...[
+                          if (widget.balance != 0 && showConversions) ...[
                             const SizedBox(width: 16),
                             Container(
                               width: 1,

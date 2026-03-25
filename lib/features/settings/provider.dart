@@ -165,6 +165,28 @@ class HapticNotifier extends StateNotifier<bool> {
   }
 }
 
+final showCurrencyConversionsProvider =
+    StateNotifierProvider<ShowCurrencyConversionsNotifier, bool>((ref) {
+      return ShowCurrencyConversionsNotifier();
+    });
+
+class ShowCurrencyConversionsNotifier extends StateNotifier<bool> {
+  ShowCurrencyConversionsNotifier() : super(true) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool('show_currency_conversions') ?? true;
+  }
+
+  Future<void> toggle(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('show_currency_conversions', value);
+    state = value;
+  }
+}
+
 final exportProvider = Provider<ExportService>((ref) {
   return ExportService(ref);
 });

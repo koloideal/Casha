@@ -34,7 +34,20 @@ class AccountDeleteDialog extends ConsumerWidget {
               'Are you sure you want to delete this account? All associated transactions will also be permanently deleted.',
             ),
             actions: [
-              TextButton(onPressed: onCancel, child: const Text('Cancel')),
+              TextButton(
+                onPressed: onCancel,
+                style: Theme.of(context).brightness == Brightness.dark
+                    ? TextButton.styleFrom(
+                        side: BorderSide(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      )
+                    : null,
+                child: const Text('Cancel'),
+              ),
               TextButton(
                 onPressed: () async {
                   if (editingAccount == null) return;
@@ -57,6 +70,16 @@ class AccountDeleteDialog extends ConsumerWidget {
                     HapticService.medium();
                   }
                 },
+                style: Theme.of(context).brightness == Brightness.dark
+                    ? TextButton.styleFrom(
+                        side: BorderSide(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      )
+                    : null,
                 child: const Text(
                   'Delete',
                   style: TextStyle(color: Colors.red),
