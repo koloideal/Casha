@@ -106,6 +106,34 @@ final themeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((
   return ThemeModeNotifier(prefs);
 });
 
+enum CardTextColorMode { white, adaptive, black }
+
+class CardTextColorNotifier extends StateNotifier<CardTextColorMode> {
+  static const _key = 'card_text_color';
+  final SharedPreferences _prefs;
+
+  CardTextColorNotifier(this._prefs)
+    : super(_fromString(_prefs.getString(_key)));
+
+  static CardTextColorMode _fromString(String? value) {
+    return CardTextColorMode.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => CardTextColorMode.adaptive,
+    );
+  }
+
+  void set(CardTextColorMode mode) {
+    state = mode;
+    _prefs.setString(_key, mode.name);
+  }
+}
+
+final cardTextColorProvider =
+    StateNotifierProvider<CardTextColorNotifier, CardTextColorMode>((ref) {
+      final prefs = ref.watch(sharedPreferencesProvider);
+      return CardTextColorNotifier(prefs);
+    });
+
 final exchangeRateServiceProvider = Provider<ExchangeRateService>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   return ExchangeRateService(prefs);

@@ -36,7 +36,7 @@ class BalanceCard extends ConsumerStatefulWidget {
   final GradientType? previewGradientType;
   final String? accountName;
   final CardColors? accountColors;
-  
+
   const BalanceCard({
     super.key,
     required this.balance,
@@ -114,13 +114,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
           center: Alignment.center,
           startAngle: 0.0,
           endAngle: 3.14159 * 2,
-          colors: [
-            primary,
-            secondary,
-            colorDark,
-            secondary,
-            primary,
-          ],
+          colors: [primary, secondary, colorDark, secondary, primary],
           stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
         );
       case GradientType.solid:
@@ -136,14 +130,14 @@ class BalanceCardState extends ConsumerState<BalanceCard>
     final s = ref.watch(stringsProvider);
     final rates = ref.read(exchangeRateServiceProvider);
     final fmt = ref.watch(amountFormatProvider);
-    
+
     // Use account-specific colors if provided, otherwise use global colors
     final globalColors = ref.watch(cardColorsProvider);
     final savedColors = widget.accountColors ?? globalColors;
     final primary = widget.previewPrimary ?? savedColors.primary;
     final secondary = widget.previewSecondary ?? savedColors.secondary;
     final gradientType = widget.previewGradientType ?? savedColors.gradientType;
-    
+
     final allCurrencies = [
       ('USD', r'$'),
       ('EUR', '€'),
@@ -153,6 +147,17 @@ class BalanceCardState extends ConsumerState<BalanceCard>
     final others = allCurrencies
         .where((c) => c.$1 != widget.currencyInfo.code)
         .toList();
+
+    final textColorMode = ref.watch(cardTextColorProvider);
+    final Color onCard;
+    switch (textColorMode) {
+      case CardTextColorMode.white:
+        onCard = Colors.white;
+      case CardTextColorMode.black:
+        onCard = Colors.black;
+      case CardTextColorMode.adaptive:
+        onCard = primary.computeLuminance() > 0.3 ? Colors.black : Colors.white;
+    }
 
     return GestureDetector(
       onLongPress: () {
@@ -199,7 +204,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                             Text(
                               widget.accountName!,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
+                                color: onCard.withOpacity(0.7),
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 letterSpacing: 0.3,
@@ -229,7 +234,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                                     style: TextStyle(
                                       fontSize: 11,
                                       letterSpacing: 1.5,
-                                      color: Colors.white.withOpacity(0.6),
+                                      color: onCard.withOpacity(0.6),
                                     ),
                                   ),
                                 if (widget.accountName == null)
@@ -243,10 +248,10 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                                       fmt,
                                       widget.currencyInfo.symbol,
                                     ),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 48,
                                       fontWeight: FontWeight.w700,
-                                      color: Colors.white,
+                                      color: onCard,
                                     ),
                                     maxLines: 1,
                                   ),
@@ -259,7 +264,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                             Container(
                               width: 1,
                               height: 70,
-                              color: Colors.white.withOpacity(0.15),
+                              color: onCard.withOpacity(0.15),
                             ),
                             const SizedBox(width: 16),
                             SizedBox(
@@ -274,7 +279,9 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                                     c.$1,
                                   );
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 3),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 3,
+                                    ),
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
                                       alignment: Alignment.centerLeft,
@@ -283,7 +290,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
-                                          color: Colors.white.withOpacity(0.65),
+                                          color: onCard.withOpacity(0.65),
                                         ),
                                         maxLines: 1,
                                       ),
@@ -305,7 +312,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 9,
-                          color: Colors.white.withOpacity(0.18),
+                          color: onCard.withOpacity(0.18),
                           letterSpacing: 0.6,
                         ),
                       ),

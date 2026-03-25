@@ -9,11 +9,13 @@ class AppStrings {
 
   String get appTitle => _ru ? 'Мои финансы' : 'My Finances';
   String get totalBalance => _ru ? 'ОБЩИЙ БАЛАНС' : 'TOTAL BALANCE';
-  String get tapAndHoldToEdit => _ru ? 'удерживайте для редактирования' : 'tap and hold to edit';
+  String get tapAndHoldToEdit =>
+      _ru ? 'удерживайте для редактирования' : 'tap and hold to edit';
   String get addAccount => _ru ? 'Добавить счёт' : 'Add account';
   String get addTransactionDashboard => _ru ? 'Добавить' : 'Add';
   String get transactions => _ru ? 'Транзакции' : 'Transactions';
-  String get searchHint => _ru ? 'Поиск транзакций...' : 'Search transactions...';
+  String get searchHint =>
+      _ru ? 'Поиск транзакций...' : 'Search transactions...';
   String get filterAll => _ru ? 'Все' : 'All';
   String get filterIncome => _ru ? 'Доход' : 'Income';
   String get filterExpense => _ru ? 'Расход' : 'Expense';
@@ -24,8 +26,11 @@ class AppStrings {
   String get monthlyBudget => _ru ? 'Бюджет на месяц' : 'Monthly Budget';
   String get spent => _ru ? 'Потрачено' : 'Spent';
   String get limit => _ru ? 'Лимит' : 'Limit';
-  String get noTransactions => _ru ? 'Транзакции не найдены' : 'No transactions found';
-  String get addFirstTx => _ru ? 'Нажмите + чтобы добавить первую транзакцию' : 'Tap + to add your first transaction';
+  String get noTransactions =>
+      _ru ? 'Транзакции не найдены' : 'No transactions found';
+  String get addFirstTx => _ru
+      ? 'Нажмите + чтобы добавить первую транзакцию'
+      : 'Tap + to add your first transaction';
 
   String get addTransaction => _ru ? 'Новая транзакция' : 'Add Transaction';
   String get editTransaction => _ru ? 'Редактировать' : 'Edit Transaction';
@@ -39,26 +44,36 @@ class AppStrings {
   String get cancel => _ru ? 'Отмена' : 'Cancel';
   String get typeIncome => _ru ? 'Доход' : 'Income';
   String get typeExpense => _ru ? 'Расход' : 'Expense';
-  String get confirmDelete => _ru ? 'Удалить транзакцию?' : 'Delete transaction?';
-  String get confirmDeleteBody => _ru ? 'Это действие нельзя отменить.' : 'This action cannot be undone.';
+  String get confirmDelete =>
+      _ru ? 'Удалить транзакцию?' : 'Delete transaction?';
+  String get confirmDeleteBody =>
+      _ru ? 'Это действие нельзя отменить.' : 'This action cannot be undone.';
   String get saveChanges => _ru ? 'Сохранить изменения' : 'Save Changes';
-  String get noteOptional => _ru ? 'Заметка (необязательно)' : 'Note (optional)';
+  String get noteOptional =>
+      _ru ? 'Заметка (необязательно)' : 'Note (optional)';
   String get addNote => _ru ? 'Добавить заметку...' : 'Add a note...';
 
   String get settings => _ru ? 'Настройки' : 'Settings';
-  String get managePreferences => _ru ? 'Управление настройками' : 'Manage your preferences';
+  String get managePreferences =>
+      _ru ? 'Управление настройками' : 'Manage your preferences';
   String get appearance => _ru ? 'Внешний вид' : 'Appearance';
   String get theme => _ru ? 'Тема' : 'Theme';
   String get themeDark => _ru ? 'Тёмная' : 'Dark';
   String get themeLight => _ru ? 'Светлая' : 'Light';
   String get themeSystem => _ru ? 'Системная' : 'System';
+  String get cardTextColor => _ru ? 'Цвет текста карточки' : 'Card text color';
+  String get cardTextColorWhite => _ru ? 'Белый' : 'White';
+  String get cardTextColorAdaptive => _ru ? 'Авто' : 'Adaptive';
+  String get cardTextColorBlack => _ru ? 'Чёрный' : 'Black';
   String get darkMode => _ru ? 'Тёмная тема' : 'Dark Mode';
   String get enabled => _ru ? 'Включено' : 'Enabled';
   String get disabled => _ru ? 'Выключено' : 'Disabled';
   String get hapticFeedback => _ru ? 'Тактильная отдача' : 'Haptic Feedback';
-  String get vibrationOnInteractions => _ru ? 'Вибрация при взаимодействии' : 'Vibration on interactions';
+  String get vibrationOnInteractions =>
+      _ru ? 'Вибрация при взаимодействии' : 'Vibration on interactions';
   String get biometricLock => _ru ? 'Биометрия' : 'Biometric Lock';
-  String get requireFingerprint => _ru ? 'Отпечаток при запуске' : 'Require fingerprint to unlock';
+  String get requireFingerprint =>
+      _ru ? 'Отпечаток при запуске' : 'Require fingerprint to unlock';
   String get currency => _ru ? 'Валюта' : 'Currency';
   String get amountFormat => _ru ? 'Формат суммы' : 'Amount Format';
   String get language => _ru ? 'Язык' : 'Language';
@@ -68,20 +83,34 @@ class AppStrings {
   String get budgetHint => _ru ? 'Месячный лимит' : 'Monthly limit';
   String get budgetNone => _ru ? 'Не установлен' : 'Not set';
   String get monthlyBudgetSetting => _ru ? 'Месячный бюджет' : 'Monthly Budget';
-  String get yourMonthlySpendingLimit => _ru ? 'Ваш лимит расходов на месяц' : 'Your monthly spending limit';
-  String get setMonthlySpendingLimit => _ru ? 'Контролируйте свои расходы за месяц' : 'Track your monthly spending';
-  String get leaveEmptyToRemove => _ru ? 'Оставьте пустым для удаления лимита' : 'Leave empty to remove budget limit';
+  String get yourMonthlySpendingLimit =>
+      _ru ? 'Ваш лимит расходов на месяц' : 'Your monthly spending limit';
+  String get setMonthlySpendingLimit => _ru
+      ? 'Контролируйте свои расходы за месяц'
+      : 'Track your monthly spending';
+  String get leaveEmptyToRemove => _ru
+      ? 'Оставьте пустым для удаления лимита'
+      : 'Leave empty to remove budget limit';
   String get data => _ru ? 'Данные' : 'Data';
   String get exportData => _ru ? 'Экспорт данных' : 'Export data';
   String get clearData => _ru ? 'Очистить данные' : 'Clear all data';
-  String get clearAllTransactions => _ru ? 'Удалить транзакции' : 'Clear All Transactions';
-  String get clearDataConfirm => _ru ? 'Удалить транзакции?' : 'Clear all transactions?';
-  String get clearDataWarning => _ru ? 'Это навсегда удалит всю историю транзакций. Это действие нельзя отменить.' : 'This will permanently delete all your transaction history. This cannot be undone.';
-  String get areYouSure => _ru ? 'Вы абсолютно уверены?' : 'Are you absolutely sure?';
-  String get allTransactionsDeleted => _ru ? 'Все транзакции удалены' : 'All transactions deleted';
+  String get clearAllTransactions =>
+      _ru ? 'Удалить транзакции' : 'Clear All Transactions';
+  String get clearDataConfirm =>
+      _ru ? 'Удалить транзакции?' : 'Clear all transactions?';
+  String get clearDataWarning => _ru
+      ? 'Это навсегда удалит всю историю транзакций. Это действие нельзя отменить.'
+      : 'This will permanently delete all your transaction history. This cannot be undone.';
+  String get areYouSure =>
+      _ru ? 'Вы абсолютно уверены?' : 'Are you absolutely sure?';
+  String get allTransactionsDeleted =>
+      _ru ? 'Все транзакции удалены' : 'All transactions deleted';
   String get noKeepThem => _ru ? 'Нет, оставить' : 'No, keep them';
-  String get yesDeleteEverything => _ru ? 'Да, удалить всё' : 'Yes, delete everything';
-  String get allTransactionsWillBeDeleted => _ru ? 'Все транзакции будут удалены навсегда. Восстановить их будет невозможно.' : 'All transactions will be deleted forever. There is no way to recover them.';
+  String get yesDeleteEverything =>
+      _ru ? 'Да, удалить всё' : 'Yes, delete everything';
+  String get allTransactionsWillBeDeleted => _ru
+      ? 'Все транзакции будут удалены навсегда. Восстановить их будет невозможно.'
+      : 'All transactions will be deleted forever. There is no way to recover them.';
   String get dangerZone => _ru ? 'Опасная зона' : 'Danger Zone';
 
   String get navDashboard => _ru ? 'Главная' : 'Dashboard';
@@ -98,9 +127,13 @@ class AppStrings {
   String get deleteCategory => _ru ? 'Удалить категорию' : 'Delete Category';
   String get noCategoriesYet => _ru ? 'Нет категорий' : 'No categories yet';
   String get noExpenseData => _ru ? 'Нет данных о расходах' : 'No expense data';
-  String get addExpensesToSeeBreakdown => _ru ? 'Добавьте расходы, чтобы увидеть разбивку' : 'Add some expenses to see the breakdown';
+  String get addExpensesToSeeBreakdown => _ru
+      ? 'Добавьте расходы, чтобы увидеть разбивку'
+      : 'Add some expenses to see the breakdown';
   String get noIncomeData => _ru ? 'Нет данных о доходах' : 'No income data';
-  String get addIncomeToSeeBreakdown => _ru ? 'Добавьте доходы, чтобы увидеть разбивку' : 'Add some income to see the breakdown';
+  String get addIncomeToSeeBreakdown => _ru
+      ? 'Добавьте доходы, чтобы увидеть разбивку'
+      : 'Add some income to see the breakdown';
   String get total => _ru ? 'Всего' : 'Total';
   String get lastSixMonths => _ru ? 'Последние 6 месяцев' : 'Last 6 Months';
 

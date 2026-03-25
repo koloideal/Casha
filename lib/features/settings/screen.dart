@@ -7,6 +7,7 @@ import '../../core/services/haptic_service.dart';
 import '../dashboard/provider.dart';
 import 'provider.dart';
 import 'widgets/theme_section.dart';
+import 'widgets/card_text_color_section.dart';
 import 'widgets/haptic_section.dart';
 import 'widgets/language_section.dart';
 import 'widgets/currency_section.dart';
@@ -45,9 +46,11 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     TextButton(
                       onPressed: () async {
-                        final biometricEnabled = await BiometricService.isEnabled();
+                        final biometricEnabled =
+                            await BiometricService.isEnabled();
                         if (biometricEnabled) {
-                          final authenticated = await BiometricService.authenticate();
+                          final authenticated =
+                              await BiometricService.authenticate();
                           if (!authenticated) {
                             Navigator.pop(ctx2);
                             return;
@@ -55,7 +58,7 @@ class SettingsScreen extends ConsumerWidget {
                         }
                         ref.read(transactionsProvider.notifier).clearAll();
                         Navigator.pop(ctx2);
-                        
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Row(
@@ -121,6 +124,8 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
         children: [
           const ThemeSection(),
+          const SizedBox(height: 16),
+          const CardTextColorSection(),
           const SizedBox(height: 16),
           const HapticSection(),
           const SizedBox(height: 16),
