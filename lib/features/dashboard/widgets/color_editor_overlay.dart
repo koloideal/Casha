@@ -42,6 +42,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
     return Material(
       color: Colors.transparent,
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           Positioned.fill(
             child: BackdropFilter(
@@ -58,19 +59,32 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
           ),
           Positioned(
             top: cardTop,
-            left: 20,
-            right: 20,
-            child: Consumer(
-              builder: (ctx, ref, _) => BalanceCard(
-                balance: ref.read(totalBalanceProvider),
-                currencyInfo: ref.read(currencyProvider),
-                onLongPress: null,
-                previewPrimary: dash.tempPrimary,
-                previewSecondary: dash.tempSecondary,
-                previewGradientType: Theme.of(widget.context).brightness ==
-                        Brightness.dark
-                    ? dash.tempDarkGradientType
-                    : dash.tempLightGradientType,
+            left: 0,
+            right: 0,
+            child: FractionallySizedBox(
+              widthFactor: 0.92,
+              child: SizedBox(
+                height: cardHeight,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Consumer(
+                      builder: (ctx, ref, _) => BalanceCard(
+                        balance: ref.read(totalBalanceProvider),
+                        currencyInfo: ref.read(currencyProvider),
+                        onLongPress: null,
+                        previewPrimary: dash.tempPrimary,
+                        previewSecondary: dash.tempSecondary,
+                        previewGradientType: Theme.of(widget.context)
+                                    .brightness ==
+                                Brightness.dark
+                            ? dash.tempDarkGradientType
+                            : dash.tempLightGradientType,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),

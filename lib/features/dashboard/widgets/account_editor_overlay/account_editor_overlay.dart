@@ -90,6 +90,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
     final editorPanelTop = cardTop + cardHeight + 20;
     final colorPanelTop = editorPanelTop + editorPanelHeight + 12;
     const colorPanelHeight = 410.0;
+    // Preview card in overlay should match BalanceCardCarousel sizing.
 
     return Consumer(
       builder: (context, ref, _) {
@@ -120,6 +121,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
         return Material(
           color: Colors.transparent,
           child: Stack(
+            clipBehavior: Clip.none,
             children: [
               Positioned.fill(
                 child: BackdropFilter(
@@ -194,22 +196,36 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                 ),
               Positioned(
                 top: cardTop,
-                left: 20,
-                right: 20,
-                child: BalanceCard(
-                  balance: previewBalance,
-                  currencyInfo: CurrencyInfo(
-                    currencyMap[dash.tempAccountCurrency]?.symbol ?? '\$',
-                    dash.tempAccountCurrency,
+                left: 0,
+                right: 0,
+                child: FractionallySizedBox(
+                  widthFactor: 0.92,
+                  child: SizedBox(
+                    height: cardHeight,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: BalanceCard(
+                          balance: previewBalance,
+                          currencyInfo: CurrencyInfo(
+                            currencyMap[dash.tempAccountCurrency]?.symbol ??
+                                '\$',
+                            dash.tempAccountCurrency,
+                          ),
+                          onLongPress: null,
+                          accountName: dash.tempAccountName,
+                          previewPrimary: dash.tempPrimary,
+                          previewSecondary: dash.tempSecondary,
+                          previewGradientType:
+                              Theme.of(widget.context).brightness ==
+                                      Brightness.dark
+                                  ? dash.tempDarkGradientType
+                                  : dash.tempLightGradientType,
+                        ),
+                      ),
+                    ),
                   ),
-                  onLongPress: null,
-                  accountName: dash.tempAccountName,
-                  previewPrimary: dash.tempPrimary,
-                  previewSecondary: dash.tempSecondary,
-                  previewGradientType:
-                      Theme.of(widget.context).brightness == Brightness.dark
-                          ? dash.tempDarkGradientType
-                          : dash.tempLightGradientType,
                 ),
               ),
               Positioned(
