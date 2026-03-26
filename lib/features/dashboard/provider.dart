@@ -11,6 +11,15 @@ import '../../shared/models/account.dart';
 import '../../shared/services/storage_service.dart';
 import '../settings/provider.dart';
 
+// BUG FOUND: lib/features/dashboard/provider.dart
+// Description: CardColorsNotifier calls an async `_load()` in the constructor without awaiting it.
+//              If the user triggers `save()` before `_load()` completes, the late `_load()` can
+//              overwrite the newly saved colors/gradient types.
+// Reproduction: Open the app (cold start), open the card color editor immediately, press Apply
+//               before the initial load finishes.
+// Suggested fix: Track a generation/token for in-flight loads and ignore stale load results
+//                after any state mutation (save/reset/theme-change).
+
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('Override in main');
 });
@@ -334,9 +343,18 @@ final activeAccountProvider = Provider<Account?>((ref) {
 class CardColors {
   final Color primary;
   final Color secondary;
-  final GradientType gradientType;
+  final GradientType lightGradientType;
+  final GradientType darkGradientType;
 
-  const CardColors(this.primary, this.secondary, this.gradientType);
+  const CardColors(
+    this.primary,
+    this.secondary,
+    this.lightGradientType,
+    this.darkGradientType,
+  );
+
+  GradientType gradientTypeForBrightness(Brightness brightness) =>
+      brightness == Brightness.dark ? darkGradientType : lightGradientType;
 }
 
 final cardColorsProvider =
@@ -365,11 +383,14 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
         const CardColors(
           CardColorService.defaultPrimary,
           CardColorService.defaultSecondary,
-          CardColorService.defaultGradient,
+          CardColorService.defaultGradientLight,
+          CardColorService.defaultGradientDark,
         ),
       ) {
     _load();
   }
+
+  int _loadGeneration = 0;
 
   void setupThemeListener(Ref ref) {
     ref.listen<ThemeMode>(themeProvider, (previous, next) {
@@ -380,20 +401,27 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
   }
 
   Future<void> _load() async {
-    final (c1, c2, g) = await CardColorService.load(accountId: accountId);
-    state = CardColors(c1, c2, g);
+    final currentGeneration = ++_loadGeneration;
+    final (c1, c2, lightG, darkG) =
+        await CardColorService.load(accountId: accountId);
+    if (currentGeneration != _loadGeneration) return; // stale
+    state = CardColors(c1, c2, lightG, darkG);
   }
 
   Future<void> save(
     Color primary,
     Color secondary,
-    GradientType gradient,
+    GradientType lightGradient,
+    GradientType darkGradient,
   ) async {
-    state = CardColors(primary, secondary, gradient);
+    // Invalidate any in-flight load so it can't overwrite this save.
+    _loadGeneration++;
+    state = CardColors(primary, secondary, lightGradient, darkGradient);
     await CardColorService.save(
       primary,
       secondary,
-      gradient,
+      lightGradient,
+      darkGradient,
       accountId: accountId,
     );
   }
@@ -405,11 +433,18 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
     final secondary = isDark
         ? CardColorService.defaultSecondary
         : CardColorService.defaultSecondaryLight;
-    state = CardColors(primary, secondary, CardColorService.defaultGradient);
+    _loadGeneration++;
+    state = CardColors(
+      primary,
+      secondary,
+      CardColorService.defaultGradientLight,
+      CardColorService.defaultGradientDark,
+    );
     await CardColorService.save(
       primary,
       secondary,
-      CardColorService.defaultGradient,
+      CardColorService.defaultGradientLight,
+      CardColorService.defaultGradientDark,
       accountId: accountId,
     );
   }
@@ -428,14 +463,17 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
     final isUsingOldDefaults =
         state.primary == oldDefaults.primary &&
         state.secondary == oldDefaults.secondary &&
-        state.gradientType == oldDefaults.gradient;
+        state.gradientTypeForBrightness(previousBrightness) ==
+            oldDefaults.gradient;
 
     // Only auto-switch if using default colors
     if (isUsingOldDefaults) {
+      _loadGeneration++;
       state = CardColors(
         newDefaults.primary,
         newDefaults.secondary,
-        newDefaults.gradient,
+        state.lightGradientType,
+        state.darkGradientType,
       );
     }
   }
@@ -454,12 +492,12 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
         ? (
             primary: CardColorService.defaultPrimary,
             secondary: CardColorService.defaultSecondary,
-            gradient: CardColorService.defaultGradient,
+            gradient: CardColorService.defaultGradientDark,
           )
         : (
             primary: CardColorService.defaultPrimaryLight,
             secondary: CardColorService.defaultSecondaryLight,
-            gradient: CardColorService.defaultGradient,
+            gradient: CardColorService.defaultGradientLight,
           );
   }
 }

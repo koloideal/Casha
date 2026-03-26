@@ -67,7 +67,11 @@ class AccountColorPanel extends StatelessWidget {
             dashboardState.overlayEntry?.markNeedsBuild();
           }
 
-          final isSolid = dashboardState.tempGradientType == GradientType.solid;
+          final activeGradientType =
+              Theme.of(dashboardContext).brightness == Brightness.dark
+                  ? dashboardState.tempDarkGradientType
+                  : dashboardState.tempLightGradientType;
+          final isSolid = activeGradientType == GradientType.solid;
           final currentHSV = (isSolid || dashboardState.editingPrimary)
               ? dashboardState.tempPrimaryHSV
               : dashboardState.tempSecondaryHSV;
@@ -96,8 +100,14 @@ class AccountColorPanel extends StatelessWidget {
                           onTap: () {
                             dashboardState.setState(() {
                               if (isSolid)
-                                dashboardState.tempGradientType =
-                                    CardColorService.defaultGradient;
+                                if (Theme.of(dashboardContext).brightness ==
+                                    Brightness.dark) {
+                                  dashboardState.tempDarkGradientType =
+                                      CardColorService.defaultGradientDark;
+                                } else {
+                                  dashboardState.tempLightGradientType =
+                                      CardColorService.defaultGradientLight;
+                                }
                               dashboardState.editingPrimary = true;
                             });
                             setPanelState(() {});
@@ -116,8 +126,14 @@ class AccountColorPanel extends StatelessWidget {
                           onTap: () {
                             dashboardState.setState(() {
                               if (isSolid)
-                                dashboardState.tempGradientType =
-                                    CardColorService.defaultGradient;
+                                if (Theme.of(dashboardContext).brightness ==
+                                    Brightness.dark) {
+                                  dashboardState.tempDarkGradientType =
+                                      CardColorService.defaultGradientDark;
+                                } else {
+                                  dashboardState.tempLightGradientType =
+                                      CardColorService.defaultGradientLight;
+                                }
                               dashboardState.editingPrimary = false;
                             });
                             setPanelState(() {});
@@ -141,8 +157,14 @@ class AccountColorPanel extends StatelessWidget {
                               ? null
                               : () {
                                   dashboardState.setState(() {
-                                    dashboardState.tempGradientType =
-                                        GradientType.solid;
+                                    if (Theme.of(dashboardContext).brightness ==
+                                        Brightness.dark) {
+                                      dashboardState.tempDarkGradientType =
+                                          GradientType.solid;
+                                    } else {
+                                      dashboardState.tempLightGradientType =
+                                          GradientType.solid;
+                                    }
                                     dashboardState.editingPrimary = true;
                                   });
                                   setPanelState(() {});
@@ -399,8 +421,7 @@ class AccountColorPanel extends StatelessWidget {
                       children: GradientType.values
                           .where((t) => t != GradientType.solid)
                           .map((type) {
-                            final isSelected =
-                                dashboardState.tempGradientType == type;
+                            final isSelected = activeGradientType == type;
                             final label = switch (type) {
                               GradientType.linear => s.gradientLinear,
                               GradientType.linearReverse => s.gradientReverse,
@@ -424,8 +445,17 @@ class AccountColorPanel extends StatelessWidget {
                                 child: GestureDetector(
                                   onTap: () {
                                     dashboardState.setState(
-                                      () => dashboardState.tempGradientType =
-                                          type,
+                                      () {
+                                        if (Theme.of(dashboardContext)
+                                                .brightness ==
+                                            Brightness.dark) {
+                                          dashboardState.tempDarkGradientType =
+                                              type;
+                                        } else {
+                                          dashboardState.tempLightGradientType =
+                                              type;
+                                        }
+                                      },
                                     );
                                     setPanelState(() {});
                                     dashboardState.overlayEntry
@@ -516,8 +546,10 @@ class AccountColorPanel extends StatelessWidget {
                             );
                             dashboardState.tempSecondaryHSV =
                                 HSVColor.fromColor(defS);
-                            dashboardState.tempGradientType =
-                                CardColorService.defaultGradient;
+                          dashboardState.tempLightGradientType =
+                              CardColorService.defaultGradientLight;
+                          dashboardState.tempDarkGradientType =
+                              CardColorService.defaultGradientDark;
                           });
                           setPanelState(() {});
                           dashboardState.overlayEntry?.markNeedsBuild();

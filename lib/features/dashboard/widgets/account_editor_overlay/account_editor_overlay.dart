@@ -206,7 +206,10 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                   accountName: dash.tempAccountName,
                   previewPrimary: dash.tempPrimary,
                   previewSecondary: dash.tempSecondary,
-                  previewGradientType: dash.tempGradientType,
+                  previewGradientType:
+                      Theme.of(widget.context).brightness == Brightness.dark
+                          ? dash.tempDarkGradientType
+                          : dash.tempLightGradientType,
                 ),
               ),
               Positioned(

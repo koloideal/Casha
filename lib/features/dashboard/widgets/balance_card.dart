@@ -130,12 +130,15 @@ class BalanceCardState extends ConsumerState<BalanceCard>
     final rates = ref.read(exchangeRateServiceProvider);
     final fmt = ref.watch(amountFormatProvider);
     final showConversions = ref.watch(showCurrencyConversionsProvider);
+    final brightness = Theme.of(context).brightness;
 
     final globalColors = ref.watch(cardColorsProvider);
     final savedColors = widget.accountColors ?? globalColors;
     final primary = widget.previewPrimary ?? savedColors.primary;
     final secondary = widget.previewSecondary ?? savedColors.secondary;
-    final gradientType = widget.previewGradientType ?? savedColors.gradientType;
+    final savedGradientType =
+        savedColors.gradientTypeForBrightness(brightness);
+    final gradientType = widget.previewGradientType ?? savedGradientType;
 
     final others = kDisplayCurrencies
         .where((c) => c.$1 != widget.currencyInfo.code)

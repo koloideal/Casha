@@ -67,7 +67,10 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                 onLongPress: null,
                 previewPrimary: dash.tempPrimary,
                 previewSecondary: dash.tempSecondary,
-                previewGradientType: dash.tempGradientType,
+                previewGradientType: Theme.of(widget.context).brightness ==
+                        Brightness.dark
+                    ? dash.tempDarkGradientType
+                    : dash.tempLightGradientType,
               ),
             ),
           ),
@@ -154,7 +157,11 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
             dash.overlayEntry?.markNeedsBuild();
           }
 
-          final isSolid = dash.tempGradientType == GradientType.solid;
+          final activeGradientType =
+              Theme.of(widget.context).brightness == Brightness.dark
+                  ? dash.tempDarkGradientType
+                  : dash.tempLightGradientType;
+          final isSolid = activeGradientType == GradientType.solid;
           final currentHSV = (isSolid || dash.editingPrimary)
               ? dash.tempPrimaryHSV
               : dash.tempSecondaryHSV;
@@ -181,7 +188,16 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           isDimmed: isSolid,
                           onTap: () {
                             dash.setState(() {
-                              if (isSolid) dash.tempGradientType = CardColorService.defaultGradient;
+                              if (isSolid) {
+                                if (Theme.of(widget.context).brightness ==
+                                    Brightness.dark) {
+                                  dash.tempDarkGradientType =
+                                      CardColorService.defaultGradientDark;
+                                } else {
+                                  dash.tempLightGradientType =
+                                      CardColorService.defaultGradientLight;
+                                }
+                              }
                               dash.editingPrimary = true;
                             });
                             setPanelState(() {});
@@ -198,7 +214,16 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           isDimmed: isSolid,
                           onTap: () {
                             dash.setState(() {
-                              if (isSolid) dash.tempGradientType = CardColorService.defaultGradient;
+                              if (isSolid) {
+                                if (Theme.of(widget.context).brightness ==
+                                    Brightness.dark) {
+                                  dash.tempDarkGradientType =
+                                      CardColorService.defaultGradientDark;
+                                } else {
+                                  dash.tempLightGradientType =
+                                      CardColorService.defaultGradientLight;
+                                }
+                              }
                               dash.editingPrimary = false;
                             });
                             setPanelState(() {});
@@ -220,7 +245,12 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                       GestureDetector(
                         onTap: isSolid ? null : () {
                           dash.setState(() {
-                            dash.tempGradientType = GradientType.solid;
+                            if (Theme.of(widget.context).brightness ==
+                                Brightness.dark) {
+                              dash.tempDarkGradientType = GradientType.solid;
+                            } else {
+                              dash.tempLightGradientType = GradientType.solid;
+                            }
                             dash.editingPrimary = true;
                           });
                           setPanelState(() {});
@@ -454,7 +484,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                       children: GradientType.values
                           .where((t) => t != GradientType.solid)
                           .map((type) {
-                        final isSelected = dash.tempGradientType == type;
+                        final isSelected = activeGradientType == type;
                         final label = switch (type) {
                           GradientType.linear => s.gradientLinear,
                           GradientType.linearReverse => s.gradientReverse,
@@ -475,8 +505,14 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                             padding: const EdgeInsets.only(right: 6),
                             child: GestureDetector(
                               onTap: () {
-                                dash.setState(
-                                    () => dash.tempGradientType = type);
+                                dash.setState(() {
+                                  if (Theme.of(widget.context).brightness ==
+                                      Brightness.dark) {
+                                    dash.tempDarkGradientType = type;
+                                  } else {
+                                    dash.tempLightGradientType = type;
+                                  }
+                                });
                                 setPanelState(() {});
                                 dash.overlayEntry?.markNeedsBuild();
                               },
@@ -557,7 +593,10 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                             dash.tempSecondary = defS;
                             dash.tempPrimaryHSV = HSVColor.fromColor(defP);
                             dash.tempSecondaryHSV = HSVColor.fromColor(defS);
-                            dash.tempGradientType = CardColorService.defaultGradient;
+                          dash.tempLightGradientType =
+                              CardColorService.defaultGradientLight;
+                          dash.tempDarkGradientType =
+                              CardColorService.defaultGradientDark;
                           });
                           setPanelState(() {});
                           dash.overlayEntry?.markNeedsBuild();

@@ -44,8 +44,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   HSVColor savedSecondaryHSV = HSVColor.fromColor(
     CardColorService.defaultSecondary,
   );
-  GradientType tempGradientType = CardColorService.defaultGradient;
-  GradientType savedGradientType = CardColorService.defaultGradient;
+  // Per-theme gradient types (light/dark), persisted separately.
+  GradientType tempLightGradientType = CardColorService.defaultGradientLight;
+  GradientType tempDarkGradientType = CardColorService.defaultGradientDark;
+  GradientType savedLightGradientType = CardColorService.defaultGradientLight;
+  GradientType savedDarkGradientType = CardColorService.defaultGradientDark;
+
   OverlayEntry? overlayEntry;
 
   // Account editing state
@@ -60,13 +64,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     savedSecondary = colors.secondary;
     savedPrimaryHSV = HSVColor.fromColor(colors.primary);
     savedSecondaryHSV = HSVColor.fromColor(colors.secondary);
-    savedGradientType = colors.gradientType;
     tempPrimary = colors.primary;
     tempSecondary = colors.secondary;
     tempPrimaryHSV = HSVColor.fromColor(colors.primary);
     tempSecondaryHSV = HSVColor.fromColor(colors.secondary);
-    tempGradientType = colors.gradientType;
-
+    savedLightGradientType = colors.lightGradientType;
+    savedDarkGradientType = colors.darkGradientType;
+    tempLightGradientType = colors.lightGradientType;
+    tempDarkGradientType = colors.darkGradientType;
     setState(() {
       editingCard = true;
       editingPrimary = true;
@@ -87,12 +92,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       HapticService.medium();
       ref
           .read(cardColorsProvider.notifier)
-          .save(tempPrimary, tempSecondary, tempGradientType);
+          .save(
+            tempPrimary,
+            tempSecondary,
+            tempLightGradientType,
+            tempDarkGradientType,
+          );
     } else {
       setState(() {
         tempPrimary = savedPrimary;
         tempSecondary = savedSecondary;
-        tempGradientType = savedGradientType;
+        tempLightGradientType = savedLightGradientType;
+        tempDarkGradientType = savedDarkGradientType;
       });
     }
     overlayEntry?.remove();
@@ -106,13 +117,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     savedSecondary = colors.secondary;
     savedPrimaryHSV = HSVColor.fromColor(colors.primary);
     savedSecondaryHSV = HSVColor.fromColor(colors.secondary);
-    savedGradientType = colors.gradientType;
     tempPrimary = colors.primary;
     tempSecondary = colors.secondary;
     tempPrimaryHSV = HSVColor.fromColor(colors.primary);
     tempSecondaryHSV = HSVColor.fromColor(colors.secondary);
-    tempGradientType = colors.gradientType;
-
+    savedLightGradientType = colors.lightGradientType;
+    savedDarkGradientType = colors.darkGradientType;
+    tempLightGradientType = colors.lightGradientType;
+    tempDarkGradientType = colors.darkGradientType;
     setState(() {
       editingAccount = account;
       tempAccountName = account.name;
@@ -137,13 +149,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     savedSecondary = colors.secondary;
     savedPrimaryHSV = HSVColor.fromColor(colors.primary);
     savedSecondaryHSV = HSVColor.fromColor(colors.secondary);
-    savedGradientType = colors.gradientType;
     tempPrimary = colors.primary;
     tempSecondary = colors.secondary;
     tempPrimaryHSV = HSVColor.fromColor(colors.primary);
     tempSecondaryHSV = HSVColor.fromColor(colors.secondary);
-    tempGradientType = colors.gradientType;
-
+    savedLightGradientType = colors.lightGradientType;
+    savedDarkGradientType = colors.darkGradientType;
+    tempLightGradientType = colors.lightGradientType;
+    tempDarkGradientType = colors.darkGradientType;
     setState(() {
       isAddingAccount = true;
       editingAccount = null;
@@ -174,7 +187,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         await CardColorService.save(
           tempPrimary,
           tempSecondary,
-          tempGradientType,
+          tempLightGradientType,
+          tempDarkGradientType,
           accountId: newId,
         );
       } else if (editingAccount != null) {
@@ -182,7 +196,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // Save colors
         await ref
             .read(accountCardColorsProvider(editingAccount!.id).notifier)
-            .save(tempPrimary, tempSecondary, tempGradientType);
+            .save(
+              tempPrimary,
+              tempSecondary,
+              tempLightGradientType,
+              tempDarkGradientType,
+            );
 
         // Update account name and currency
         final updatedAccount = Account(
@@ -201,7 +220,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       setState(() {
         tempPrimary = savedPrimary;
         tempSecondary = savedSecondary;
-        tempGradientType = savedGradientType;
+        tempLightGradientType = savedLightGradientType;
+        tempDarkGradientType = savedDarkGradientType;
         if (editingAccount != null) {
           tempAccountName = editingAccount!.name;
           tempAccountCurrency = editingAccount!.currency;
@@ -349,7 +369,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       previewPrimary: editingCard ? tempPrimary : null,
                       previewSecondary: editingCard ? tempSecondary : null,
                       previewGradientType: editingCard
-                          ? tempGradientType
+                          ? (Theme.of(context).brightness == Brightness.dark
+                              ? tempDarkGradientType
+                              : tempLightGradientType)
                           : null,
                     ),
                     const SizedBox(height: 16),
