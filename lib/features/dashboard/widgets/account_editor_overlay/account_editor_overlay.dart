@@ -85,7 +85,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(widget.context);
     final cardTop = mq.padding.top + kToolbarHeight + 16;
-    const cardHeight = 220.0;
+    const cardHeight = 230.0;
     const editorPanelHeight = 102.0;
     final editorPanelTop = cardTop + cardHeight + 20;
     final colorPanelTop = editorPanelTop + editorPanelHeight + 12;
@@ -202,9 +202,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                   widthFactor: 0.92,
                   child: SizedBox(
                     height: cardHeight,
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: Padding(
+                    child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: BalanceCard(
                           balance: previewBalance,
@@ -224,7 +222,6 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                   : dash.tempLightGradientType,
                         ),
                       ),
-                    ),
                   ),
                 ),
               ),
