@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/constants.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/haptic_service.dart';
+import '../../shared/models/account.dart';
 import '../../shared/models/transaction.dart';
 import '../dashboard/provider.dart';
 import '../settings/provider.dart';
@@ -375,6 +376,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     final categories = ref.watch(availableCategoriesProvider(widget.initial));
     final overrideCurrency = state.overrideCurrency;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isEditing = state.isEditing;
+    final activeAccount = ref.watch(activeAccountProvider);
+    final isAccountLocked = activeAccount != null;
+    final isTransfer = state.type == TransactionType.transfer;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -428,50 +433,99 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
               ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  TypeToggle(
-                    selected: state.type,
-                    onChanged: (type) => ref
-                        .read(addTransactionProvider(widget.initial).notifier)
-                        .setType(type),
-                    isDark: isDark,
+                  Stack(
+                    children: [
+                      IgnorePointer(
+                        ignoring: isEditing,
+                        child: TypeToggle(
+                          selected: state.type,
+                          onChanged: (type) => ref
+                              .read(
+                                addTransactionProvider(widget.initial).notifier,
+                              )
+                              .setType(type),
+                          isDark: isDark,
+                        ),
+                      ),
+                      if (isEditing)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Icon(
+                            Icons.lock_outline,
+                            size: 16,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.4),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 16),
 
-                  AccountRow(
-                    initial: widget.initial,
-                    showFromDropdown: _showFromAccountDropdown,
-                    showToDropdown: _showToAccountDropdown,
-                    onToggleFromDropdown: () => setState(() {
-                      _showFromAccountDropdown = !_showFromAccountDropdown;
-                      _fromAccountError = null;
-                    }),
-                    onToggleToDropdown: () => setState(() {
-                      _showToAccountDropdown = !_showToAccountDropdown;
-                      _toAccountError = null;
-                    }),
-                    fromIndicatorKey: _fromAccountIndicatorKey,
-                    toIndicatorKey: _toAccountIndicatorKey,
-                    fromAccountError: _fromAccountError,
-                    toAccountError: _toAccountError,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 24),
+                  if (isTransfer)
+                    AccountRow(
+                      initial: widget.initial,
+                      showFromDropdown: _showFromAccountDropdown,
+                      showToDropdown: _showToAccountDropdown,
+                      onToggleFromDropdown: () => setState(() {
+                        _showFromAccountDropdown = !_showFromAccountDropdown;
+                        _fromAccountError = null;
+                      }),
+                      onToggleToDropdown: () => setState(() {
+                        _showToAccountDropdown = !_showToAccountDropdown;
+                        _toAccountError = null;
+                      }),
+                      fromIndicatorKey: _fromAccountIndicatorKey,
+                      toIndicatorKey: _toAccountIndicatorKey,
+                      fromAccountError: _fromAccountError,
+                      toAccountError: _toAccountError,
+                      isDark: isDark,
+                      isAccountLocked: isAccountLocked,
+                    ),
+                  if (isTransfer) const SizedBox(height: 24),
 
                   SectionLabel(s.amount),
                   const SizedBox(height: 8),
-                  AmountInput(
-                    controller: _amountController,
-                    currencySymbol: overrideCurrency,
-                    currencyCode: state.overrideCurrencyCode,
-                    showError: _showError,
-                    borderColorAnimation: _borderColorAnimation,
-                    isDark: isDark,
-                    onChanged: (v) {
-                      final parsed = double.tryParse(v);
-                      ref
-                          .read(addTransactionProvider(widget.initial).notifier)
-                          .setAmount(parsed);
-                    },
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: AmountInput(
+                          controller: _amountController,
+                          currencySymbol: overrideCurrency,
+                          currencyCode: state.overrideCurrencyCode,
+                          showError: _showError,
+                          borderColorAnimation: _borderColorAnimation,
+                          isDark: isDark,
+                          onChanged: (v) {
+                            final parsed = double.tryParse(v);
+                            ref
+                                .read(
+                                  addTransactionProvider(
+                                    widget.initial,
+                                  ).notifier,
+                                )
+                                .setAmount(parsed);
+                          },
+                        ),
+                      ),
+                      if (!isTransfer) ...[
+                        const SizedBox(width: 12),
+                        _InlineAccountSelector(
+                          initial: widget.initial,
+                          showDropdown: _showFromAccountDropdown,
+                          onToggleDropdown: () => setState(() {
+                            _showFromAccountDropdown =
+                                !_showFromAccountDropdown;
+                            _fromAccountError = null;
+                          }),
+                          indicatorKey: _fromAccountIndicatorKey,
+                          isDark: isDark,
+                          isLocked: isAccountLocked,
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 20),
 
@@ -583,6 +637,131 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InlineAccountSelector extends ConsumerWidget {
+  final Transaction? initial;
+  final bool showDropdown;
+  final VoidCallback onToggleDropdown;
+  final GlobalKey indicatorKey;
+  final bool isDark;
+  final bool isLocked;
+
+  const _InlineAccountSelector({
+    required this.initial,
+    required this.showDropdown,
+    required this.onToggleDropdown,
+    required this.indicatorKey,
+    required this.isDark,
+    required this.isLocked,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accountsAsync = ref.watch(accountsProvider);
+    final state = ref.watch(addTransactionProvider(initial));
+    final activeAccount = ref.watch(activeAccountProvider);
+
+    return accountsAsync.when(
+      data: (accounts) {
+        final selectedAccountId = state.selectedAccountId;
+        final Account? displayAccount;
+
+        if (selectedAccountId != null) {
+          displayAccount = accounts.firstWhere(
+            (a) => a.id == selectedAccountId,
+            orElse: () => accounts.isNotEmpty
+                ? accounts.first
+                : Account(
+                    id: 0,
+                    name: '',
+                    currency: 'USD',
+                    isMain: false,
+                    sortOrder: 0,
+                    createdAt: DateTime.now(),
+                  ),
+          );
+        } else {
+          displayAccount =
+              activeAccount ?? (accounts.isNotEmpty ? accounts.first : null);
+        }
+
+        return Opacity(
+          opacity: isLocked ? 0.7 : 1.0,
+          child: IgnorePointer(
+            ignoring: isLocked,
+            child: GestureDetector(
+              onTap: onToggleDropdown,
+              child: Container(
+                key: indicatorKey,
+                height: 56,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : const Color(0xFFDDDDEE),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.account_balance_wallet_rounded,
+                      size: 16,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      displayAccount?.name ?? 'Account',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                    if (!isLocked) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        showDropdown
+                            ? Icons.arrow_drop_up
+                            : Icons.arrow_drop_down,
+                        size: 20,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      loading: () => Container(
+        height: 56,
+        width: 140,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      error: (_, __) => Container(
+        height: 56,
+        width: 140,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );

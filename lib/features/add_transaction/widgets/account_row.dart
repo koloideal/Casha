@@ -16,6 +16,7 @@ class AccountRow extends ConsumerWidget {
   final String? fromAccountError;
   final String? toAccountError;
   final bool isDark;
+  final bool isAccountLocked;
 
   const AccountRow({
     super.key,
@@ -29,6 +30,7 @@ class AccountRow extends ConsumerWidget {
     this.fromAccountError,
     this.toAccountError,
     required this.isDark,
+    this.isAccountLocked = false,
   });
 
   @override
@@ -79,6 +81,7 @@ class AccountRow extends ConsumerWidget {
             fromAccountError: fromAccountError,
             toAccountError: toAccountError,
             isDark: isDark,
+            isAccountLocked: isAccountLocked,
           )
         else
           _SingleAccountSelector(
@@ -226,6 +229,7 @@ class _TransferAccountRow extends ConsumerWidget {
   final String? fromAccountError;
   final String? toAccountError;
   final bool isDark;
+  final bool isAccountLocked;
 
   const _TransferAccountRow({
     required this.initial,
@@ -239,6 +243,7 @@ class _TransferAccountRow extends ConsumerWidget {
     this.fromAccountError,
     this.toAccountError,
     required this.isDark,
+    this.isAccountLocked = false,
   });
 
   @override
@@ -285,10 +290,11 @@ class _TransferAccountRow extends ConsumerWidget {
             account: fromAccount,
             label: 'From',
             showDropdown: showFromDropdown,
-            onToggle: onToggleFromDropdown,
+            onToggle: isAccountLocked ? null : onToggleFromDropdown,
             indicatorKey: fromIndicatorKey,
             error: fromAccountError,
             isDark: isDark,
+            disabled: isAccountLocked,
           ),
         ),
         Padding(
