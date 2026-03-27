@@ -119,11 +119,13 @@ class AccountSelector extends ConsumerWidget {
 class AccountDropdownOverlay extends ConsumerWidget {
   final Transaction? initial;
   final VoidCallback onClose;
+  final GlobalKey? triggerKey;
 
   const AccountDropdownOverlay({
     super.key,
     required this.initial,
     required this.onClose,
+    this.triggerKey,
   });
 
   @override
@@ -131,10 +133,25 @@ class AccountDropdownOverlay extends ConsumerWidget {
     final activeAccount = ref.watch(activeAccountProvider);
     final accountsAsync = ref.watch(accountsProvider);
 
+    // Calculate position from trigger key
+    double top = 76;
+    double left = 20;
+    double? width;
+
+    if (triggerKey?.currentContext != null) {
+      final renderBox =
+          triggerKey!.currentContext!.findRenderObject() as RenderBox;
+      final offset = renderBox.localToGlobal(Offset.zero);
+      final size = renderBox.size;
+      top = offset.dy + size.height + 4;
+      left = offset.dx;
+      width = size.width;
+    }
+
     return Positioned(
-      top: 76,
-      left: 20,
-      right: MediaQuery.of(context).size.width / 2 + 6,
+      top: top,
+      left: left,
+      width: width,
       child: Material(
         elevation: 8,
         borderRadius: BorderRadius.circular(12),

@@ -487,45 +487,47 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
 
                   SectionLabel(s.amount),
                   const SizedBox(height: 8),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: AmountInput(
-                          controller: _amountController,
-                          currencySymbol: overrideCurrency,
-                          currencyCode: state.overrideCurrencyCode,
-                          showError: _showError,
-                          borderColorAnimation: _borderColorAnimation,
-                          isDark: isDark,
-                          onChanged: (v) {
-                            final parsed = double.tryParse(v);
-                            ref
-                                .read(
-                                  addTransactionProvider(
-                                    widget.initial,
-                                  ).notifier,
-                                )
-                                .setAmount(parsed);
-                          },
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: AmountInput(
+                            controller: _amountController,
+                            currencySymbol: overrideCurrency,
+                            currencyCode: state.overrideCurrencyCode,
+                            showError: _showError,
+                            borderColorAnimation: _borderColorAnimation,
+                            isDark: isDark,
+                            onChanged: (v) {
+                              final parsed = double.tryParse(v);
+                              ref
+                                  .read(
+                                    addTransactionProvider(
+                                      widget.initial,
+                                    ).notifier,
+                                  )
+                                  .setAmount(parsed);
+                            },
+                          ),
                         ),
-                      ),
-                      if (!isTransfer) ...[
-                        const SizedBox(width: 12),
-                        _InlineAccountSelector(
-                          initial: widget.initial,
-                          showDropdown: _showFromAccountDropdown,
-                          onToggleDropdown: () => setState(() {
-                            _showFromAccountDropdown =
-                                !_showFromAccountDropdown;
-                            _fromAccountError = null;
-                          }),
-                          indicatorKey: _fromAccountIndicatorKey,
-                          isDark: isDark,
-                          isLocked: isAccountLocked,
-                        ),
+                        if (!isTransfer) ...[
+                          const SizedBox(width: 12),
+                          _InlineAccountSelector(
+                            initial: widget.initial,
+                            showDropdown: _showFromAccountDropdown,
+                            onToggleDropdown: () => setState(() {
+                              _showFromAccountDropdown =
+                                  !_showFromAccountDropdown;
+                              _fromAccountError = null;
+                            }),
+                            indicatorKey: _fromAccountIndicatorKey,
+                            isDark: isDark,
+                            isLocked: isAccountLocked,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 20),
 
@@ -621,6 +623,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                   initial: widget.initial,
                   onClose: () =>
                       setState(() => _showFromAccountDropdown = false),
+                  triggerKey: _fromAccountIndicatorKey,
                 ),
               if (_showToAccountDropdown)
                 Positioned.fill(
@@ -634,6 +637,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                 _ToAccountDropdownOverlay(
                   initial: widget.initial,
                   onClose: () => setState(() => _showToAccountDropdown = false),
+                  triggerKey: _toAccountIndicatorKey,
                 ),
             ],
           ),
@@ -698,8 +702,10 @@ class _InlineAccountSelector extends ConsumerWidget {
               onTap: onToggleDropdown,
               child: Container(
                 key: indicatorKey,
-                height: 56,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
@@ -771,10 +777,12 @@ class _InlineAccountSelector extends ConsumerWidget {
 class _ToAccountDropdownOverlay extends ConsumerWidget {
   final Transaction? initial;
   final VoidCallback onClose;
+  final GlobalKey? triggerKey;
 
   const _ToAccountDropdownOverlay({
     required this.initial,
     required this.onClose,
+    this.triggerKey,
   });
 
   @override
@@ -785,10 +793,25 @@ class _ToAccountDropdownOverlay extends ConsumerWidget {
         .selectedAccountId;
     final toAccountId = ref.read(addTransactionProvider(initial)).toAccountId;
 
+    // Calculate position from trigger key
+    double top = 340;
+    double left = 20;
+    double? width;
+
+    if (triggerKey?.currentContext != null) {
+      final renderBox =
+          triggerKey!.currentContext!.findRenderObject() as RenderBox;
+      final offset = renderBox.localToGlobal(Offset.zero);
+      final size = renderBox.size;
+      top = offset.dy + size.height + 4;
+      left = offset.dx;
+      width = size.width;
+    }
+
     return Positioned(
-      top: 340,
-      left: 20,
-      right: 20,
+      top: top,
+      left: left,
+      width: width,
       child: Material(
         elevation: 8,
         borderRadius: BorderRadius.circular(12),
