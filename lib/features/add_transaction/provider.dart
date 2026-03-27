@@ -13,6 +13,7 @@ class AddTransactionState {
   final String overrideCurrency;
   final String overrideCurrencyCode;
   final int? selectedAccountId;
+  final int? toAccountId;
 
   const AddTransactionState({
     this.amount,
@@ -25,6 +26,7 @@ class AddTransactionState {
     this.overrideCurrency = '\$',
     this.overrideCurrencyCode = 'USD',
     this.selectedAccountId,
+    this.toAccountId,
   });
 
   factory AddTransactionState.fromTransaction(Transaction tx) {
@@ -56,6 +58,7 @@ class AddTransactionState {
     String? overrideCurrency,
     String? overrideCurrencyCode,
     int? selectedAccountId,
+    int? toAccountId,
   }) => AddTransactionState(
     amount: amount ?? this.amount,
     category: category ?? this.category,
@@ -67,6 +70,7 @@ class AddTransactionState {
     overrideCurrency: overrideCurrency ?? this.overrideCurrency,
     overrideCurrencyCode: overrideCurrencyCode ?? this.overrideCurrencyCode,
     selectedAccountId: selectedAccountId ?? this.selectedAccountId,
+    toAccountId: toAccountId ?? this.toAccountId,
   );
 
   bool get isEditing => editingId != null;
@@ -85,8 +89,12 @@ class AddTransactionNotifier extends StateNotifier<AddTransactionState> {
   void setCategory(String v) => state = state.copyWith(category: v);
 
   void setType(TransactionType v) {
-    final newCategory = AppCategories.forType(v).first;
-    state = state.copyWith(type: v, category: newCategory);
+    if (v == TransactionType.transfer) {
+      state = state.copyWith(type: v, category: 'Transfer', toAccountId: null);
+    } else {
+      final newCategory = AppCategories.forType(v).first;
+      state = state.copyWith(type: v, category: newCategory, toAccountId: null);
+    }
   }
 
   void setDate(DateTime v) => state = state.copyWith(date: v);
@@ -103,6 +111,10 @@ class AddTransactionNotifier extends StateNotifier<AddTransactionState> {
   }
 
   void setAccountId(int id) => state = state.copyWith(selectedAccountId: id);
+
+  void setToAccountId(int? id) => state = state.copyWith(toAccountId: id);
+
+  bool get isTransfer => state.type == TransactionType.transfer;
 
   void reset() => state = AddTransactionState.empty();
 }

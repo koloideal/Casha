@@ -29,19 +29,23 @@ class TransactionTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
     final fmt = ref.watch(amountFormatProvider);
+    final isTransfer = transaction.category == 'Transfer';
     final isIncome = transaction.type == TransactionType.income;
-    final color = isIncome ? AppColors.income : AppColors.expense;
-    final catColor =
-        AppCategories.colors[transaction.category] ?? AppColors.accent;
-    final catIcon =
-        AppCategories.icons[transaction.category] ?? Icons.category_rounded;
+    final color = isTransfer
+        ? const Color(0xFF7C6DED)
+        : (isIncome ? AppColors.income : AppColors.expense);
+    final catColor = isTransfer
+        ? const Color(0xFF7C6DED)
+        : (AppCategories.colors[transaction.category] ?? AppColors.accent);
+    final catIcon = isTransfer
+        ? Icons.swap_horiz_rounded
+        : (AppCategories.icons[transaction.category] ?? Icons.category_rounded);
 
     // Check if we're on Total Balance page
     final activeAccount = ref.watch(activeAccountProvider);
-    final displayCurrency = activeAccount?.currency ??
-        ref.watch(currencyProvider).code;
-    final showConverted =
-        transaction.currencyCode != displayCurrency;
+    final displayCurrency =
+        activeAccount?.currency ?? ref.watch(currencyProvider).code;
+    final showConverted = transaction.currencyCode != displayCurrency;
     final exchangeService = ref.watch(exchangeRateServiceProvider);
     final convertedAmount = showConverted
         ? exchangeService.convert(
@@ -50,8 +54,7 @@ class TransactionTile extends ConsumerWidget {
             displayCurrency,
           )
         : 0.0;
-    final displaySymbol =
-        currencyMap[displayCurrency]?.symbol ?? '';
+    final displaySymbol = currencyMap[displayCurrency]?.symbol ?? '';
 
     // Look up the account name by matching transaction.accountId
     final accounts = ref.watch(accountsProvider).valueOrNull ?? [];
@@ -93,7 +96,9 @@ class TransactionTile extends ConsumerWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          s.categoryLabel(transaction.category),
+                          isTransfer
+                              ? 'Transfer'
+                              : s.categoryLabel(transaction.category),
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 fontWeight: FontWeight.w600,
@@ -143,12 +148,12 @@ class TransactionTile extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            isIncome ? '+ ' : '- ',
+                            isTransfer ? '' : (isIncome ? '+ ' : '- '),
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                              color: color,
-                              fontWeight: FontWeight.w700,
-                            ),
+                                  color: color,
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
                           BynSign(fontSize: 14, color: color),
                           const SizedBox(width: 2),
@@ -156,14 +161,20 @@ class TransactionTile extends ConsumerWidget {
                             formatAmount('', transaction.amount, fmt),
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                              color: color,
-                              fontWeight: FontWeight.w700,
-                            ),
+                                  color: color,
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
                         ],
                       )
                     : Text(
-                        '${isIncome ? '+ ' : '- '}${formatAmount(transaction.currency, transaction.amount, fmt)}',
+                        isTransfer
+                            ? formatAmount(
+                                transaction.currency,
+                                transaction.amount,
+                                fmt,
+                              )
+                            : '${isIncome ? '+ ' : '- '}${formatAmount(transaction.currency, transaction.amount, fmt)}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: color,
                           fontWeight: FontWeight.w700,
@@ -184,10 +195,7 @@ class TransactionTile extends ConsumerWidget {
                             height: 1.3,
                           ),
                         ),
-                        BynSign(
-                          fontSize: 11,
-                          color: color.withOpacity(0.5),
-                        ),
+                        BynSign(fontSize: 11, color: color.withOpacity(0.5)),
                         const SizedBox(width: 2),
                         Text(
                           formatAmount('', convertedAmount, fmt),

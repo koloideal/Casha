@@ -15,49 +15,66 @@ class FilterChips extends ConsumerWidget {
     final timeFilter = ref.watch(timeFilterProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Row(
-      children: [
-        _FilterChip(
-          label: strings.filterAllTime,
-          isSelected: timeFilter == TimeFilter.allTime,
-          onTap: () => ref.read(timeFilterProvider.notifier).state = TimeFilter.allTime,
-        ),
-        const SizedBox(width: 6),
-        _FilterChip(
-          label: strings.filterMonth,
-          isSelected: timeFilter == TimeFilter.lastMonth,
-          onTap: () => ref.read(timeFilterProvider.notifier).state = TimeFilter.lastMonth,
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Container(
-            width: 1,
-            height: 20,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(
-              isDark ? 0.15 : 0.2,
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      clipBehavior: Clip.none,
+      child: Row(
+        children: [
+          _FilterChip(
+            label: strings.filterAllTime,
+            isSelected: timeFilter == TimeFilter.allTime,
+            onTap: () => ref.read(timeFilterProvider.notifier).state =
+                TimeFilter.allTime,
+          ),
+          const SizedBox(width: 6),
+          _FilterChip(
+            label: strings.filterMonth,
+            isSelected: timeFilter == TimeFilter.lastMonth,
+            onTap: () => ref.read(timeFilterProvider.notifier).state =
+                TimeFilter.lastMonth,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Container(
+              width: 1,
+              height: 20,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withOpacity(isDark ? 0.15 : 0.2),
             ),
           ),
-        ),
-        _FilterChip(
-          label: strings.filterAll,
-          isSelected: typeFilter == TransactionFilter.all,
-          onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.all,
-        ),
-        const SizedBox(width: 6),
-        _FilterChip(
-          label: strings.filterIncome,
-          isSelected: typeFilter == TransactionFilter.income,
-          color: AppColors.income,
-          onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.income,
-        ),
-        const SizedBox(width: 6),
-        _FilterChip(
-          label: strings.filterExpense,
-          isSelected: typeFilter == TransactionFilter.expense,
-          color: AppColors.expense,
-          onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.expense,
-        ),
-      ],
+          _FilterChip(
+            label: strings.filterAll,
+            isSelected: typeFilter == TransactionFilter.all,
+            onTap: () => ref.read(transactionFilterProvider.notifier).state =
+                TransactionFilter.all,
+          ),
+          const SizedBox(width: 6),
+          _FilterChip(
+            label: strings.filterIncome,
+            isSelected: typeFilter == TransactionFilter.income,
+            color: AppColors.income,
+            onTap: () => ref.read(transactionFilterProvider.notifier).state =
+                TransactionFilter.income,
+          ),
+          const SizedBox(width: 6),
+          _FilterChip(
+            label: strings.filterExpense,
+            isSelected: typeFilter == TransactionFilter.expense,
+            color: AppColors.expense,
+            onTap: () => ref.read(transactionFilterProvider.notifier).state =
+                TransactionFilter.expense,
+          ),
+          const SizedBox(width: 6),
+          _FilterChip(
+            label: strings.filterTransfer,
+            isSelected: typeFilter == TransactionFilter.transfer,
+            color: Colors.blueAccent,
+            onTap: () => ref.read(transactionFilterProvider.notifier).state =
+                TransactionFilter.transfer,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -96,8 +113,8 @@ class _FilterChip extends StatelessWidget {
           border: isSelected
               ? Border.all(color: chipColor, width: 1.5)
               : isDark
-                  ? null
-                  : Border.all(color: const Color(0xFFDDDDEE), width: 1),
+              ? null
+              : Border.all(color: const Color(0xFFDDDDEE), width: 1),
         ),
         child: Text(
           label,

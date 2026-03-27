@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -10,6 +9,7 @@ import '../../shared/models/transaction.dart';
 import '../dashboard/provider.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
+import 'widgets/account_row.dart';
 import 'widgets/account_selector.dart';
 import 'widgets/amount_input.dart';
 import 'widgets/category_picker.dart';
@@ -37,13 +37,17 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
-  final _accountIndicatorKey = GlobalKey();
+  final _fromAccountIndicatorKey = GlobalKey();
+  final _toAccountIndicatorKey = GlobalKey();
   late AnimationController _shakeController;
   late Animation<Color?> _borderColorAnimation;
   bool _showError = false;
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
-  bool _showAccountDropdown = false;
+  bool _showFromAccountDropdown = false;
+  bool _showToAccountDropdown = false;
+  String? _toAccountError;
+  String? _fromAccountError;
 
   @override
   void initState() {
@@ -82,6 +86,13 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         ref
             .read(addTransactionProvider(null).notifier)
             .setCurrency(currencySymbol, currencyCode);
+
+        // Set the selected account if there's an active account
+        if (activeAccount != null) {
+          ref
+              .read(addTransactionProvider(null).notifier)
+              .setAccountId(activeAccount.id);
+        }
       });
     }
   }
@@ -134,6 +145,30 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     final amount = double.parse(parsed);
     final state = ref.read(addTransactionProvider(widget.initial));
 
+    // Validate transfer
+    if (state.type == TransactionType.transfer) {
+      bool hasError = false;
+
+      if (state.selectedAccountId == null) {
+        setState(() => _fromAccountError = 'Please select a source account');
+        hasError = true;
+      } else {
+        setState(() => _fromAccountError = null);
+      }
+
+      if (state.toAccountId == null) {
+        setState(() => _toAccountError = 'Please select a destination account');
+        hasError = true;
+      } else if (state.toAccountId == state.selectedAccountId) {
+        setState(() => _toAccountError = 'Source and destination must differ');
+        hasError = true;
+      } else {
+        setState(() => _toAccountError = null);
+      }
+
+      if (hasError) return;
+    }
+
     final finalDateTime = DateTime(
       _selectedDate.year,
       _selectedDate.month,
@@ -160,56 +195,100 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         'Amount: $amount, Category: ${state.category}, Type: ${state.type.name}',
       );
 
-      final activeAccount = ref.read(activeAccountProvider);
-      final selectedId = ref
-          .read(addTransactionProvider(widget.initial))
-          .selectedAccountId;
-      int accountId;
+      if (state.type == TransactionType.transfer) {
+        // Handle transfer: create two transactions
+        // Get currency with fallback to global currency
+        final curr = ref.read(currencyProvider);
+        final currency = state.overrideCurrency.isNotEmpty
+            ? state.overrideCurrency
+            : curr.symbol;
+        final currencyCode = state.overrideCurrencyCode.isNotEmpty
+            ? state.overrideCurrencyCode
+            : curr.code;
 
-      if (selectedId != null && selectedId != 0) {
-        print('Using selected account ID: $selectedId');
-        accountId = selectedId;
-      } else if (activeAccount != null) {
-        print(
-          'Using active account ID: ${activeAccount.id}, Name: ${activeAccount.name}',
+        final expense = Transaction(
+          id: _uuid.v4(),
+          amount: amount,
+          category: 'Transfer',
+          type: TransactionType.expense,
+          date: finalDateTime,
+          note: note,
+          currency: currency,
+          currencyCode: currencyCode,
+          accountId: state.selectedAccountId!,
         );
-        accountId = activeAccount.id;
+
+        final income = Transaction(
+          id: _uuid.v4(),
+          amount: amount,
+          category: 'Transfer',
+          type: TransactionType.income,
+          date: finalDateTime,
+          note: note,
+          currency: currency,
+          currencyCode: currencyCode,
+          accountId: state.toAccountId!,
+        );
+
+        print('Creating transfer transactions...');
+        await ref.read(transactionsProvider.notifier).add(expense);
+        await ref.read(transactionsProvider.notifier).add(income);
+        print('Transfer completed');
       } else {
-        print('No active account. Fetching main account...');
-        final mainAccount = await ref.read(accountRepositoryProvider).getMain();
-        print(
-          'Main account fetched: ID=${mainAccount.id}, Name: ${mainAccount.name}',
+        // Handle regular income/expense
+        final activeAccount = ref.read(activeAccountProvider);
+        final selectedId = ref
+            .read(addTransactionProvider(widget.initial))
+            .selectedAccountId;
+        int accountId;
+
+        if (selectedId != null && selectedId != 0) {
+          print('Using selected account ID: $selectedId');
+          accountId = selectedId;
+        } else if (activeAccount != null) {
+          print(
+            'Using active account ID: ${activeAccount.id}, Name: ${activeAccount.name}',
+          );
+          accountId = activeAccount.id;
+        } else {
+          print('No active account. Fetching main account...');
+          final mainAccount = await ref
+              .read(accountRepositoryProvider)
+              .getMain();
+          print(
+            'Main account fetched: ID=${mainAccount.id}, Name: ${mainAccount.name}',
+          );
+          accountId = mainAccount.id;
+        }
+
+        final tx = Transaction(
+          id: state.editingId ?? _uuid.v4(),
+          amount: amount,
+          category: state.category,
+          type: state.type,
+          date: finalDateTime,
+          note: note,
+          currency: state.overrideCurrency,
+          currencyCode: state.overrideCurrencyCode,
+          accountId: accountId,
         );
-        accountId = mainAccount.id;
-      }
 
-      final tx = Transaction(
-        id: state.editingId ?? _uuid.v4(),
-        amount: amount,
-        category: state.category,
-        type: state.type,
-        date: finalDateTime,
-        note: note,
-        currency: state.overrideCurrency,
-        currencyCode: state.overrideCurrencyCode,
-        accountId: accountId,
-      );
+        print('Transaction object created: ID=${tx.id}, AccId=${tx.accountId}');
+        print('Calling provider to save...');
 
-      print('Transaction object created: ID=${tx.id}, AccId=${tx.accountId}');
-      print('Calling provider to save...');
+        if (state.isEditing) {
+          await ref.read(transactionsProvider.notifier).update(tx);
+          print('Update completed');
+        } else {
+          final res = await ref.read(transactionsProvider.notifier).add(tx);
+          print(
+            'Add completed. Result: ${res.isSuccess ? "SUCCESS" : "FAILURE"}',
+          );
 
-      if (state.isEditing) {
-        await ref.read(transactionsProvider.notifier).update(tx);
-        print('Update completed');
-      } else {
-        final res = await ref.read(transactionsProvider.notifier).add(tx);
-        print(
-          'Add completed. Result: ${res.isSuccess ? "SUCCESS" : "FAILURE"}',
-        );
-
-        if (res.isFailure) {
-          print('!!! Provider returned failure: ${res.errorOrNull}');
-          throw Exception(res.errorOrNull);
+          if (res.isFailure) {
+            print('!!! Provider returned failure: ${res.errorOrNull}');
+            throw Exception(res.errorOrNull);
+          }
         }
       }
 
@@ -349,37 +428,32 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
               ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AccountSelector(
-                              initial: widget.initial,
-                              showDropdown: _showAccountDropdown,
-                              onToggleDropdown: () => setState(
-                                () => _showAccountDropdown =
-                                    !_showAccountDropdown,
-                              ),
-                              indicatorKey: _accountIndicatorKey,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TypeToggle(
-                          selected: state.type,
-                          onChanged: (type) => ref
-                              .read(
-                                addTransactionProvider(widget.initial).notifier,
-                              )
-                              .setType(type),
-                          isDark: isDark,
-                        ),
-                      ),
-                    ],
+                  TypeToggle(
+                    selected: state.type,
+                    onChanged: (type) => ref
+                        .read(addTransactionProvider(widget.initial).notifier)
+                        .setType(type),
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 16),
+
+                  AccountRow(
+                    initial: widget.initial,
+                    showFromDropdown: _showFromAccountDropdown,
+                    showToDropdown: _showToAccountDropdown,
+                    onToggleFromDropdown: () => setState(() {
+                      _showFromAccountDropdown = !_showFromAccountDropdown;
+                      _fromAccountError = null;
+                    }),
+                    onToggleToDropdown: () => setState(() {
+                      _showToAccountDropdown = !_showToAccountDropdown;
+                      _toAccountError = null;
+                    }),
+                    fromIndicatorKey: _fromAccountIndicatorKey,
+                    toIndicatorKey: _toAccountIndicatorKey,
+                    fromAccountError: _fromAccountError,
+                    toAccountError: _toAccountError,
+                    isDark: isDark,
                   ),
                   const SizedBox(height: 24),
 
@@ -419,16 +493,18 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                   ),
                   const SizedBox(height: 20),
 
-                  SectionLabel(s.category),
-                  const SizedBox(height: 8),
-                  CategoryPicker(
-                    categories: categories,
-                    selected: state.category,
-                    onChanged: (c) => ref
-                        .read(addTransactionProvider(widget.initial).notifier)
-                        .setCategory(c),
-                  ),
-                  const SizedBox(height: 20),
+                  if (state.type != TransactionType.transfer) ...[
+                    SectionLabel(s.category),
+                    const SizedBox(height: 8),
+                    CategoryPicker(
+                      categories: categories,
+                      selected: state.category,
+                      onChanged: (c) => ref
+                          .read(addTransactionProvider(widget.initial).notifier)
+                          .setCategory(c),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
 
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,20 +553,148 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                   ),
                 ],
               ),
-              if (_showAccountDropdown)
+              if (_showFromAccountDropdown)
                 Positioned.fill(
                   child: GestureDetector(
-                    onTap: () => setState(() => _showAccountDropdown = false),
+                    onTap: () =>
+                        setState(() => _showFromAccountDropdown = false),
                     behavior: HitTestBehavior.translucent,
                     child: const SizedBox.expand(),
                   ),
                 ),
-              if (_showAccountDropdown)
+              if (_showFromAccountDropdown)
                 AccountDropdownOverlay(
                   initial: widget.initial,
-                  onClose: () => setState(() => _showAccountDropdown = false),
+                  onClose: () =>
+                      setState(() => _showFromAccountDropdown = false),
+                ),
+              if (_showToAccountDropdown)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _showToAccountDropdown = false),
+                    behavior: HitTestBehavior.translucent,
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              if (_showToAccountDropdown)
+                _ToAccountDropdownOverlay(
+                  initial: widget.initial,
+                  onClose: () => setState(() => _showToAccountDropdown = false),
                 ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ToAccountDropdownOverlay extends ConsumerWidget {
+  final Transaction? initial;
+  final VoidCallback onClose;
+
+  const _ToAccountDropdownOverlay({
+    required this.initial,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accountsAsync = ref.watch(accountsProvider);
+    final selectedAccountId = ref
+        .read(addTransactionProvider(initial))
+        .selectedAccountId;
+    final toAccountId = ref.read(addTransactionProvider(initial)).toAccountId;
+
+    return Positioned(
+      top: 340,
+      left: 20,
+      right: 20,
+      child: Material(
+        elevation: 8,
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF7C6DED).withOpacity(0.3),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: accountsAsync.when(
+            data: (accounts) {
+              final filteredAccounts = accounts
+                  .where((a) => a.id != selectedAccountId)
+                  .toList();
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: filteredAccounts.map((account) {
+                  final isSelected = account.id == toAccountId;
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      ref
+                          .read(addTransactionProvider(initial).notifier)
+                          .setToAccountId(account.id);
+                      onClose();
+                      HapticService.light();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.account_balance_wallet_rounded,
+                            size: 16,
+                            color: isSelected
+                                ? const Color(0xFF7C6DED)
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              account.name,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                                color: isSelected
+                                    ? const Color(0xFF7C6DED)
+                                    : Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          if (isSelected)
+                            const Icon(
+                              Icons.check_rounded,
+                              size: 16,
+                              color: Color(0xFF7C6DED),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
           ),
         ),
       ),

@@ -114,7 +114,7 @@ class TransactionsNotifier
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
-enum TransactionFilter { all, income, expense }
+enum TransactionFilter { all, income, expense, transfer }
 
 enum TimeFilter { allTime, lastMonth }
 
@@ -146,7 +146,7 @@ final globalTotalBalanceProvider = Provider<double>((ref) {
   final exchangeService = ref.watch(exchangeRateServiceProvider);
   final targetCurrency = ref.watch(currencyProvider).code;
 
-  return txs.fold(0.0, (sum, t) {
+  return txs.where((t) => t.category != 'Transfer').fold(0.0, (sum, t) {
     final converted = exchangeService.convert(
       t.amount,
       t.currencyCode,
@@ -173,7 +173,7 @@ final totalBalanceProvider = Provider<double>((ref) {
 
   final exchangeService = ref.watch(exchangeRateServiceProvider);
 
-  return txs.fold(0.0, (sum, t) {
+  return txs.where((t) => t.category != 'Transfer').fold(0.0, (sum, t) {
     final converted = exchangeService.convert(
       t.amount,
       t.currencyCode,
@@ -186,7 +186,9 @@ final totalBalanceProvider = Provider<double>((ref) {
 final totalIncomeProvider = Provider<double>((ref) {
   // Watch the filtered transactions directly
   final txs = ref.watch(accountFilteredTransactionsProvider);
-  final filtered = txs.where((t) => t.type == TransactionType.income);
+  final filtered = txs.where(
+    (t) => t.type == TransactionType.income && t.category != 'Transfer',
+  );
 
   // Watch the dependencies that change on swipe!
   final index = ref.watch(activeAccountIndexProvider);
@@ -212,7 +214,9 @@ final totalIncomeProvider = Provider<double>((ref) {
 
 final totalExpenseProvider = Provider<double>((ref) {
   final txs = ref.watch(accountFilteredTransactionsProvider);
-  final filtered = txs.where((t) => t.type == TransactionType.expense);
+  final filtered = txs.where(
+    (t) => t.type == TransactionType.expense && t.category != 'Transfer',
+  );
 
   final index = ref.watch(activeAccountIndexProvider);
   final accountsAsync = ref.watch(accountsProvider);
@@ -291,6 +295,8 @@ final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
     filtered = filtered
         .where((t) => t.type == TransactionType.expense)
         .toList();
+  } else if (typeFilter == TransactionFilter.transfer) {
+    filtered = filtered.where((t) => t.category == 'Transfer').toList();
   }
 
   if (query.isNotEmpty) {
@@ -402,8 +408,9 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
 
   Future<void> _load() async {
     final currentGeneration = ++_loadGeneration;
-    final (c1, c2, lightG, darkG) =
-        await CardColorService.load(accountId: accountId);
+    final (c1, c2, lightG, darkG) = await CardColorService.load(
+      accountId: accountId,
+    );
     if (currentGeneration != _loadGeneration) return; // stale
     state = CardColors(c1, c2, lightG, darkG);
   }

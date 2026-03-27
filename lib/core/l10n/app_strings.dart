@@ -19,6 +19,7 @@ class AppStrings {
   String get filterAll => _ru ? 'Все' : 'All';
   String get filterIncome => _ru ? 'Доход' : 'Income';
   String get filterExpense => _ru ? 'Расход' : 'Expense';
+  String get filterTransfer => _ru ? 'Перевод' : 'Transfer';
   String get filterAllTime => _ru ? 'Всё время' : 'All Time';
   String get filterMonth => _ru ? 'Месяц' : 'Month';
   String get income => _ru ? 'Доход' : 'Income';

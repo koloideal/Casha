@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
 import '../../../shared/models/transaction.dart';
+import '../../dashboard/provider.dart';
 
-class TypeToggle extends StatelessWidget {
+class TypeToggle extends ConsumerWidget {
   final TransactionType selected;
   final ValueChanged<TransactionType> onChanged;
   final bool isDark;
@@ -15,7 +17,11 @@ class TypeToggle extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accountsAsync = ref.watch(accountsProvider);
+    final accounts = accountsAsync.valueOrNull ?? [];
+    final transferDisabled = accounts.length <= 1;
+
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -28,56 +34,111 @@ class TypeToggle extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: GestureDetector(
+            child: _TypeOption(
+              icon: Icons.arrow_downward_rounded,
+              label: 'Income',
+              color: AppColors.income,
+              isSelected: selected == TransactionType.income,
               onTap: () => onChanged(TransactionType.income),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  color: selected == TransactionType.income
-                      ? AppColors.income.withOpacity(0.15)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.arrow_downward_rounded,
-                    color: selected == TransactionType.income
-                        ? AppColors.income
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.4),
-                    size: 20,
-                  ),
-                ),
-              ),
+              isDark: isDark,
             ),
           ),
           Expanded(
-            child: GestureDetector(
+            child: _TypeOption(
+              icon: Icons.arrow_upward_rounded,
+              label: 'Expense',
+              color: AppColors.expense,
+              isSelected: selected == TransactionType.expense,
               onTap: () => onChanged(TransactionType.expense),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  color: selected == TransactionType.expense
-                      ? AppColors.expense.withOpacity(0.15)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.arrow_upward_rounded,
-                    color: selected == TransactionType.expense
-                        ? AppColors.expense
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.4),
-                    size: 20,
-                  ),
-                ),
-              ),
+              isDark: isDark,
+            ),
+          ),
+          Expanded(
+            child: _TypeOption(
+              icon: Icons.swap_horiz_rounded,
+              label: 'Transfer',
+              color: Colors.blueAccent,
+              isSelected: selected == TransactionType.transfer,
+              onTap: transferDisabled
+                  ? null
+                  : () => onChanged(TransactionType.transfer),
+              isDark: isDark,
+              disabled: transferDisabled,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TypeOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isSelected;
+  final VoidCallback? onTap;
+  final bool isDark;
+  final bool disabled;
+
+  const _TypeOption({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.isSelected,
+    required this.onTap,
+    required this.isDark,
+    this.disabled = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveColor = disabled
+        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.2)
+        : color;
+
+    return GestureDetector(
+      onTap: disabled ? null : onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: isSelected && !disabled
+              ? effectiveColor.withOpacity(0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(11),
+          border: isSelected && !disabled
+              ? Border.all(color: effectiveColor, width: 1.5)
+              : null,
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: isSelected && !disabled
+                    ? effectiveColor
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(disabled ? 0.2 : 0.4),
+                size: 20,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected && !disabled
+                      ? effectiveColor
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(
+                          disabled ? 0.2 : 0.5,
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
