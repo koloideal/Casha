@@ -35,7 +35,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(widget.context);
     final cardTop = mq.padding.top + kToolbarHeight + 16;
-    const cardHeight = 220.0;
+    const cardHeight = 230.0;
     final panelTop = cardTop + cardHeight + 65;
     const panelHeight = 410.0;
 
@@ -65,9 +65,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
               widthFactor: 0.92,
               child: SizedBox(
                 height: cardHeight,
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
+                child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Consumer(
                       builder: (ctx, ref, _) => BalanceCard(
@@ -84,7 +82,6 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                       ),
                     ),
                   ),
-                ),
               ),
             ),
           ),
