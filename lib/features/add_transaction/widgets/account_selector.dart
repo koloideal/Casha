@@ -136,7 +136,6 @@ class AccountDropdownOverlay extends ConsumerWidget {
     // Calculate position from trigger key
     double top = 76;
     double left = 20;
-    double? width;
 
     if (triggerKey?.currentContext != null) {
       final renderBox =
@@ -145,115 +144,115 @@ class AccountDropdownOverlay extends ConsumerWidget {
       final size = renderBox.size;
       top = offset.dy + size.height + 4;
       left = offset.dx;
-      width = size.width;
     }
 
     return Positioned(
       top: top,
       left: left,
-      width: width,
-      child: Material(
-        elevation: 8,
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.transparent,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFF7C6DED).withOpacity(0.3),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
+      child: IntrinsicWidth(
+        child: Material(
+          elevation: 8,
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF7C6DED).withOpacity(0.3),
+                width: 1.5,
               ),
-            ],
-          ),
-          child: accountsAsync.when(
-            data: (accounts) {
-              final txAccountId = ref
-                  .read(addTransactionProvider(initial))
-                  .selectedAccountId;
-              final Account displayAccount;
-              if (txAccountId != null) {
-                displayAccount = accounts.firstWhere(
-                  (a) => a.id == txAccountId,
-                  orElse: () => accounts.firstWhere(
-                    (a) => a.isMain,
-                    orElse: () => accounts.first,
-                  ),
-                );
-              } else {
-                displayAccount =
-                    activeAccount ??
-                    accounts.firstWhere(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: accountsAsync.when(
+              data: (accounts) {
+                final txAccountId = ref
+                    .read(addTransactionProvider(initial))
+                    .selectedAccountId;
+                final Account displayAccount;
+                if (txAccountId != null) {
+                  displayAccount = accounts.firstWhere(
+                    (a) => a.id == txAccountId,
+                    orElse: () => accounts.firstWhere(
                       (a) => a.isMain,
                       orElse: () => accounts.first,
-                    );
-              }
-
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: accounts.map((account) {
-                  final isSelected = account.id == displayAccount.id;
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      ref
-                          .read(addTransactionProvider(initial).notifier)
-                          .setAccountId(account.id);
-                      onClose();
-                      HapticService.light();
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.account_balance_wallet_rounded,
-                            size: 16,
-                            color: isSelected
-                                ? const Color(0xFF7C6DED)
-                                : Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withOpacity(0.5),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              account.name,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                                color: isSelected
-                                    ? const Color(0xFF7C6DED)
-                                    : Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                          if (isSelected)
-                            const Icon(
-                              Icons.check_rounded,
-                              size: 16,
-                              color: Color(0xFF7C6DED),
-                            ),
-                        ],
-                      ),
                     ),
                   );
-                }).toList(),
-              );
-            },
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+                } else {
+                  displayAccount =
+                      activeAccount ??
+                      accounts.firstWhere(
+                        (a) => a.isMain,
+                        orElse: () => accounts.first,
+                      );
+                }
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: accounts.map((account) {
+                    final isSelected = account.id == displayAccount.id;
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        ref
+                            .read(addTransactionProvider(initial).notifier)
+                            .setAccountId(account.id);
+                        onClose();
+                        HapticService.light();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.account_balance_wallet_rounded,
+                              size: 16,
+                              color: isSelected
+                                  ? const Color(0xFF7C6DED)
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.5),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                account.name,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color: isSelected
+                                      ? const Color(0xFF7C6DED)
+                                      : Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(
+                                Icons.check_rounded,
+                                size: 16,
+                                color: Color(0xFF7C6DED),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
           ),
         ),
       ),

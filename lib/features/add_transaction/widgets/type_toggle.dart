@@ -8,12 +8,14 @@ class TypeToggle extends ConsumerWidget {
   final TransactionType selected;
   final ValueChanged<TransactionType> onChanged;
   final bool isDark;
+  final bool isEditing;
 
   const TypeToggle({
     super.key,
     required this.selected,
     required this.onChanged,
     required this.isDark,
+    this.isEditing = false,
   });
 
   @override
@@ -41,6 +43,7 @@ class TypeToggle extends ConsumerWidget {
               isSelected: selected == TransactionType.income,
               onTap: () => onChanged(TransactionType.income),
               isDark: isDark,
+              showLock: isEditing && selected == TransactionType.income,
             ),
           ),
           Expanded(
@@ -51,6 +54,7 @@ class TypeToggle extends ConsumerWidget {
               isSelected: selected == TransactionType.expense,
               onTap: () => onChanged(TransactionType.expense),
               isDark: isDark,
+              showLock: isEditing && selected == TransactionType.expense,
             ),
           ),
           Expanded(
@@ -64,6 +68,7 @@ class TypeToggle extends ConsumerWidget {
                   : () => onChanged(TransactionType.transfer),
               isDark: isDark,
               disabled: transferDisabled,
+              showLock: isEditing && selected == TransactionType.transfer,
             ),
           ),
         ],
@@ -80,6 +85,7 @@ class _TypeOption extends StatelessWidget {
   final VoidCallback? onTap;
   final bool isDark;
   final bool disabled;
+  final bool showLock;
 
   const _TypeOption({
     required this.icon,
@@ -89,6 +95,7 @@ class _TypeOption extends StatelessWidget {
     required this.onTap,
     required this.isDark,
     this.disabled = false,
+    this.showLock = false,
   });
 
   @override
@@ -99,46 +106,62 @@ class _TypeOption extends StatelessWidget {
 
     return GestureDetector(
       onTap: disabled ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: isSelected && !disabled
-              ? effectiveColor.withOpacity(0.15)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(11),
-          border: isSelected && !disabled
-              ? Border.all(color: effectiveColor, width: 1.5)
-              : null,
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: isSelected && !disabled
-                    ? effectiveColor
-                    : Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(disabled ? 0.2 : 0.4),
-                size: 20,
+      child: Stack(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: isSelected && !disabled
+                  ? effectiveColor.withOpacity(0.15)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(11),
+              border: isSelected && !disabled
+                  ? Border.all(color: effectiveColor, width: 1.5)
+                  : null,
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    color: isSelected && !disabled
+                        ? effectiveColor
+                        : Theme.of(context).colorScheme.onSurface.withOpacity(
+                            disabled ? 0.2 : 0.4,
+                          ),
+                    size: 20,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                      color: isSelected && !disabled
+                          ? effectiveColor
+                          : Theme.of(context).colorScheme.onSurface.withOpacity(
+                              disabled ? 0.2 : 0.5,
+                            ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected && !disabled
-                      ? effectiveColor
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(
-                          disabled ? 0.2 : 0.5,
-                        ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          if (showLock)
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Icon(
+                Icons.lock_outline,
+                size: 10,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              ),
+            ),
+        ],
       ),
     );
   }

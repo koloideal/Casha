@@ -418,13 +418,6 @@ class _AccountHalf extends StatelessWidget {
             ),
           ),
         ),
-        if (error != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            error!,
-            style: const TextStyle(fontSize: 11, color: Color(0xFFE05C6B)),
-          ),
-        ],
       ],
     );
   }
