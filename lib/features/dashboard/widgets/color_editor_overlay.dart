@@ -96,7 +96,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
           ),
           // Close Button - Top Right
           Positioned(
-            top: mq.padding.top + (kToolbarHeight / 2) - 20,
+            top: cardTop - 20,
             right: 20,
             child: GestureDetector(
               onTap: () => dash.closeOverlay(apply: false),
