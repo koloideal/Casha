@@ -189,10 +189,17 @@ class AccountDropdownOverlay extends ConsumerWidget {
               final txAccountId = ref
                   .read(addTransactionProvider(initial))
                   .selectedAccountId;
+              final toAccountId = ref
+                  .read(addTransactionProvider(initial))
+                  .toAccountId;
+
+              final availableAccounts = accounts
+                  .where((a) => toAccountId == null || a.id != toAccountId)
+                  .toList();
 
               return Column(
                 mainAxisSize: MainAxisSize.min,
-                children: accounts.map((account) {
+                children: availableAccounts.map((account) {
                   final isSelected =
                       txAccountId != null && account.id == txAccountId;
                   return InkWell(
