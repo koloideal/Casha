@@ -993,7 +993,8 @@ class _ToAccountDropdownOverlay extends ConsumerWidget {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: filteredAccounts.map((account) {
-                  final isSelected = account.id == toAccountId;
+                  final isSelected =
+                      toAccountId != null && account.id == toAccountId;
                   return InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () {

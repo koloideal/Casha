@@ -132,7 +132,6 @@ class AccountDropdownOverlay extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final activeAccount = ref.watch(activeAccountProvider);
     final accountsAsync = ref.watch(accountsProvider);
 
     // Calculate position from trigger key
@@ -190,28 +189,12 @@ class AccountDropdownOverlay extends ConsumerWidget {
               final txAccountId = ref
                   .read(addTransactionProvider(initial))
                   .selectedAccountId;
-              final Account displayAccount;
-              if (txAccountId != null) {
-                displayAccount = accounts.firstWhere(
-                  (a) => a.id == txAccountId,
-                  orElse: () => accounts.firstWhere(
-                    (a) => a.isMain,
-                    orElse: () => accounts.first,
-                  ),
-                );
-              } else {
-                displayAccount =
-                    activeAccount ??
-                    accounts.firstWhere(
-                      (a) => a.isMain,
-                      orElse: () => accounts.first,
-                    );
-              }
 
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: accounts.map((account) {
-                  final isSelected = account.id == displayAccount.id;
+                  final isSelected =
+                      txAccountId != null && account.id == txAccountId;
                   return InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () {
