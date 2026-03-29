@@ -90,7 +90,6 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
     final editorPanelTop = cardTop + cardHeight + 20;
     final colorPanelTop = editorPanelTop + editorPanelHeight + 12;
     const colorPanelHeight = 410.0;
-    // Preview card in overlay should match BalanceCardCarousel sizing.
 
     return Consumer(
       builder: (context, ref, _) {
@@ -203,25 +202,24 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                   child: SizedBox(
                     height: cardHeight,
                     child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: BalanceCard(
-                          balance: previewBalance,
-                          currencyInfo: CurrencyInfo(
-                            currencyMap[dash.tempAccountCurrency]?.symbol ??
-                                '\$',
-                            dash.tempAccountCurrency,
-                          ),
-                          onLongPress: null,
-                          accountName: dash.tempAccountName,
-                          previewPrimary: dash.tempPrimary,
-                          previewSecondary: dash.tempSecondary,
-                          previewGradientType:
-                              Theme.of(widget.context).brightness ==
-                                      Brightness.dark
-                                  ? dash.tempDarkGradientType
-                                  : dash.tempLightGradientType,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: BalanceCard(
+                        balance: previewBalance,
+                        currencyInfo: CurrencyInfo(
+                          currencyMap[dash.tempAccountCurrency]?.symbol ?? '\$',
+                          dash.tempAccountCurrency,
                         ),
+                        onLongPress: null,
+                        accountName: dash.tempAccountName,
+                        previewPrimary: dash.tempPrimary,
+                        previewSecondary: dash.tempSecondary,
+                        previewGradientType:
+                            Theme.of(widget.context).brightness ==
+                                Brightness.dark
+                            ? dash.tempDarkGradientType
+                            : dash.tempLightGradientType,
                       ),
+                    ),
                   ),
                 ),
               ),
@@ -299,75 +297,75 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: kDisplayCurrencies.map((entry) {
-                              final isSelected = entry.$1 == _selectedCurrency;
-                              return InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedCurrency = entry.$1;
-                                    dash.setState(() {
-                                      dash.tempAccountCurrency = entry.$1;
-                                    });
-                                    dash.overlayEntry?.markNeedsBuild();
-                                    _showCurrencyDropdown = false;
-                                  });
-                                },
-                                borderRadius: BorderRadius.circular(12),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 8,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      entry.$1 == 'BYN'
-                                          ? BynSign(
-                                              fontSize: 14,
-                                              color: isSelected
-                                                  ? const Color(0xFF7C6DED)
-                                                  : Theme.of(
-                                                      widget.context,
-                                                    ).colorScheme.onSurface,
-                                            )
-                                          : Text(
-                                              entry.$2,
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                color: isSelected
-                                                    ? const Color(0xFF7C6DED)
-                                                    : null,
-                                              ),
-                                            ),
-                                      const SizedBox(width: 4),
-                                      Flexible(
-                                        child: Text(
-                                          entry.$1,
+                          final isSelected = entry.$1 == _selectedCurrency;
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                _selectedCurrency = entry.$1;
+                                dash.setState(() {
+                                  dash.tempAccountCurrency = entry.$1;
+                                });
+                                dash.overlayEntry?.markNeedsBuild();
+                                _showCurrencyDropdown = false;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 8,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  entry.$1 == 'BYN'
+                                      ? BynSign(
+                                          fontSize: 14,
+                                          color: isSelected
+                                              ? const Color(0xFF7C6DED)
+                                              : Theme.of(
+                                                  widget.context,
+                                                ).colorScheme.onSurface,
+                                        )
+                                      : Text(
+                                          entry.$2,
                                           style: TextStyle(
-                                            fontSize: 11,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
                                             color: isSelected
                                                 ? const Color(0xFF7C6DED)
-                                                : Theme.of(widget.context)
-                                                      .colorScheme
-                                                      .onSurface
-                                                      .withOpacity(0.6),
+                                                : null,
                                           ),
-                                          overflow: TextOverflow.ellipsis,
                                         ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      entry.$1,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: isSelected
+                                            ? const Color(0xFF7C6DED)
+                                            : Theme.of(widget.context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withOpacity(0.6),
                                       ),
-                                      if (isSelected) ...[
-                                        const SizedBox(width: 4),
-                                        const Icon(
-                                          Icons.check_rounded,
-                                          size: 14,
-                                          color: Color(0xFF7C6DED),
-                                        ),
-                                      ],
-                                    ],
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
+                                  if (isSelected) ...[
+                                    const SizedBox(width: 4),
+                                    const Icon(
+                                      Icons.check_rounded,
+                                      size: 14,
+                                      color: Color(0xFF7C6DED),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
                   ),

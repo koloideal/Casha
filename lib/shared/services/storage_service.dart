@@ -16,7 +16,6 @@ class StorageService {
 
   StorageService(this._prefs);
 
-  /// Load all transactions with error handling
   Result<List<Transaction>> loadTransactions() {
     return resultOf(() {
       final raw = _prefs.getString(_transactionsKey);
@@ -29,13 +28,11 @@ class StorageService {
     });
   }
 
-  /// Load transactions (legacy - throws on error)
   List<Transaction> loadTransactionsUnsafe() {
     final result = loadTransactions();
     return result.getOrDefault([]);
   }
 
-  /// Save transactions with error handling
   Future<Result<void>> saveTransactions(List<Transaction> transactions) async {
     return asyncResultOf(() async {
       final encoded = jsonEncode(transactions.map((t) => t.toJson()).toList());
@@ -43,7 +40,6 @@ class StorageService {
     });
   }
 
-  /// Add transaction with error handling
   Future<Result<void>> addTransaction(Transaction transaction) async {
     return asyncResultOf(() async {
       final listResult = loadTransactions();
@@ -57,7 +53,6 @@ class StorageService {
     });
   }
 
-  /// Update transaction with error handling
   Future<Result<void>> updateTransaction(Transaction transaction) async {
     return asyncResultOf(() async {
       final listResult = loadTransactions();
@@ -76,7 +71,6 @@ class StorageService {
     });
   }
 
-  /// Delete transaction with error handling
   Future<Result<void>> deleteTransaction(String id) async {
     return asyncResultOf(() async {
       final listResult = loadTransactions();
@@ -100,7 +94,6 @@ class StorageService {
     return _prefs.getDouble(_budgetKey);
   }
 
-  /// Save budget with error handling
   Future<Result<void>> saveBudget(double? budget) async {
     return asyncResultOf(() async {
       if (budget == null) {
@@ -196,7 +189,6 @@ class StorageService {
     }
   }
 
-  /// Process recurring transactions with error handling (returns count)
   Future<Result<int>> processRecurringTransactionsWithResult() async {
     return asyncResultOf(() async {
       final transactionsResult = loadTransactions();

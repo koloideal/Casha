@@ -4,8 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ExchangeRateService {
   static const String _primaryUrl = 'https://open.er-api.com/v6/latest/USD';
-  static const String _fallbackUrl =
-      'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json';
+  static const String _fallbackUrl = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json';
   static const String _cacheKey = 'exchange_rates';
 
   static const Map<String, double> _fallbackRates = {

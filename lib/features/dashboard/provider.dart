@@ -12,15 +12,6 @@ import '../../shared/models/account.dart';
 import '../../shared/services/storage_service.dart';
 import '../settings/provider.dart';
 
-// BUG FOUND: lib/features/dashboard/provider.dart
-// Description: CardColorsNotifier calls an async `_load()` in the constructor without awaiting it.
-//              If the user triggers `save()` before `_load()` completes, the late `_load()` can
-//              overwrite the newly saved colors/gradient types.
-// Reproduction: Open the app (cold start), open the card color editor immediately, press Apply
-//               before the initial load finishes.
-// Suggested fix: Track a generation/token for in-flight loads and ignore stale load results
-//                after any state mutation (save/reset/theme-change).
-
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('Override in main');
 });
@@ -113,15 +104,13 @@ class TransactionsNotifier
   }
 }
 
-// Returns a map: transactionId -> paired Transaction (its counterpart)
 final transferPairsProvider = Provider<Map<String, Transaction>>((ref) {
   final txs = ref.watch(transactionsProvider).valueOrNull ?? [];
   final transfers = txs.where((t) => t.category == 'Transfer').toList();
   final Map<String, Transaction> pairs = {};
 
   for (final tx in transfers) {
-    if (pairs.containsKey(tx.id)) continue; // already paired
-    // Find counterpart: opposite type, same amount, same date (minute precision), same note
+    if (pairs.containsKey(tx.id)) continue;
     final counterpart = transfers.firstWhereOrNull(
       (other) =>
           other.id != tx.id &&
@@ -156,18 +145,15 @@ final timeFilterProvider = StateProvider<TimeFilter>(
   (ref) => TimeFilter.lastMonth,
 );
 
-// Base filtered transactions by active account
 final accountFilteredTransactionsProvider = Provider<List<Transaction>>((ref) {
   final txsAsync = ref.watch(transactionsProvider);
   final txs = txsAsync.valueOrNull ?? [];
   final activeAccount = ref.watch(activeAccountProvider);
 
-  // If activeAccount is null (Total Balance page), return all transactions
   if (activeAccount == null) {
     return txs;
   }
 
-  // Filter by account ID
   return txs.where((t) => t.accountId == activeAccount.id).toList();
 });
 
@@ -214,18 +200,15 @@ final totalBalanceProvider = Provider<double>((ref) {
 });
 
 final totalIncomeProvider = Provider<double>((ref) {
-  // Watch the filtered transactions directly
   final txs = ref.watch(accountFilteredTransactionsProvider);
   final filtered = txs.where(
     (t) => t.type == TransactionType.income && t.category != 'Transfer',
   );
 
-  // Watch the dependencies that change on swipe!
   final index = ref.watch(activeAccountIndexProvider);
   final accountsAsync = ref.watch(accountsProvider);
   final globalCurrency = ref.watch(currencyProvider).code;
 
-  // Resolve target currency synchronously based on the current swipe index
   String targetCurrency = globalCurrency;
   if (index > 0) {
     final accounts = accountsAsync.valueOrNull ?? [];
@@ -341,12 +324,9 @@ final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
 
   filtered.sort((a, b) => b.date.compareTo(a.date));
 
-  // Deduplicate transfers for Total Balance view
   if (activeAccount == null) {
     filtered = filtered.where((t) {
       if (t.category != 'Transfer') return true;
-      // On Total Balance: show only expense side of complete pairs
-      // If income side has a known pair, hide it
       if (t.type == TransactionType.income && transferPairs.containsKey(t.id)) {
         return false;
       }
@@ -361,7 +341,6 @@ final recentTransactionsProvider = Provider<List<Transaction>>((ref) {
   return ref.watch(filteredTransactionsProvider).take(20).toList();
 });
 
-// Watches the list of all accounts
 final accountsProvider = StreamProvider<List<Account>>((ref) async* {
   final repository = ref.watch(accountRepositoryProvider);
   while (true) {
@@ -370,15 +349,13 @@ final accountsProvider = StreamProvider<List<Account>>((ref) async* {
   }
 });
 
-// Ephemeral UI state — active carousel index, starts at 0, not persisted
 final activeAccountIndexProvider = StateProvider<int>((ref) => 0);
 
-// Returns the currently active Account based on carousel index
 final activeAccountProvider = Provider<Account?>((ref) {
   final index = ref.watch(activeAccountIndexProvider);
   final accountsAsync = ref.watch(accountsProvider);
 
-  if (index == 0) return null; // 0 means "Total Balance"
+  if (index == 0) return null;
 
   return accountsAsync.when(
     data: (accounts) {
@@ -416,7 +393,6 @@ final cardColorsProvider =
       return notifier;
     });
 
-// Account-specific color provider
 final accountCardColorsProvider =
     StateNotifierProvider.family<CardColorsNotifier, CardColors, int>((
       ref,
@@ -457,7 +433,7 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
     final (c1, c2, lightG, darkG) = await CardColorService.load(
       accountId: accountId,
     );
-    if (currentGeneration != _loadGeneration) return; // stale
+    if (currentGeneration != _loadGeneration) return; 
     state = CardColors(c1, c2, lightG, darkG);
   }
 
@@ -467,7 +443,6 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
     GradientType lightGradient,
     GradientType darkGradient,
   ) async {
-    // Invalidate any in-flight load so it can't overwrite this save.
     _loadGeneration++;
     state = CardColors(primary, secondary, lightGradient, darkGradient);
     await CardColorService.save(
@@ -506,20 +481,17 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
     final previousBrightness = _resolve(previous);
     final nextBrightness = _resolve(next);
 
-    // No change in actual brightness
     if (previousBrightness == nextBrightness) return;
 
     final oldDefaults = _defaultsFor(previousBrightness);
     final newDefaults = _defaultsFor(nextBrightness);
 
-    // Check if current colors match old theme defaults
     final isUsingOldDefaults =
         state.primary == oldDefaults.primary &&
         state.secondary == oldDefaults.secondary &&
         state.gradientTypeForBrightness(previousBrightness) ==
             oldDefaults.gradient;
 
-    // Only auto-switch if using default colors
     if (isUsingOldDefaults) {
       _loadGeneration++;
       state = CardColors(

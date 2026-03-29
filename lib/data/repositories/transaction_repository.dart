@@ -8,7 +8,6 @@ class TransactionRepository {
 
   TransactionRepository(this._db);
 
-  /// Get all transactions
   Future<Result<List<model.Transaction>>> getAll() async {
     return asyncResultOf(() async {
       final transactions = await _db.getAllTransactions();
@@ -16,7 +15,6 @@ class TransactionRepository {
     });
   }
 
-  /// Get transactions by date range
   Future<Result<List<model.Transaction>>> getByDateRange(
     DateTime start,
     DateTime end,
@@ -27,7 +25,6 @@ class TransactionRepository {
     });
   }
 
-  /// Get transactions by type
   Future<Result<List<model.Transaction>>> getByType(
     model.TransactionType type,
   ) async {
@@ -37,7 +34,6 @@ class TransactionRepository {
     });
   }
 
-  /// Search transactions
   Future<Result<List<model.Transaction>>> search(String query) async {
     return asyncResultOf(() async {
       final transactions = await _db.searchTransactions(query);
@@ -45,7 +41,6 @@ class TransactionRepository {
     });
   }
 
-  /// Get transaction by ID
   Future<Result<model.Transaction?>> getById(String id) async {
     return asyncResultOf(() async {
       final transaction = await _db.getTransactionById(id);
@@ -53,31 +48,17 @@ class TransactionRepository {
     });
   }
 
-  /// Add transaction
   Future<Result<void>> add(model.Transaction transaction) async {
     return asyncResultOf(() async {
-      print('--- SAVING TRANSACTION: START ---');
-      print('Transaction data: ID=${transaction.id}, Amount=${transaction.amount}, AccId=${transaction.accountId}');
-      print('Category=${transaction.category}, Type=${transaction.type.name}');
-      print('Date=${transaction.date}, Currency=${transaction.currencyCode}');
-      
       final companion = _toCompanion(transaction);
-      print('Companion created successfully');
-      print('Companion: $companion');
-      
       final result = await _db.insertTransaction(companion);
-      print('DB Insert finished. Result Success: ${result.isSuccess}');
 
       if (result.isFailure) {
-        print('!!! DB INSERT FAILED: ${result.errorOrNull}');
         throw Exception(result.errorOrNull);
       }
-      
-      print('--- SAVING TRANSACTION: END (SUCCESS) ---');
     });
   }
 
-  /// Update transaction
   Future<Result<void>> update(model.Transaction transaction) async {
     return asyncResultOf(() async {
       final dbTransaction = _toDbModel(transaction);
@@ -89,19 +70,16 @@ class TransactionRepository {
     });
   }
 
-  /// Delete transaction
   Future<Result<void>> delete(String id) async {
     return _db.deleteTransaction(id);
   }
 
-  /// Delete all transactions
   Future<Result<void>> deleteAll() async {
     return asyncResultOf(() async {
       await _db.deleteAllTransactions();
     });
   }
 
-  /// Get recurring transactions
   Future<Result<List<model.Transaction>>> getRecurring() async {
     return asyncResultOf(() async {
       final transactions = await _db.getRecurringTransactions();
@@ -109,28 +87,24 @@ class TransactionRepository {
     });
   }
 
-  /// Get total balance
   Future<Result<double>> getTotalBalance() async {
     return asyncResultOf(() async {
       return await _db.getTotalBalance();
     });
   }
 
-  /// Get total income for date range
   Future<Result<double>> getTotalIncome(DateTime start, DateTime end) async {
     return asyncResultOf(() async {
       return await _db.getTotalIncome(start, end);
     });
   }
 
-  /// Get total expense for date range
   Future<Result<double>> getTotalExpense(DateTime start, DateTime end) async {
     return asyncResultOf(() async {
       return await _db.getTotalExpense(start, end);
     });
   }
 
-  /// Get category totals
   Future<Result<Map<String, double>>> getCategoryTotals(
     DateTime start,
     DateTime end,
@@ -141,11 +115,6 @@ class TransactionRepository {
     });
   }
 
-  // ============================================================================
-  // CONVERTERS
-  // ============================================================================
-
-  /// Convert database model to app model
   model.Transaction _toModel(dynamic dbTransaction) {
     return model.Transaction(
       id: dbTransaction.id as String,
@@ -164,9 +133,7 @@ class TransactionRepository {
     );
   }
 
-  /// Convert app model to database model
   dynamic _toDbModel(model.Transaction transaction) {
-    // This will be replaced with proper TransactionData after code generation
     return TransactionsCompanion(
       id: Value(transaction.id),
       amount: Value(transaction.amount),
@@ -183,10 +150,8 @@ class TransactionRepository {
     );
   }
 
-  /// Convert app model to companion for insert
   TransactionsCompanion _toCompanion(model.Transaction transaction) {
     try {
-      print('_toCompanion: Creating companion for transaction ${transaction.id}');
       final companion = TransactionsCompanion(
         id: Value(transaction.id),
         amount: Value(transaction.amount),
@@ -200,17 +165,12 @@ class TransactionRepository {
         currencyCode: Value(transaction.currencyCode),
         accountId: Value(transaction.accountId),
       );
-      print('_toCompanion: Companion created successfully');
       return companion;
-    } catch (e, stack) {
-      print('!!! _toCompanion FAILED !!!');
-      print('Error: $e');
-      print('Stack: $stack');
+    } catch (e, _) {
       rethrow;
     }
   }
 
-  /// Parse recurrence type
   model.RecurrenceType _parseRecurrence(String recurrence) {
     return model.RecurrenceType.values.firstWhere(
       (e) => e.name == recurrence,

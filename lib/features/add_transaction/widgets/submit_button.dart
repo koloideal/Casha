@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants.dart';
 import '../../../shared/models/transaction.dart';
 
 class SubmitButton extends StatelessWidget {

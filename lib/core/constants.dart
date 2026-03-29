@@ -140,7 +140,6 @@ class AppCurrencies {
   }
 }
 
-/// `(code, textSymbol)` for pickers and conversion rows. BYN uses `''` — use BynSign in UI.
 const List<(String, String)> kDisplayCurrencies = [
   ('USD', r'$'),
   ('EUR', '€'),

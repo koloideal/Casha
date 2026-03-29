@@ -134,10 +134,9 @@ class AccountDropdownOverlay extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final accountsAsync = ref.watch(accountsProvider);
 
-    // Calculate position from trigger key
     double top = 76;
     double left = 20;
-    double triggerWidth = 200; // fallback width
+    double triggerWidth = 200; 
 
     if (triggerKey?.currentContext != null) {
       final triggerBox =

@@ -41,7 +41,6 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
   @override
   void initState() {
     super.initState();
-    // 0.92 позволяет видеть края предыдущей/следующей карточки
     final savedIndex = ref.read(activeAccountIndexProvider);
     _pageController = PageController(
       viewportFraction: 0.92,
@@ -68,14 +67,12 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
           children: [
             SizedBox(
               height: 230,
-              // OverflowBox позволяет PageView игнорировать паддинги родителя (DashboardScreen)
-              // и растянуться на всю ширину экрана
               child: OverflowBox(
                 maxWidth: MediaQuery.of(context).size.width,
                 child: PageView.builder(
                   controller: _pageController,
                   clipBehavior:
-                      Clip.none, // Не обрезает карточку при 3D-наклоне
+                      Clip.none, 
                   itemCount: totalPages,
                   onPageChanged: (index) {
                     ref.read(activeAccountIndexProvider.notifier).state = index;
@@ -105,7 +102,6 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                         accountCardColorsProvider(account.id),
                       );
 
-                      // Calculate this specific account's balance
                       final txs =
                           ref.watch(transactionsProvider).valueOrNull ?? [];
                       final accountTxs = txs
@@ -119,7 +115,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                           t.amount,
                           t.currencyCode,
                           account
-                              .currency, // target is the account's own currency
+                              .currency, 
                         );
                         return t.type == TransactionType.income
                             ? sum + converted
@@ -128,7 +124,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
 
                       cardWidget = BalanceCard(
                         balance:
-                            accountBalance, // Use the dynamically calculated balance!
+                            accountBalance, 
                         currencyInfo: CurrencyInfo(
                           currencyMap[account.currency]?.symbol ?? '\$',
                           account.currency,
@@ -144,7 +140,6 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                       );
                     }
 
-                    // Отступ между карточками во время свайпа
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: cardWidget,
@@ -198,12 +193,12 @@ class AddAccountCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(
           horizontal: 10,
           vertical: 10,
-        ), // Reduced margins for larger size
+        ),  
         child: CustomPaint(
           painter: _DashedBorderPainter(),
           child: Container(
             width: double.infinity,
-            height: 205, // Increased height
+            height: 205, 
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
               borderRadius: BorderRadius.circular(20),
@@ -213,7 +208,7 @@ class AddAccountCard extends StatelessWidget {
               children: [
                 Icon(
                   Icons.add_rounded,
-                  size: 36, // Slightly bigger icon
+                  size: 36,
                   color: Theme.of(
                     context,
                   ).colorScheme.onSurface.withOpacity(0.5),

@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class HapticService {
   static const _key = 'haptic_enabled';
-  static bool _enabled = true; // runtime cache
+  static bool _enabled = true; 
 
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();

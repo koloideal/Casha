@@ -42,7 +42,6 @@ class TransactionTile extends ConsumerWidget {
         ? Icons.swap_horiz_rounded
         : (AppCategories.icons[transaction.category] ?? Icons.category_rounded);
 
-    // Check if we're on Total Balance page
     final activeAccount = ref.watch(activeAccountProvider);
     final displayCurrency =
         activeAccount?.currency ?? ref.watch(currencyProvider).code;
@@ -57,19 +56,16 @@ class TransactionTile extends ConsumerWidget {
         : 0.0;
     final displaySymbol = currencyMap[displayCurrency]?.symbol ?? '';
 
-    // Look up the account name by matching transaction.accountId
     final accounts = ref.watch(accountsProvider).valueOrNull ?? [];
     final txAccount = accounts.firstWhereOrNull(
       (a) => a.id == transaction.accountId,
     );
 
-    // Build account label with 10-character limit
     String accountLabel = txAccount?.name ?? '';
     if (accountLabel.length > 10) {
       accountLabel = '${accountLabel.substring(0, 10)}...';
     }
 
-    // Transfer pairing logic
     final pairs = ref.watch(transferPairsProvider);
     final counterpart = pairs[transaction.id];
 
@@ -381,11 +377,9 @@ class TransactionTile extends ConsumerWidget {
     bool isIncome,
     Account? activeAccount,
   ) {
-    // Total Balance view with Transfer expense: no prefix
     if (isTransfer && activeAccount == null && !isIncome) {
       return '';
     }
-    // All other cases: show + or −
     return isIncome ? '+ ' : '\u2212 ';
   }
 
@@ -396,15 +390,12 @@ class TransactionTile extends ConsumerWidget {
     Account? activeAccount,
     Color defaultColor,
   ) {
-    // Total Balance view with Transfer expense: neutral color
     if (isTransfer && activeAccount == null && !isIncome) {
       return Theme.of(context).colorScheme.onSurface.withOpacity(0.8);
     }
-    // Transfer in account view or Total Balance income: use income/expense colors
     if (isTransfer) {
       return isIncome ? AppColors.income : AppColors.expense;
     }
-    // Non-transfer: use default color
     return defaultColor;
   }
 }

@@ -206,7 +206,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     final amount = double.parse(parsed);
     final state = ref.read(addTransactionProvider(widget.initial));
 
-    // Validate transfer
     if (state.type == TransactionType.transfer) {
       bool hasError = false;
 
@@ -471,14 +470,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                         onPressed: () async {
                           Navigator.pop(ctx);
 
-                          // Always delete the record we were given
                           await ref
                               .read(transactionsProvider.notifier)
                               .delete(widget.initial!.id);
 
-                          // If this is a Transfer, also delete the counterpart
                           if (widget.initial!.category == 'Transfer') {
-                            // Use the pre-populated IDs from initState if available
                             final counterpartId =
                                 widget.initial!.type == TransactionType.expense
                                 ? _transferIncomeRecordId
@@ -489,7 +485,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                                   .read(transactionsProvider.notifier)
                                   .delete(counterpartId);
                             } else {
-                              // Fallback: search manually
                               final allTxs =
                                   ref.read(transactionsProvider).valueOrNull ??
                                   [];
@@ -893,10 +888,9 @@ class _ToAccountDropdownOverlay extends ConsumerWidget {
         .selectedAccountId;
     final toAccountId = ref.read(addTransactionProvider(initial)).toAccountId;
 
-    // Calculate position from trigger key
     double top = 340;
     double left = 20;
-    double triggerWidth = 200; // fallback width
+    double triggerWidth = 200; 
 
     if (triggerKey?.currentContext != null) {
       final triggerBox =

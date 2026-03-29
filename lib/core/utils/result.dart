@@ -1,27 +1,20 @@
-/// Result type for handling success and failure cases
-/// Uses sealed classes for exhaustive pattern matching
 sealed class Result<T> {
   const Result();
 
-  /// Check if result is success
   bool get isSuccess => this is Success<T>;
 
-  /// Check if result is failure
   bool get isFailure => this is Failure<T>;
 
-  /// Get data if success, null otherwise
   T? get dataOrNull => switch (this) {
     Success(data: final data) => data,
     Failure() => null,
   };
 
-  /// Get error if failure, null otherwise
   String? get errorOrNull => switch (this) {
     Success() => null,
     Failure(message: final message) => message,
   };
 
-  /// Transform success value
   Result<R> map<R>(R Function(T data) transform) {
     return switch (this) {
       Success(data: final data) => Success(transform(data)),
@@ -29,7 +22,6 @@ sealed class Result<T> {
     };
   }
 
-  /// Execute callback on success
   Result<T> onSuccess(void Function(T data) callback) {
     if (this case Success(data: final data)) {
       callback(data);
@@ -37,7 +29,6 @@ sealed class Result<T> {
     return this;
   }
 
-  /// Execute callback on failure
   Result<T> onFailure(void Function(String message) callback) {
     if (this case Failure(message: final message)) {
       callback(message);
@@ -45,7 +36,6 @@ sealed class Result<T> {
     return this;
   }
 
-  /// Get data or throw exception
   T getOrThrow() {
     return switch (this) {
       Success(data: final data) => data,
@@ -54,7 +44,6 @@ sealed class Result<T> {
     };
   }
 
-  /// Get data or return default value
   T getOrDefault(T defaultValue) {
     return switch (this) {
       Success(data: final data) => data,
@@ -62,7 +51,6 @@ sealed class Result<T> {
     };
   }
 
-  /// Get data or compute from error
   T getOrElse(T Function(String error) onError) {
     return switch (this) {
       Success(data: final data) => data,
@@ -71,7 +59,6 @@ sealed class Result<T> {
   }
 }
 
-/// Success result containing data
 class Success<T> extends Result<T> {
   final T data;
 
@@ -91,7 +78,6 @@ class Success<T> extends Result<T> {
   int get hashCode => data.hashCode;
 }
 
-/// Failure result containing error message and optional exception
 class Failure<T> extends Result<T> {
   final String message;
   final Exception? exception;
@@ -114,15 +100,12 @@ class Failure<T> extends Result<T> {
   int get hashCode => message.hashCode ^ exception.hashCode;
 }
 
-/// Extension for Future<Result<T>>
 extension FutureResultExtension<T> on Future<Result<T>> {
-  /// Map async result
   Future<Result<R>> mapAsync<R>(R Function(T data) transform) async {
     final result = await this;
     return result.map(transform);
   }
 
-  /// Execute callback on success
   Future<Result<T>> onSuccessAsync(
     Future<void> Function(T data) callback,
   ) async {
@@ -133,7 +116,6 @@ extension FutureResultExtension<T> on Future<Result<T>> {
     return result;
   }
 
-  /// Execute callback on failure
   Future<Result<T>> onFailureAsync(
     Future<void> Function(String message) callback,
   ) async {
@@ -145,7 +127,6 @@ extension FutureResultExtension<T> on Future<Result<T>> {
   }
 }
 
-/// Helper to wrap try-catch blocks
 Result<T> resultOf<T>(T Function() computation) {
   try {
     return Success(computation());
@@ -154,7 +135,6 @@ Result<T> resultOf<T>(T Function() computation) {
   }
 }
 
-/// Helper to wrap async try-catch blocks
 Future<Result<T>> asyncResultOf<T>(Future<T> Function() computation) async {
   try {
     final data = await computation();

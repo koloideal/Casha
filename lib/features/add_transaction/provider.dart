@@ -30,7 +30,6 @@ class AddTransactionState {
   });
 
   factory AddTransactionState.fromTransaction(Transaction tx) {
-    // Override type to transfer when category is 'Transfer'
     final resolvedType = (tx.category == 'Transfer')
         ? TransactionType.transfer
         : tx.type;

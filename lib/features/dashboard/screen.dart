@@ -44,7 +44,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   HSVColor savedSecondaryHSV = HSVColor.fromColor(
     CardColorService.defaultSecondary,
   );
-  // Per-theme gradient types (light/dark), persisted separately.
   GradientType tempLightGradientType = CardColorService.defaultGradientLight;
   GradientType tempDarkGradientType = CardColorService.defaultGradientDark;
   GradientType savedLightGradientType = CardColorService.defaultGradientLight;
@@ -52,7 +51,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   OverlayEntry? overlayEntry;
 
-  // Account editing state
   Account? editingAccount;
   String tempAccountName = '';
   String tempAccountCurrency = 'USD';
@@ -192,8 +190,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           accountId: newId,
         );
       } else if (editingAccount != null) {
-        // Existing edit logic
-        // Save colors
         await ref
             .read(accountCardColorsProvider(editingAccount!.id).notifier)
             .save(
@@ -203,7 +199,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               tempDarkGradientType,
             );
 
-        // Update account name and currency
         final updatedAccount = Account(
           id: editingAccount!.id,
           name: tempAccountName.trim(),
@@ -216,7 +211,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         await ref.read(accountRepositoryProvider).update(updatedAccount);
       }
     } else {
-      // Restore original values on cancel
       setState(() {
         tempPrimary = savedPrimary;
         tempSecondary = savedSecondary;
@@ -370,8 +364,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       previewSecondary: editingCard ? tempSecondary : null,
                       previewGradientType: editingCard
                           ? (Theme.of(context).brightness == Brightness.dark
-                              ? tempDarkGradientType
-                              : tempLightGradientType)
+                                ? tempDarkGradientType
+                                : tempLightGradientType)
                           : null,
                     ),
                     const SizedBox(height: 16),
@@ -457,9 +451,9 @@ class _AccountsInfoBlock extends ConsumerWidget {
     final s = ref.watch(stringsProvider);
     final onSurface = Theme.of(context).colorScheme.onSurface;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 60), 
+      padding: const EdgeInsets.only(bottom: 60),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 260), 
+        constraints: const BoxConstraints(maxWidth: 260),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,17 +478,26 @@ class _AccountsInfoBlock extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
-            _InfoRow(icon: Icons.swap_horiz_rounded, text: s.accountsInfoBalance),
+            _InfoRow(
+              icon: Icons.swap_horiz_rounded,
+              text: s.accountsInfoBalance,
+            ),
             const SizedBox(height: 8),
-            _InfoRow(icon: Icons.touch_app_rounded, text: s.accountsInfoCustomize),
+            _InfoRow(
+              icon: Icons.touch_app_rounded,
+              text: s.accountsInfoCustomize,
+            ),
             const SizedBox(height: 8),
-            _InfoRow(icon: Icons.lock_outline_rounded, text: s.accountsInfoLimit),
+            _InfoRow(
+              icon: Icons.lock_outline_rounded,
+              text: s.accountsInfoLimit,
+            ),
           ],
         ),
       ),
     );
   }
-  }
+}
 
 class _InfoRow extends StatelessWidget {
   final IconData icon;

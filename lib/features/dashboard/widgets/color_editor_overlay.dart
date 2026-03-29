@@ -94,7 +94,6 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
               child: _buildPanel(panelHeight),
             ),
           ),
-          // Close Button - Top Right
           Positioned(
             top: cardTop - 20,
             right: 20,
@@ -367,7 +366,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           ),
                           const SizedBox(height: 8),
                           SizedBox(
-                            height: 36, //
+                            height: 36,
                             child: ColorPickerSlider(
                               TrackType.hue,
                               currentHSV,

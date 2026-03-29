@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/utils/result.dart';
 
-/// Show error snackbar with custom styling
 void showErrorSnackbar(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -28,7 +27,6 @@ void showErrorSnackbar(BuildContext context, String message) {
   );
 }
 
-/// Show success snackbar with custom styling
 void showSuccessSnackbar(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -48,7 +46,6 @@ void showSuccessSnackbar(BuildContext context, String message) {
   );
 }
 
-/// Show warning snackbar with custom styling
 void showWarningSnackbar(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -68,31 +65,25 @@ void showWarningSnackbar(BuildContext context, String message) {
   );
 }
 
-/// Extension to handle Result with UI feedback
 extension ResultUIExtension<T> on Result<T> {
-  /// Show snackbar on failure
   Result<T> showErrorOnFailure(BuildContext context) {
     onFailure((message) => showErrorSnackbar(context, message));
     return this;
   }
 
-  /// Show snackbar on success with custom message
   Result<T> showSuccessMessage(BuildContext context, String message) {
     onSuccess((_) => showSuccessSnackbar(context, message));
     return this;
   }
 }
 
-/// Extension for Future<Result<T>>
 extension FutureResultUIExtension<T> on Future<Result<T>> {
-  /// Show snackbar on failure
   Future<Result<T>> showErrorOnFailure(BuildContext context) async {
     final result = await this;
     result.onFailure((message) => showErrorSnackbar(context, message));
     return result;
   }
 
-  /// Show snackbar on success with custom message
   Future<Result<T>> showSuccessMessage(
     BuildContext context,
     String message,
@@ -102,7 +93,6 @@ extension FutureResultUIExtension<T> on Future<Result<T>> {
     return result;
   }
 
-  /// Show both success and error messages
   Future<Result<T>> showFeedback(
     BuildContext context, {
     required String successMessage,
@@ -115,7 +105,6 @@ extension FutureResultUIExtension<T> on Future<Result<T>> {
   }
 }
 
-/// Error dialog widget
 class ErrorDialog extends StatelessWidget {
   final String title;
   final String message;

@@ -21,7 +21,6 @@ class AccountRepository {
         .watch()
         .asyncMap((rows) async {
       if (rows.isEmpty) {
-        // Fallback: insert default account if none exists
         await _db.into(_db.accounts).insert(
               AccountsCompanion.insert(
                 name: 'main',
@@ -30,7 +29,6 @@ class AccountRepository {
                 sortOrder: const Value(0),
               ),
             );
-        // Re-query after insert
         final newRows = await (_db.select(_db.accounts)
               ..orderBy([(a) => OrderingTerm.asc(a.sortOrder)]))
             .get();
@@ -63,8 +61,6 @@ class AccountRepository {
       var rows = await (_db.select(_db.accounts)
             ..orderBy([(a) => OrderingTerm.asc(a.sortOrder)]))
           .get();
-
-      // Fallback: insert default account if none exists
       if (rows.isEmpty) {
         try {
           await _db.into(_db.accounts).insert(
@@ -78,7 +74,6 @@ class AccountRepository {
         } catch (e) {
           // Ignore if already exists
         }
-        // Re-query after insert
         rows = await (_db.select(_db.accounts)
               ..orderBy([(a) => OrderingTerm.asc(a.sortOrder)]))
             .get();
@@ -95,7 +90,6 @@ class AccountRepository {
               ))
           .toList();
     } catch (e) {
-      // Return empty list on error
       return [];
     }
   }
@@ -116,11 +110,9 @@ class AccountRepository {
       );
     }
 
-    // Fallback if no main account is found
     final all = await getAll();
     if (all.isNotEmpty) return all.first;
 
-    // Absolute fallback: create and return a default account
     try {
       await _db.into(_db.accounts).insert(
             AccountsCompanion.insert(
@@ -131,7 +123,6 @@ class AccountRepository {
             ),
           );
       
-      // Query the newly created account
       final newRow = await (_db.select(_db.accounts)
             ..where((a) => a.isMain.equals(true)))
           .getSingleOrNull();
@@ -150,7 +141,6 @@ class AccountRepository {
       // Ignore insert errors
     }
 
-    // Final fallback to prevent crashes
     return model.Account(
       id: 1,
       name: 'main',
