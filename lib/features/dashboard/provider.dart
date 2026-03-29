@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -111,6 +112,35 @@ class TransactionsNotifier
     await _load();
   }
 }
+
+// Returns a map: transactionId -> paired Transaction (its counterpart)
+final transferPairsProvider = Provider<Map<String, Transaction>>((ref) {
+  final txs = ref.watch(transactionsProvider).valueOrNull ?? [];
+  final transfers = txs.where((t) => t.category == 'Transfer').toList();
+  final Map<String, Transaction> pairs = {};
+
+  for (final tx in transfers) {
+    if (pairs.containsKey(tx.id)) continue; // already paired
+    // Find counterpart: opposite type, same amount, same date (minute precision), same note
+    final counterpart = transfers.firstWhereOrNull(
+      (other) =>
+          other.id != tx.id &&
+          other.type != tx.type &&
+          other.amount == tx.amount &&
+          other.date.year == tx.date.year &&
+          other.date.month == tx.date.month &&
+          other.date.day == tx.date.day &&
+          other.date.hour == tx.date.hour &&
+          other.date.minute == tx.date.minute &&
+          other.note == tx.note,
+    );
+    if (counterpart != null) {
+      pairs[tx.id] = counterpart;
+      pairs[counterpart.id] = tx;
+    }
+  }
+  return pairs;
+});
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
@@ -273,6 +303,8 @@ final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
   final query = ref.watch(searchQueryProvider).toLowerCase();
   final typeFilter = ref.watch(transactionFilterProvider);
   final timeFilter = ref.watch(timeFilterProvider);
+  final activeAccount = ref.watch(activeAccountProvider);
+  final transferPairs = ref.watch(transferPairsProvider);
 
   var filtered = txs;
 
@@ -308,6 +340,20 @@ final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
   }
 
   filtered.sort((a, b) => b.date.compareTo(a.date));
+
+  // Deduplicate transfers for Total Balance view
+  if (activeAccount == null) {
+    filtered = filtered.where((t) {
+      if (t.category != 'Transfer') return true;
+      // On Total Balance: show only expense side of complete pairs
+      // If income side has a known pair, hide it
+      if (t.type == TransactionType.income && transferPairs.containsKey(t.id)) {
+        return false;
+      }
+      return true;
+    }).toList();
+  }
+
   return filtered;
 });
 

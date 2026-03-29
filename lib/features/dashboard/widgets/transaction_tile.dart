@@ -7,6 +7,7 @@ import '../../../core/constants.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../shared/models/transaction.dart';
+import '../../../shared/models/account.dart';
 import '../../../shared/providers/amount_format_provider.dart';
 import '../../../shared/utils/currency_utils.dart';
 import '../../../shared/widgets/byn_sign.dart';
@@ -68,6 +69,10 @@ class TransactionTile extends ConsumerWidget {
       accountLabel = '${accountLabel.substring(0, 10)}...';
     }
 
+    // Transfer pairing logic
+    final pairs = ref.watch(transferPairsProvider);
+    final counterpart = pairs[transaction.id];
+
     return GestureDetector(
       onTap: () => context.push('/add', extra: transaction),
       child: Container(
@@ -95,19 +100,29 @@ class TransactionTile extends ConsumerWidget {
                   Row(
                     children: [
                       Flexible(
-                        child: Text(
-                          isTransfer
-                              ? 'Transfer'
-                              : s.categoryLabel(transaction.category),
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
+                        child: isTransfer
+                            ? _buildTransferLabel(
+                                context,
+                                ref,
+                                counterpart,
+                                accounts,
+                                activeAccount,
+                              )
+                            : Text(
+                                s.categoryLabel(transaction.category),
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
                       ),
-                      if (activeAccount == null && accountLabel.isNotEmpty) ...[
+                      if (!isTransfer &&
+                          activeAccount == null &&
+                          accountLabel.isNotEmpty) ...[
                         const SizedBox(width: 6),
                         _AccountTag(label: accountLabel),
                       ],
@@ -148,35 +163,60 @@ class TransactionTile extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            isTransfer ? '' : (isIncome ? '+ ' : '- '),
+                            _getAmountPrefix(
+                              isTransfer,
+                              isIncome,
+                              activeAccount,
+                            ),
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color: color,
+                                  color: _getAmountColor(
+                                    context,
+                                    isTransfer,
+                                    isIncome,
+                                    activeAccount,
+                                    color,
+                                  ),
                                   fontWeight: FontWeight.w700,
                                 ),
                           ),
-                          BynSign(fontSize: 14, color: color),
+                          BynSign(
+                            fontSize: 14,
+                            color: _getAmountColor(
+                              context,
+                              isTransfer,
+                              isIncome,
+                              activeAccount,
+                              color,
+                            ),
+                          ),
                           const SizedBox(width: 2),
                           Text(
                             formatAmount('', transaction.amount, fmt),
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color: color,
+                                  color: _getAmountColor(
+                                    context,
+                                    isTransfer,
+                                    isIncome,
+                                    activeAccount,
+                                    color,
+                                  ),
                                   fontWeight: FontWeight.w700,
                                 ),
                           ),
                         ],
                       )
                     : Text(
-                        isTransfer
-                            ? formatAmount(
-                                transaction.currency,
-                                transaction.amount,
-                                fmt,
-                              )
-                            : '${isIncome ? '+ ' : '- '}${formatAmount(transaction.currency, transaction.amount, fmt)}',
+                        '${_getAmountPrefix(isTransfer, isIncome, activeAccount)}${formatAmount(transaction.currency, transaction.amount, fmt)}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: color,
+                          color: _getAmountColor(
+                            context,
+                            isTransfer,
+                            isIncome,
+                            activeAccount,
+                            color,
+                          ),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -226,6 +266,151 @@ class TransactionTile extends ConsumerWidget {
       ),
     );
   }
+
+  Widget _buildTransferLabel(
+    BuildContext context,
+    WidgetRef ref,
+    Transaction? counterpart,
+    List<Account> accounts,
+    Account? activeAccount,
+  ) {
+    // Fallback if no counterpart
+    if (counterpart == null) {
+      return Text(
+        'Transfer',
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final isExpense = transaction.type == TransactionType.expense;
+    final sourceAccountId = isExpense
+        ? transaction.accountId
+        : counterpart.accountId;
+    final destAccountId = isExpense
+        ? counterpart.accountId
+        : transaction.accountId;
+
+    final sourceAccountName = _accountName(accounts, sourceAccountId);
+    final destAccountName = _accountName(accounts, destAccountId);
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
+    // Total Balance view (activeAccount == null), showing expense side
+    if (activeAccount == null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Transfer',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: onSurface,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: _TransferChip(
+              label: '$sourceAccountName → $destAccountName',
+              icon: Icons.swap_horiz_rounded,
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Account view
+    if (isExpense) {
+      // Expense side: Transfer to <destAccountName>
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Transfer',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: onSurface,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'to',
+            style: TextStyle(
+              fontSize: 11,
+              color: onSurface.withOpacity(0.45),
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Flexible(child: _TransferChip(label: destAccountName, icon: null)),
+        ],
+      );
+    } else {
+      // Income side: Transfer from <sourceAccountName>
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Transfer',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: onSurface,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'from',
+            style: TextStyle(
+              fontSize: 11,
+              color: onSurface.withOpacity(0.45),
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Flexible(child: _TransferChip(label: sourceAccountName, icon: null)),
+        ],
+      );
+    }
+  }
+
+  String _accountName(List<Account> accounts, int? id) {
+    if (id == null) return '?';
+    return accounts.firstWhereOrNull((a) => a.id == id)?.name ?? '?';
+  }
+
+  String _getAmountPrefix(
+    bool isTransfer,
+    bool isIncome,
+    Account? activeAccount,
+  ) {
+    // Total Balance view with Transfer expense: no prefix
+    if (isTransfer && activeAccount == null && !isIncome) {
+      return '';
+    }
+    // All other cases: show + or −
+    return isIncome ? '+ ' : '\u2212 ';
+  }
+
+  Color _getAmountColor(
+    BuildContext context,
+    bool isTransfer,
+    bool isIncome,
+    Account? activeAccount,
+    Color defaultColor,
+  ) {
+    // Total Balance view with Transfer expense: neutral color
+    if (isTransfer && activeAccount == null && !isIncome) {
+      return Theme.of(context).colorScheme.onSurface.withOpacity(0.8);
+    }
+    // Transfer in account view or Total Balance income: use income/expense colors
+    if (isTransfer) {
+      return isIncome ? AppColors.income : AppColors.expense;
+    }
+    // Non-transfer: use default color
+    return defaultColor;
+  }
 }
 
 class _AccountTag extends StatelessWidget {
@@ -261,6 +446,48 @@ class _AccountTag extends StatelessWidget {
             letterSpacing: 0.1,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TransferChip extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  const _TransferChip({required this.label, this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFF7C6DED).withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFF7C6DED).withOpacity(0.35),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 11, color: const Color(0xFF7C6DED)),
+            const SizedBox(width: 4),
+          ],
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF7C6DED),
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+        ],
       ),
     );
   }

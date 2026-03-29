@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -75,6 +76,30 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     if (widget.initial != null) {
       _amountController.text = widget.initial!.amount.toString();
       _noteController.text = widget.initial!.note ?? '';
+
+      // Pre-populate toAccountId when opening Transfer for edit
+      if (widget.initial!.category == 'Transfer') {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final allTxs = ref.read(transactionsProvider).valueOrNull ?? [];
+          final counterpart = allTxs.firstWhereOrNull(
+            (t) =>
+                t.category == 'Transfer' &&
+                t.type == TransactionType.income &&
+                t.amount == widget.initial!.amount &&
+                t.date.year == widget.initial!.date.year &&
+                t.date.month == widget.initial!.date.month &&
+                t.date.day == widget.initial!.date.day &&
+                t.date.hour == widget.initial!.date.hour &&
+                t.date.minute == widget.initial!.date.minute &&
+                t.note == widget.initial!.note,
+          );
+          if (counterpart != null) {
+            ref
+                .read(addTransactionProvider(widget.initial).notifier)
+                .setToAccountId(counterpart.accountId);
+          }
+        });
+      }
     } else {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final activeAccount = ref.read(activeAccountProvider);
@@ -206,6 +231,58 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         final currencyCode = state.overrideCurrencyCode.isNotEmpty
             ? state.overrideCurrencyCode
             : curr.code;
+
+        if (state.isEditing) {
+          // Update both sides of the transfer pair
+          // Update the expense side (widget.initial = expense record)
+          final updatedExpense = Transaction(
+            id: widget.initial!.id,
+            amount: amount,
+            category: 'Transfer',
+            type: TransactionType.expense,
+            date: finalDateTime,
+            note: note,
+            currency: currency,
+            currencyCode: currencyCode,
+            accountId: widget.initial!.accountId, // locked, unchanged
+          );
+          await ref.read(transactionsProvider.notifier).update(updatedExpense);
+
+          // Find and update the income counterpart
+          final allTxs = ref.read(transactionsProvider).valueOrNull ?? [];
+          final counterpart = allTxs.firstWhereOrNull(
+            (t) =>
+                t.category == 'Transfer' &&
+                t.type == TransactionType.income &&
+                t.accountId == state.toAccountId &&
+                t.amount ==
+                    widget.initial!.amount && // match by original amount
+                t.date.year == widget.initial!.date.year &&
+                t.date.month == widget.initial!.date.month &&
+                t.date.day == widget.initial!.date.day &&
+                t.date.hour == widget.initial!.date.hour &&
+                t.date.minute == widget.initial!.date.minute &&
+                t.note == widget.initial!.note,
+          );
+
+          if (counterpart != null) {
+            final updatedIncome = Transaction(
+              id: counterpart.id,
+              amount: amount, // updated amount
+              category: 'Transfer',
+              type: TransactionType.income,
+              date: finalDateTime,
+              note: note,
+              currency: currency, // updated currency
+              currencyCode: currencyCode,
+              accountId: counterpart.accountId, // locked, unchanged
+            );
+            await ref.read(transactionsProvider.notifier).update(updatedIncome);
+          }
+
+          if (mounted) context.pop();
+          return;
+        }
 
         final expense = Transaction(
           id: _uuid.v4(),
@@ -378,8 +455,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isEditing = state.isEditing;
     final activeAccount = ref.watch(activeAccountProvider);
-    final isAccountLocked = activeAccount != null;
     final isTransfer = state.type == TransactionType.transfer;
+    final isEditingTransfer = isEditing && isTransfer;
+    final isAccountLocked = activeAccount != null || isEditingTransfer;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
