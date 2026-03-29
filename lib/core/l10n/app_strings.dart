@@ -190,5 +190,18 @@ class AppStrings {
   String get showConversionsOnCard =>
       _ru ? 'Показывать на карточке' : 'Show on balance card';
 
+  String get selectSourceAccount =>
+      _ru ? 'Выберите счёт отправителя' : 'Select source account';
+  String get selectDestAccount =>
+      _ru ? 'Выберите счёт получателя' : 'Select destination account';
+  String get accountsMustDiffer =>
+      _ru ? 'Счета должны отличаться' : 'Accounts must differ';
+  String get transferLabel => _ru ? 'Перевод' : 'Transfer';
+  String get transferTo => _ru ? 'на' : 'to';
+  String get transferFrom => _ru ? 'с' : 'from';
+  String get selectAccount => _ru ? 'Выберите счёт' : 'Select account';
+  String get accountPlaceholder => _ru ? 'Счёт' : 'Account';
+  String get saveError => _ru ? 'Ошибка сохранения' : 'Save error';
+
   String get dateLocale => _ru ? 'ru_RU' : 'en_US';
 }

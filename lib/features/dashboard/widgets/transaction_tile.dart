@@ -274,10 +274,10 @@ class TransactionTile extends ConsumerWidget {
     List<Account> accounts,
     Account? activeAccount,
   ) {
-    // Fallback if no counterpart
+    final s = ref.watch(stringsProvider);
     if (counterpart == null) {
       return Text(
-        'Transfer',
+        s.transferLabel,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.w600,
           color: Theme.of(context).colorScheme.onSurface,
@@ -298,13 +298,12 @@ class TransactionTile extends ConsumerWidget {
     final destAccountName = _accountName(accounts, destAccountId);
     final onSurface = Theme.of(context).colorScheme.onSurface;
 
-    // Total Balance view (activeAccount == null), showing expense side
     if (activeAccount == null) {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Transfer',
+            s.transferLabel,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: onSurface,
@@ -321,14 +320,12 @@ class TransactionTile extends ConsumerWidget {
       );
     }
 
-    // Account view
     if (isExpense) {
-      // Expense side: Transfer to <destAccountName>
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Transfer',
+            s.transferLabel,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: onSurface,
@@ -336,7 +333,7 @@ class TransactionTile extends ConsumerWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            'to',
+            s.transferTo,
             style: TextStyle(
               fontSize: 11,
               color: onSurface.withOpacity(0.45),
@@ -348,12 +345,11 @@ class TransactionTile extends ConsumerWidget {
         ],
       );
     } else {
-      // Income side: Transfer from <sourceAccountName>
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Transfer',
+            s.transferLabel,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: onSurface,
@@ -361,7 +357,7 @@ class TransactionTile extends ConsumerWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            'from',
+            s.transferFrom,
             style: TextStyle(
               fontSize: 11,
               color: onSurface.withOpacity(0.45),

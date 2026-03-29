@@ -80,13 +80,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
       _amountController.text = widget.initial!.amount.toString();
       _noteController.text = widget.initial!.note ?? '';
 
-      // Pre-populate toAccountId when opening Transfer for edit
       if (widget.initial!.category == 'Transfer') {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final allTxs = ref.read(transactionsProvider).valueOrNull ?? [];
 
           if (widget.initial!.type == TransactionType.expense) {
-            // widget.initial IS the expense side — find income counterpart for To
             final counterpart = allTxs.firstWhereOrNull(
               (t) =>
                   t.id != widget.initial!.id &&
@@ -110,7 +108,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
               _transferIncomeRecordId = counterpart?.id;
             });
           } else {
-            // widget.initial IS the income side — find expense counterpart
             final expenseRecord = allTxs.firstWhereOrNull(
               (t) =>
                   t.id != widget.initial!.id &&
@@ -125,7 +122,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                   t.note == widget.initial!.note,
             );
             if (expenseRecord != null) {
-              // Swap: From = expense account, To = this income account
               ref
                   .read(addTransactionProvider(widget.initial).notifier)
                   .setAccountId(expenseRecord.accountId);
@@ -145,7 +141,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         final activeAccount = ref.read(activeAccountProvider);
         final curr = ref.read(currencyProvider);
 
-        // Use active account's currency if available, otherwise use global currency
         final currencyCode = activeAccount?.currency ?? curr.code;
         final currencySymbol = currencyMap[currencyCode]?.symbol ?? curr.symbol;
 
@@ -153,7 +148,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
             .read(addTransactionProvider(null).notifier)
             .setCurrency(currencySymbol, currencyCode);
 
-        // Set the selected account if there's an active account
         if (activeAccount != null) {
           ref
               .read(addTransactionProvider(null).notifier)
@@ -191,7 +185,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     final parts = normalized.split('.');
     if (parts.length == 2 && parts[1].length > 2) return null;
 
-    return normalized; // valid, return normalized string
+    return normalized;
   }
 
   void _triggerError() {
@@ -200,6 +194,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
   }
 
   Future<void> _submit() async {
+    final s = ref.read(stringsProvider);
     final raw = _amountController.text;
     final parsed = _validateAndParseAmount(raw);
 
@@ -216,17 +211,17 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
       bool hasError = false;
 
       if (state.selectedAccountId == null) {
-        setState(() => _fromAccountError = 'Please select a source account');
+        setState(() => _fromAccountError = s.selectSourceAccount);
         hasError = true;
       } else {
         setState(() => _fromAccountError = null);
       }
 
       if (state.toAccountId == null) {
-        setState(() => _toAccountError = 'Please select a destination account');
+        setState(() => _toAccountError = s.selectDestAccount);
         hasError = true;
       } else if (state.toAccountId == state.selectedAccountId) {
-        setState(() => _toAccountError = 'Source and destination must differ');
+        setState(() => _toAccountError = s.accountsMustDiffer);
         hasError = true;
       } else {
         setState(() => _toAccountError = null);
@@ -256,14 +251,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         : _noteController.text.trim();
 
     try {
-      print('--- SUBMIT CLICKED ---');
-      print(
-        'Amount: $amount, Category: ${state.category}, Type: ${state.type.name}',
-      );
-
       if (state.type == TransactionType.transfer) {
-        // Handle transfer: create two transactions
-        // Get currency with fallback to global currency
         final curr = ref.read(currencyProvider);
         final currency = state.overrideCurrency.isNotEmpty
             ? state.overrideCurrency
@@ -273,8 +261,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
             : curr.code;
 
         if (state.isEditing) {
-          // Update both sides of the transfer pair
-          // Update the expense side
           final updatedExpense = Transaction(
             id: _transferExpenseRecordId ?? widget.initial!.id,
             amount: amount,
@@ -284,22 +270,21 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
             note: note,
             currency: currency,
             currencyCode: currencyCode,
-            accountId: state.selectedAccountId!, // from initState
+            accountId: state.selectedAccountId!,
           );
           await ref.read(transactionsProvider.notifier).update(updatedExpense);
 
-          // Update the income side
           if (_transferIncomeRecordId != null) {
             final updatedIncome = Transaction(
               id: _transferIncomeRecordId!,
-              amount: amount, // updated amount
+              amount: amount,
               category: 'Transfer',
               type: TransactionType.income,
               date: finalDateTime,
               note: note,
-              currency: currency, // updated currency
+              currency: currency,
               currencyCode: currencyCode,
-              accountId: state.toAccountId!, // from initState
+              accountId: state.toAccountId!,
             );
             await ref.read(transactionsProvider.notifier).update(updatedIncome);
           }
@@ -332,12 +317,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
           accountId: state.toAccountId!,
         );
 
-        print('Creating transfer transactions...');
         await ref.read(transactionsProvider.notifier).add(expense);
         await ref.read(transactionsProvider.notifier).add(income);
-        print('Transfer completed');
       } else {
-        // Handle regular income/expense
         final activeAccount = ref.read(activeAccountProvider);
         final selectedId = ref
             .read(addTransactionProvider(widget.initial))
@@ -345,21 +327,13 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         int accountId;
 
         if (selectedId != null && selectedId != 0) {
-          print('Using selected account ID: $selectedId');
           accountId = selectedId;
         } else if (activeAccount != null) {
-          print(
-            'Using active account ID: ${activeAccount.id}, Name: ${activeAccount.name}',
-          );
           accountId = activeAccount.id;
         } else {
-          print('No active account. Fetching main account...');
           final mainAccount = await ref
               .read(accountRepositoryProvider)
               .getMain();
-          print(
-            'Main account fetched: ID=${mainAccount.id}, Name: ${mainAccount.name}',
-          );
           accountId = mainAccount.id;
         }
 
@@ -375,42 +349,27 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
           accountId: accountId,
         );
 
-        print('Transaction object created: ID=${tx.id}, AccId=${tx.accountId}');
-        print('Calling provider to save...');
-
         if (state.isEditing) {
           await ref.read(transactionsProvider.notifier).update(tx);
-          print('Update completed');
         } else {
           final res = await ref.read(transactionsProvider.notifier).add(tx);
-          print(
-            'Add completed. Result: ${res.isSuccess ? "SUCCESS" : "FAILURE"}',
-          );
 
           if (res.isFailure) {
-            print('!!! Provider returned failure: ${res.errorOrNull}');
             throw Exception(res.errorOrNull);
           }
         }
       }
 
-      print('Provider save completed successfully');
       HapticService.medium();
 
       if (mounted) {
-        print('Popping screen...');
         context.pop();
       }
-    } catch (e, stack) {
-      print('!!! SAVE CRASHED !!!');
-      print('Error: $e');
-      print('Stack trace:');
-      print(stack);
-
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Save error: $e'),
+            content: Text('${s.saveError}: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),

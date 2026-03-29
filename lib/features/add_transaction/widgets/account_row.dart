@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/l10n/locale_provider.dart';
 import '../../../shared/models/account.dart';
 import '../../../shared/models/transaction.dart';
 import '../../dashboard/provider.dart';
@@ -37,12 +38,12 @@ class AccountRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
     final state = ref.watch(addTransactionProvider(initial));
     final accountsAsync = ref.watch(accountsProvider);
     final accounts = accountsAsync.valueOrNull ?? [];
     final isTransfer = state.type == TransactionType.transfer;
 
-    // Auto-select toAccount when only 2 accounts exist
     if (isTransfer && accounts.length == 2 && state.selectedAccountId != null) {
       final otherId = accounts
           .firstWhere(
@@ -63,7 +64,7 @@ class AccountRow extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Account',
+          s.accountPlaceholder,
           style: TextStyle(
             fontSize: 13,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
@@ -95,6 +96,7 @@ class AccountRow extends ConsumerWidget {
             indicatorKey: fromIndicatorKey,
             error: fromAccountError,
             isDark: isDark,
+            selectAccountText: s.selectAccount,
           ),
       ],
     );
@@ -109,6 +111,7 @@ class _SingleAccountSelector extends ConsumerWidget {
   final GlobalKey indicatorKey;
   final String? error;
   final bool isDark;
+  final String selectAccountText;
 
   const _SingleAccountSelector({
     required this.initial,
@@ -118,6 +121,7 @@ class _SingleAccountSelector extends ConsumerWidget {
     required this.indicatorKey,
     this.error,
     required this.isDark,
+    required this.selectAccountText,
   });
 
   @override
@@ -184,7 +188,7 @@ class _SingleAccountSelector extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    displayAccount?.name ?? 'Select account',
+                    displayAccount?.name ?? selectAccountText,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: displayAccount != null
                           ? Theme.of(context).colorScheme.onSurface
@@ -253,6 +257,7 @@ class _TransferAccountRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
     final state = ref.watch(addTransactionProvider(initial));
     final activeAccount = ref.watch(activeAccountProvider);
 
@@ -275,8 +280,6 @@ class _TransferAccountRow extends ConsumerWidget {
               ),
       );
     } else {
-      // If no account is explicitly selected and we're on Total Balance
-      // creating a new transfer — show empty, force user to choose
       if (activeAccount == null && initial == null) {
         fromAccount = null;
       } else {
@@ -306,6 +309,7 @@ class _TransferAccountRow extends ConsumerWidget {
             error: fromAccountError,
             isDark: isDark,
             disabled: isFromAccountLocked,
+            selectText: s.selectAccount,
           ),
         ),
         Padding(
@@ -328,6 +332,7 @@ class _TransferAccountRow extends ConsumerWidget {
             error: toAccountError,
             isDark: isDark,
             disabled: autoSelectEnabled || isToAccountLocked,
+            selectText: s.selectAccount,
           ),
         ),
       ],
@@ -344,6 +349,7 @@ class _AccountHalf extends StatelessWidget {
   final String? error;
   final bool isDark;
   final bool disabled;
+  final String selectText;
 
   const _AccountHalf({
     required this.account,
@@ -354,6 +360,7 @@ class _AccountHalf extends StatelessWidget {
     this.error,
     required this.isDark,
     this.disabled = false,
+    required this.selectText,
   });
 
   @override
@@ -413,7 +420,7 @@ class _AccountHalf extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  account?.name ?? 'Select',
+                  account?.name ?? selectText,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
