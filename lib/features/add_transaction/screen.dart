@@ -37,6 +37,7 @@ class AddTransactionScreen extends ConsumerStatefulWidget {
 class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  final _stackKey = GlobalKey();
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
   final _fromAccountIndicatorKey = GlobalKey();
@@ -507,6 +508,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         child: Form(
           key: _formKey,
           child: Stack(
+            key: _stackKey,
             children: [
               ListView(
                 padding: const EdgeInsets.all(20),
@@ -685,6 +687,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                   onClose: () =>
                       setState(() => _showFromAccountDropdown = false),
                   triggerKey: _fromAccountIndicatorKey,
+                  stackKey: _stackKey,
                 ),
               if (_showToAccountDropdown)
                 Positioned.fill(
@@ -699,6 +702,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                   initial: widget.initial,
                   onClose: () => setState(() => _showToAccountDropdown = false),
                   triggerKey: _toAccountIndicatorKey,
+                  stackKey: _stackKey,
                 ),
             ],
           ),
@@ -839,11 +843,13 @@ class _ToAccountDropdownOverlay extends ConsumerWidget {
   final Transaction? initial;
   final VoidCallback onClose;
   final GlobalKey? triggerKey;
+  final GlobalKey? stackKey;
 
   const _ToAccountDropdownOverlay({
     required this.initial,
     required this.onClose,
     this.triggerKey,
+    this.stackKey,
   });
 
   @override
@@ -857,106 +863,122 @@ class _ToAccountDropdownOverlay extends ConsumerWidget {
     // Calculate position from trigger key
     double top = 340;
     double left = 20;
+    double triggerWidth = 200; // fallback width
 
     if (triggerKey?.currentContext != null) {
-      final renderBox =
+      final triggerBox =
           triggerKey!.currentContext!.findRenderObject() as RenderBox;
-      final offset = renderBox.localToGlobal(Offset.zero);
-      final size = renderBox.size;
-      top = offset.dy + size.height + 4;
-      left = offset.dx;
+      final triggerOffset = triggerBox.localToGlobal(Offset.zero);
+      final triggerSize = triggerBox.size;
+      triggerWidth = triggerSize.width;
+
+      double stackDy = 0;
+      double stackDx = 0;
+      if (stackKey?.currentContext != null) {
+        final stackBox =
+            stackKey!.currentContext!.findRenderObject() as RenderBox;
+        final stackOffset = stackBox.localToGlobal(Offset.zero);
+        stackDy = stackOffset.dy;
+        stackDx = stackOffset.dx;
+      }
+
+      top = triggerOffset.dy - stackDy + triggerSize.height + 4;
+      left = triggerOffset.dx - stackDx;
     }
 
     return Positioned(
       top: top,
       left: left,
-      child: IntrinsicWidth(
-        child: Material(
-          elevation: 8,
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.transparent,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFF7C6DED).withOpacity(0.3),
-                width: 1.5,
+      width: triggerWidth,
+      child: Material(
+        elevation: 8,
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF7C6DED).withOpacity(0.3),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: accountsAsync.when(
-              data: (accounts) {
-                final filteredAccounts = accounts
-                    .where((a) => a.id != selectedAccountId)
-                    .toList();
+            ],
+          ),
+          child: accountsAsync.when(
+            data: (accounts) {
+              final filteredAccounts = accounts
+                  .where((a) => a.id != selectedAccountId)
+                  .toList();
 
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: filteredAccounts.map((account) {
-                    final isSelected = account.id == toAccountId;
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () {
-                        ref
-                            .read(addTransactionProvider(initial).notifier)
-                            .setToAccountId(account.id);
-                        onClose();
-                        HapticService.light();
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.account_balance_wallet_rounded,
-                              size: 16,
-                              color: isSelected
-                                  ? const Color(0xFF7C6DED)
-                                  : Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.5),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                account.name,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                  color: isSelected
-                                      ? const Color(0xFF7C6DED)
-                                      : Theme.of(context).colorScheme.onSurface,
-                                ),
-                              ),
-                            ),
-                            if (isSelected)
-                              const Icon(
-                                Icons.check_rounded,
-                                size: 16,
-                                color: Color(0xFF7C6DED),
-                              ),
-                          ],
-                        ),
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: filteredAccounts.map((account) {
+                  final isSelected = account.id == toAccountId;
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      ref
+                          .read(addTransactionProvider(initial).notifier)
+                          .setToAccountId(account.id);
+                      onClose();
+                      HapticService.light();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
                       ),
-                    );
-                  }).toList(),
-                );
-              },
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.account_balance_wallet_rounded,
+                            size: 16,
+                            color: isSelected
+                                ? const Color(0xFF7C6DED)
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              account.name,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                                color: isSelected
+                                    ? const Color(0xFF7C6DED)
+                                    : Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          if (isSelected) ...[
+                            const SizedBox(width: 10),
+                            const Icon(
+                              Icons.check_rounded,
+                              size: 16,
+                              color: Color(0xFF7C6DED),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
           ),
         ),
       ),
