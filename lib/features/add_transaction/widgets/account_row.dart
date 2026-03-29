@@ -275,8 +275,14 @@ class _TransferAccountRow extends ConsumerWidget {
               ),
       );
     } else {
-      fromAccount =
-          activeAccount ?? (accounts.isNotEmpty ? accounts.first : null);
+      // If no account is explicitly selected and we're on Total Balance
+      // creating a new transfer — show empty, force user to choose
+      if (activeAccount == null && initial == null) {
+        fromAccount = null;
+      } else {
+        fromAccount =
+            activeAccount ?? (accounts.isNotEmpty ? accounts.first : null);
+      }
     }
 
     final Account? toAccount = toAccountId != null && accounts.isNotEmpty

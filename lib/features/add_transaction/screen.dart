@@ -481,7 +481,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     final activeAccount = ref.watch(activeAccountProvider);
     final isTransfer = state.type == TransactionType.transfer;
     final isEditingTransfer = isEditing && isTransfer;
-    final isFromAccountLocked = activeAccount != null || isTransfer;
+    final isFromAccountLocked = activeAccount != null || isEditingTransfer;
     final isToAccountLocked = isEditingTransfer;
 
     return Scaffold(

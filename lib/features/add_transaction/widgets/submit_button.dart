@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants.dart';
 import '../../../shared/models/transaction.dart';
 
 class SubmitButton extends StatelessWidget {
@@ -21,7 +22,9 @@ class SubmitButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typeColor = type == TransactionType.income
+    final typeColor = type == TransactionType.transfer
+        ? AppColors.accent
+        : type == TransactionType.income
         ? const Color(0xFF4CAF8C)
         : const Color(0xFFE05C6B);
 
