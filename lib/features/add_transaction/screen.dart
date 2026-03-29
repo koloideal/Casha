@@ -51,6 +51,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
   bool _showToAccountDropdown = false;
   String? _toAccountError;
   String? _fromAccountError;
+  String? _transferExpenseRecordId;
+  String? _transferIncomeRecordId;
 
   @override
   void initState() {
@@ -82,22 +84,59 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
       if (widget.initial!.category == 'Transfer') {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final allTxs = ref.read(transactionsProvider).valueOrNull ?? [];
-          final counterpart = allTxs.firstWhereOrNull(
-            (t) =>
-                t.category == 'Transfer' &&
-                t.type == TransactionType.income &&
-                t.amount == widget.initial!.amount &&
-                t.date.year == widget.initial!.date.year &&
-                t.date.month == widget.initial!.date.month &&
-                t.date.day == widget.initial!.date.day &&
-                t.date.hour == widget.initial!.date.hour &&
-                t.date.minute == widget.initial!.date.minute &&
-                t.note == widget.initial!.note,
-          );
-          if (counterpart != null) {
-            ref
-                .read(addTransactionProvider(widget.initial).notifier)
-                .setToAccountId(counterpart.accountId);
+
+          if (widget.initial!.type == TransactionType.expense) {
+            // widget.initial IS the expense side — find income counterpart for To
+            final counterpart = allTxs.firstWhereOrNull(
+              (t) =>
+                  t.id != widget.initial!.id &&
+                  t.category == 'Transfer' &&
+                  t.type == TransactionType.income &&
+                  t.amount == widget.initial!.amount &&
+                  t.date.year == widget.initial!.date.year &&
+                  t.date.month == widget.initial!.date.month &&
+                  t.date.day == widget.initial!.date.day &&
+                  t.date.hour == widget.initial!.date.hour &&
+                  t.date.minute == widget.initial!.date.minute &&
+                  t.note == widget.initial!.note,
+            );
+            if (counterpart != null) {
+              ref
+                  .read(addTransactionProvider(widget.initial).notifier)
+                  .setToAccountId(counterpart.accountId);
+            }
+            setState(() {
+              _transferExpenseRecordId = widget.initial!.id;
+              _transferIncomeRecordId = counterpart?.id;
+            });
+          } else {
+            // widget.initial IS the income side — find expense counterpart
+            final expenseRecord = allTxs.firstWhereOrNull(
+              (t) =>
+                  t.id != widget.initial!.id &&
+                  t.category == 'Transfer' &&
+                  t.type == TransactionType.expense &&
+                  t.amount == widget.initial!.amount &&
+                  t.date.year == widget.initial!.date.year &&
+                  t.date.month == widget.initial!.date.month &&
+                  t.date.day == widget.initial!.date.day &&
+                  t.date.hour == widget.initial!.date.hour &&
+                  t.date.minute == widget.initial!.date.minute &&
+                  t.note == widget.initial!.note,
+            );
+            if (expenseRecord != null) {
+              // Swap: From = expense account, To = this income account
+              ref
+                  .read(addTransactionProvider(widget.initial).notifier)
+                  .setAccountId(expenseRecord.accountId);
+              ref
+                  .read(addTransactionProvider(widget.initial).notifier)
+                  .setToAccountId(widget.initial!.accountId);
+            }
+            setState(() {
+              _transferExpenseRecordId = expenseRecord?.id;
+              _transferIncomeRecordId = widget.initial!.id;
+            });
           }
         });
       }
@@ -235,9 +274,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
 
         if (state.isEditing) {
           // Update both sides of the transfer pair
-          // Update the expense side (widget.initial = expense record)
+          // Update the expense side
           final updatedExpense = Transaction(
-            id: widget.initial!.id,
+            id: _transferExpenseRecordId ?? widget.initial!.id,
             amount: amount,
             category: 'Transfer',
             type: TransactionType.expense,
@@ -245,30 +284,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
             note: note,
             currency: currency,
             currencyCode: currencyCode,
-            accountId: widget.initial!.accountId, // locked, unchanged
+            accountId: state.selectedAccountId!, // from initState
           );
           await ref.read(transactionsProvider.notifier).update(updatedExpense);
 
-          // Find and update the income counterpart
-          final allTxs = ref.read(transactionsProvider).valueOrNull ?? [];
-          final counterpart = allTxs.firstWhereOrNull(
-            (t) =>
-                t.category == 'Transfer' &&
-                t.type == TransactionType.income &&
-                t.accountId == state.toAccountId &&
-                t.amount ==
-                    widget.initial!.amount && // match by original amount
-                t.date.year == widget.initial!.date.year &&
-                t.date.month == widget.initial!.date.month &&
-                t.date.day == widget.initial!.date.day &&
-                t.date.hour == widget.initial!.date.hour &&
-                t.date.minute == widget.initial!.date.minute &&
-                t.note == widget.initial!.note,
-          );
-
-          if (counterpart != null) {
+          // Update the income side
+          if (_transferIncomeRecordId != null) {
             final updatedIncome = Transaction(
-              id: counterpart.id,
+              id: _transferIncomeRecordId!,
               amount: amount, // updated amount
               category: 'Transfer',
               type: TransactionType.income,
@@ -276,7 +299,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
               note: note,
               currency: currency, // updated currency
               currencyCode: currencyCode,
-              accountId: counterpart.accountId, // locked, unchanged
+              accountId: state.toAccountId!, // from initState
             );
             await ref.read(transactionsProvider.notifier).update(updatedIncome);
           }
@@ -458,7 +481,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
     final activeAccount = ref.watch(activeAccountProvider);
     final isTransfer = state.type == TransactionType.transfer;
     final isEditingTransfer = isEditing && isTransfer;
-    final isAccountLocked = activeAccount != null || isEditingTransfer;
+    final isFromAccountLocked = activeAccount != null || isTransfer;
+    final isToAccountLocked = isEditingTransfer;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -485,12 +509,60 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                         child: Text(s.cancel),
                       ),
                       TextButton(
-                        onPressed: () {
-                          ref
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+
+                          // Always delete the record we were given
+                          await ref
                               .read(transactionsProvider.notifier)
                               .delete(widget.initial!.id);
-                          Navigator.pop(ctx);
-                          context.pop();
+
+                          // If this is a Transfer, also delete the counterpart
+                          if (widget.initial!.category == 'Transfer') {
+                            // Use the pre-populated IDs from initState if available
+                            final counterpartId =
+                                widget.initial!.type == TransactionType.expense
+                                ? _transferIncomeRecordId
+                                : _transferExpenseRecordId;
+
+                            if (counterpartId != null) {
+                              await ref
+                                  .read(transactionsProvider.notifier)
+                                  .delete(counterpartId);
+                            } else {
+                              // Fallback: search manually
+                              final allTxs =
+                                  ref.read(transactionsProvider).valueOrNull ??
+                                  [];
+                              final oppositeType =
+                                  widget.initial!.type ==
+                                      TransactionType.expense
+                                  ? TransactionType.income
+                                  : TransactionType.expense;
+                              final counterpart = allTxs.firstWhereOrNull(
+                                (t) =>
+                                    t.id != widget.initial!.id &&
+                                    t.category == 'Transfer' &&
+                                    t.type == oppositeType &&
+                                    t.amount == widget.initial!.amount &&
+                                    t.date.year == widget.initial!.date.year &&
+                                    t.date.month ==
+                                        widget.initial!.date.month &&
+                                    t.date.day == widget.initial!.date.day &&
+                                    t.date.hour == widget.initial!.date.hour &&
+                                    t.date.minute ==
+                                        widget.initial!.date.minute &&
+                                    t.note == widget.initial!.note,
+                              );
+                              if (counterpart != null) {
+                                await ref
+                                    .read(transactionsProvider.notifier)
+                                    .delete(counterpart.id);
+                              }
+                            }
+                          }
+
+                          if (mounted) context.pop();
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: const Color(0xFFE05C6B),
@@ -544,7 +616,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                       fromAccountError: _fromAccountError,
                       toAccountError: _toAccountError,
                       isDark: isDark,
-                      isAccountLocked: isAccountLocked,
+                      isFromAccountLocked: isFromAccountLocked,
+                      isToAccountLocked: isToAccountLocked,
                     ),
                   if (isTransfer) const SizedBox(height: 24),
 
@@ -586,7 +659,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                             }),
                             indicatorKey: _fromAccountIndicatorKey,
                             isDark: isDark,
-                            isLocked: isAccountLocked,
+                            isLocked: isFromAccountLocked,
                           ),
                         ],
                       ],
@@ -767,8 +840,9 @@ class _InlineAccountSelector extends ConsumerWidget {
               onTap: onToggleDropdown,
               child: Container(
                 key: indicatorKey,
+                constraints: const BoxConstraints(minWidth: 130),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
+                  horizontal: 16,
                   vertical: 16,
                 ),
                 decoration: BoxDecoration(

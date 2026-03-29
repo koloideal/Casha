@@ -66,22 +66,21 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
               child: SizedBox(
                 height: cardHeight,
                 child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Consumer(
-                      builder: (ctx, ref, _) => BalanceCard(
-                        balance: ref.read(totalBalanceProvider),
-                        currencyInfo: ref.read(currencyProvider),
-                        onLongPress: null,
-                        previewPrimary: dash.tempPrimary,
-                        previewSecondary: dash.tempSecondary,
-                        previewGradientType: Theme.of(widget.context)
-                                    .brightness ==
-                                Brightness.dark
-                            ? dash.tempDarkGradientType
-                            : dash.tempLightGradientType,
-                      ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Consumer(
+                    builder: (ctx, ref, _) => BalanceCard(
+                      balance: ref.read(totalBalanceProvider),
+                      currencyInfo: ref.read(currencyProvider),
+                      onLongPress: null,
+                      previewPrimary: dash.tempPrimary,
+                      previewSecondary: dash.tempSecondary,
+                      previewGradientType:
+                          Theme.of(widget.context).brightness == Brightness.dark
+                          ? dash.tempDarkGradientType
+                          : dash.tempLightGradientType,
                     ),
                   ),
+                ),
               ),
             ),
           ),
@@ -97,30 +96,34 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
           ),
           // Close Button - Top Right
           Positioned(
-            top: mq.padding.top + 8,
+            top: mq.padding.top + (kToolbarHeight / 2) - 20,
             right: 20,
-            child: SafeArea(
-              child: GestureDetector(
-                onTap: () => dash.closeOverlay(apply: false),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Theme.of(widget.context).colorScheme.surface,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+            child: GestureDetector(
+              onTap: () => dash.closeOverlay(apply: false),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Theme.of(widget.context).colorScheme.surface,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Theme.of(
+                      widget.context,
+                    ).colorScheme.onSurface.withOpacity(0.15),
+                    width: 1.5,
                   ),
-                  child: Icon(
-                    Icons.close_rounded,
-                    size: 24,
-                    color: Theme.of(widget.context).colorScheme.onSurface,
-                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 24,
+                  color: Theme.of(widget.context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -137,7 +140,9 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
         color: Theme.of(widget.context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Theme.of(widget.context).colorScheme.onSurface.withOpacity(0.1),
+          color: Theme.of(
+            widget.context,
+          ).colorScheme.onSurface.withOpacity(0.1),
           width: 1.5,
         ),
         boxShadow: [
@@ -153,7 +158,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
           final s = AppStrings(
             ProviderScope.containerOf(widget.context).read(localeProvider),
           );
-          
+
           void onHSVChanged(HSVColor hsv) {
             setPanelState(() {});
             dash.setState(() {
@@ -170,8 +175,8 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
 
           final activeGradientType =
               Theme.of(widget.context).brightness == Brightness.dark
-                  ? dash.tempDarkGradientType
-                  : dash.tempLightGradientType;
+              ? dash.tempDarkGradientType
+              : dash.tempLightGradientType;
           final isSolid = activeGradientType == GradientType.solid;
           final currentHSV = (isSolid || dash.editingPrimary)
               ? dash.tempPrimaryHSV
@@ -191,10 +196,9 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           label: s.colorPrimary,
                           isSelected: dash.editingPrimary && !isSolid,
                           color: isSolid
-                              ? Theme.of(widget.context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(0.12)
+                              ? Theme.of(
+                                  widget.context,
+                                ).colorScheme.onSurface.withOpacity(0.12)
                               : dash.tempPrimary,
                           isDimmed: isSolid,
                           onTap: () {
@@ -246,31 +250,36 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Container(
                           width: 1,
-                          color: Theme.of(widget.context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.15),
+                          color: Theme.of(
+                            widget.context,
+                          ).colorScheme.onSurface.withOpacity(0.15),
                           margin: const EdgeInsets.symmetric(vertical: 4),
                         ),
                       ),
                       GestureDetector(
-                        onTap: isSolid ? null : () {
-                          dash.setState(() {
-                            if (Theme.of(widget.context).brightness ==
-                                Brightness.dark) {
-                              dash.tempDarkGradientType = GradientType.solid;
-                            } else {
-                              dash.tempLightGradientType = GradientType.solid;
-                            }
-                            dash.editingPrimary = true;
-                          });
-                          setPanelState(() {});
-                          dash.overlayEntry?.markNeedsBuild();
-                        },
+                        onTap: isSolid
+                            ? null
+                            : () {
+                                dash.setState(() {
+                                  if (Theme.of(widget.context).brightness ==
+                                      Brightness.dark) {
+                                    dash.tempDarkGradientType =
+                                        GradientType.solid;
+                                  } else {
+                                    dash.tempLightGradientType =
+                                        GradientType.solid;
+                                  }
+                                  dash.editingPrimary = true;
+                                });
+                                setPanelState(() {});
+                                dash.overlayEntry?.markNeedsBuild();
+                              },
                         child: Container(
                           height: double.infinity,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: isSolid
                                 ? const Color(0xFF7C6DED).withOpacity(0.15)
@@ -279,10 +288,9 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                             border: Border.all(
                               color: isSolid
                                   ? const Color(0xFF7C6DED)
-                                  : Theme.of(widget.context)
-                                      .colorScheme
-                                      .onSurface
-                                      .withOpacity(0.2),
+                                  : Theme.of(
+                                      widget.context,
+                                    ).colorScheme.onSurface.withOpacity(0.2),
                               width: 1.5,
                             ),
                           ),
@@ -297,8 +305,8 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                                   color: dash.tempPrimary,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Theme.of(widget.context)
-                                                .brightness ==
+                                    color:
+                                        Theme.of(widget.context).brightness ==
                                             Brightness.dark
                                         ? Colors.white30
                                         : Colors.black12,
@@ -321,9 +329,9 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                                     color: isSolid
                                         ? const Color(0xFF7C6DED)
                                         : Theme.of(widget.context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.5),
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(0.5),
                                   ),
                                 ),
                               ),
@@ -339,9 +347,8 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                   child: LayoutBuilder(
                     builder: (lbCtx, constraints) {
                       const reservedBelow = 78.0;
-                      final spectrumH =
-                          (constraints.maxHeight - reservedBelow).clamp(
-                              40.0, double.infinity);
+                      final spectrumH = (constraints.maxHeight - reservedBelow)
+                          .clamp(40.0, double.infinity);
 
                       return Column(
                         mainAxisSize: MainAxisSize.min,
@@ -360,7 +367,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           ),
                           const SizedBox(height: 8),
                           SizedBox(
-                            height: 36,  //
+                            height: 36, //
                             child: ColorPickerSlider(
                               TrackType.hue,
                               currentHSV,
@@ -381,7 +388,8 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                                     GestureDetector(
                                       onTap: () {
                                         dash.setState(
-                                            () => dash.editingPrimary = true);
+                                          () => dash.editingPrimary = true,
+                                        );
                                         setPanelState(() {});
                                         dash.overlayEntry?.markNeedsBuild();
                                       },
@@ -398,10 +406,12 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                                               border: dash.editingPrimary
                                                   ? Border.all(
                                                       color: Colors.white,
-                                                      width: 2)
+                                                      width: 2,
+                                                    )
                                                   : Border.all(
                                                       color: Colors.transparent,
-                                                      width: 2),
+                                                      width: 2,
+                                                    ),
                                             ),
                                           ),
                                           const SizedBox(width: 5),
@@ -417,9 +427,10 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                                                   .colorScheme
                                                   .onSurface
                                                   .withOpacity(
-                                                      dash.editingPrimary
-                                                          ? 0.8
-                                                          : 0.4),
+                                                    dash.editingPrimary
+                                                        ? 0.8
+                                                        : 0.4,
+                                                  ),
                                             ),
                                           ),
                                         ],
@@ -429,8 +440,9 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                                     if (!isSolid)
                                       GestureDetector(
                                         onTap: () {
-                                          dash.setState(() =>
-                                              dash.editingPrimary = false);
+                                          dash.setState(
+                                            () => dash.editingPrimary = false,
+                                          );
                                           setPanelState(() {});
                                           dash.overlayEntry?.markNeedsBuild();
                                         },
@@ -449,9 +461,10 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                                                     .colorScheme
                                                     .onSurface
                                                     .withOpacity(
-                                                        !dash.editingPrimary
-                                                            ? 0.8
-                                                            : 0.4),
+                                                      !dash.editingPrimary
+                                                          ? 0.8
+                                                          : 0.4,
+                                                    ),
                                               ),
                                             ),
                                             const SizedBox(width: 5),
@@ -465,11 +478,13 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                                                 border: !dash.editingPrimary
                                                     ? Border.all(
                                                         color: Colors.white,
-                                                        width: 2)
+                                                        width: 2,
+                                                      )
                                                     : Border.all(
                                                         color:
                                                             Colors.transparent,
-                                                        width: 2),
+                                                        width: 2,
+                                                      ),
                                               ),
                                             ),
                                           ],
@@ -495,92 +510,99 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                       children: GradientType.values
                           .where((t) => t != GradientType.solid)
                           .map((type) {
-                        final isSelected = activeGradientType == type;
-                        final label = switch (type) {
-                          GradientType.linear => s.gradientLinear,
-                          GradientType.linearReverse => s.gradientReverse,
-                          GradientType.radial => s.gradientRadial,
-                          GradientType.sweep => s.gradientSweep,
-                          GradientType.solid => '',
-                        };
-                        final icon = switch (type) {
-                          GradientType.linear => Icons.trending_flat_rounded,
-                          GradientType.linearReverse =>
-                            Icons.swap_horiz_rounded,
-                          GradientType.radial => Icons.blur_circular_rounded,
-                          GradientType.sweep => Icons.rotate_right_rounded,
-                          GradientType.solid => Icons.square_rounded,
-                        };
-                        return Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: GestureDetector(
-                              onTap: () {
-                                dash.setState(() {
-                                  if (Theme.of(widget.context).brightness ==
-                                      Brightness.dark) {
-                                    dash.tempDarkGradientType = type;
-                                  } else {
-                                    dash.tempLightGradientType = type;
-                                  }
-                                });
-                                setPanelState(() {});
-                                dash.overlayEntry?.markNeedsBuild();
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 150),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? const Color(0xFF7C6DED)
-                                          .withOpacity(0.15)
-                                      : Theme.of(widget.context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? const Color(0xFF7C6DED)
-                                        : Colors.transparent,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(icon,
-                                        size: 15,
-                                        color: isSelected
-                                            ? const Color(0xFF7C6DED)
-                                            : Theme.of(widget.context)
+                            final isSelected = activeGradientType == type;
+                            final label = switch (type) {
+                              GradientType.linear => s.gradientLinear,
+                              GradientType.linearReverse => s.gradientReverse,
+                              GradientType.radial => s.gradientRadial,
+                              GradientType.sweep => s.gradientSweep,
+                              GradientType.solid => '',
+                            };
+                            final icon = switch (type) {
+                              GradientType.linear =>
+                                Icons.trending_flat_rounded,
+                              GradientType.linearReverse =>
+                                Icons.swap_horiz_rounded,
+                              GradientType.radial =>
+                                Icons.blur_circular_rounded,
+                              GradientType.sweep => Icons.rotate_right_rounded,
+                              GradientType.solid => Icons.square_rounded,
+                            };
+                            return Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    dash.setState(() {
+                                      if (Theme.of(widget.context).brightness ==
+                                          Brightness.dark) {
+                                        dash.tempDarkGradientType = type;
+                                      } else {
+                                        dash.tempLightGradientType = type;
+                                      }
+                                    });
+                                    setPanelState(() {});
+                                    dash.overlayEntry?.markNeedsBuild();
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? const Color(
+                                              0xFF7C6DED,
+                                            ).withOpacity(0.15)
+                                          : Theme.of(widget.context)
                                                 .colorScheme
                                                 .onSurface
-                                                .withOpacity(0.45)),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      label,
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.normal,
+                                                .withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
                                         color: isSelected
                                             ? const Color(0xFF7C6DED)
-                                            : Theme.of(widget.context)
-                                                .colorScheme
-                                                .onSurface
-                                                .withOpacity(0.45),
+                                            : Colors.transparent,
+                                        width: 1.5,
                                       ),
                                     ),
-                                  ],
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          icon,
+                                          size: 15,
+                                          color: isSelected
+                                              ? const Color(0xFF7C6DED)
+                                              : Theme.of(widget.context)
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.45),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          label,
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: isSelected
+                                                ? FontWeight.w600
+                                                : FontWeight.normal,
+                                            color: isSelected
+                                                ? const Color(0xFF7C6DED)
+                                                : Theme.of(widget.context)
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withOpacity(0.45),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                            );
+                          })
+                          .toList(),
                     ),
                   ),
                 ),
@@ -592,7 +614,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                         onPressed: () {
                           final isDarkTheme =
                               Theme.of(widget.context).brightness ==
-                                  Brightness.dark;
+                              Brightness.dark;
                           final defP = isDarkTheme
                               ? CardColorService.defaultPrimary
                               : CardColorService.defaultPrimaryLight;
@@ -604,31 +626,32 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                             dash.tempSecondary = defS;
                             dash.tempPrimaryHSV = HSVColor.fromColor(defP);
                             dash.tempSecondaryHSV = HSVColor.fromColor(defS);
-                          dash.tempLightGradientType =
-                              CardColorService.defaultGradientLight;
-                          dash.tempDarkGradientType =
-                              CardColorService.defaultGradientDark;
+                            dash.tempLightGradientType =
+                                CardColorService.defaultGradientLight;
+                            dash.tempDarkGradientType =
+                                CardColorService.defaultGradientDark;
                           });
                           setPanelState(() {});
                           dash.overlayEntry?.markNeedsBuild();
                         },
                         icon: const Icon(Icons.restart_alt_rounded, size: 15),
-                        label: Text(s.reset,
-                            style: const TextStyle(fontSize: 13)),
+                        label: Text(
+                          s.reset,
+                          style: const TextStyle(fontSize: 13),
+                        ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(widget.context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.7),
+                          foregroundColor: Theme.of(
+                            widget.context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
                           side: BorderSide(
-                            color: Theme.of(widget.context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.2),
+                            color: Theme.of(
+                              widget.context,
+                            ).colorScheme.onSurface.withOpacity(0.2),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
@@ -642,11 +665,16 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text(s.apply,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 14)),
+                        child: Text(
+                          s.apply,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -679,12 +707,14 @@ class PanelTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor = isSelected 
+    final borderColor = isSelected
         ? const Color(0xFF7C6DED)
         : (isDark ? Colors.white24 : const Color(0xFFCCCCDD));
     final textColor = isSelected
         ? const Color(0xFF7C6DED)
-        : (isDark ? Colors.white60 : Theme.of(context).colorScheme.onSurface.withOpacity(0.5));
+        : (isDark
+              ? Colors.white60
+              : Theme.of(context).colorScheme.onSurface.withOpacity(0.5));
 
     return GestureDetector(
       onTap: onTap,
@@ -696,12 +726,11 @@ class PanelTab extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF7C6DED).withOpacity(0.15) : Colors.transparent,
+            color: isSelected
+                ? const Color(0xFF7C6DED).withOpacity(0.15)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: borderColor,
-              width: 1.5,
-            ),
+            border: Border.all(color: borderColor, width: 1.5),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -728,8 +757,9 @@ class PanelTab extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
                     color: textColor,
                   ),
                 ),

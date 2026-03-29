@@ -16,7 +16,8 @@ class AccountRow extends ConsumerWidget {
   final String? fromAccountError;
   final String? toAccountError;
   final bool isDark;
-  final bool isAccountLocked;
+  final bool isFromAccountLocked;
+  final bool isToAccountLocked;
 
   const AccountRow({
     super.key,
@@ -30,7 +31,8 @@ class AccountRow extends ConsumerWidget {
     this.fromAccountError,
     this.toAccountError,
     required this.isDark,
-    this.isAccountLocked = false,
+    this.isFromAccountLocked = false,
+    this.isToAccountLocked = false,
   });
 
   @override
@@ -81,7 +83,8 @@ class AccountRow extends ConsumerWidget {
             fromAccountError: fromAccountError,
             toAccountError: toAccountError,
             isDark: isDark,
-            isAccountLocked: isAccountLocked,
+            isFromAccountLocked: isFromAccountLocked,
+            isToAccountLocked: isToAccountLocked,
           )
         else
           _SingleAccountSelector(
@@ -229,7 +232,8 @@ class _TransferAccountRow extends ConsumerWidget {
   final String? fromAccountError;
   final String? toAccountError;
   final bool isDark;
-  final bool isAccountLocked;
+  final bool isFromAccountLocked;
+  final bool isToAccountLocked;
 
   const _TransferAccountRow({
     required this.initial,
@@ -243,7 +247,8 @@ class _TransferAccountRow extends ConsumerWidget {
     this.fromAccountError,
     this.toAccountError,
     required this.isDark,
-    this.isAccountLocked = false,
+    this.isFromAccountLocked = false,
+    this.isToAccountLocked = false,
   });
 
   @override
@@ -290,11 +295,11 @@ class _TransferAccountRow extends ConsumerWidget {
             account: fromAccount,
             label: 'From',
             showDropdown: showFromDropdown,
-            onToggle: isAccountLocked ? null : onToggleFromDropdown,
+            onToggle: isFromAccountLocked ? null : onToggleFromDropdown,
             indicatorKey: fromIndicatorKey,
             error: fromAccountError,
             isDark: isDark,
-            disabled: isAccountLocked,
+            disabled: isFromAccountLocked,
           ),
         ),
         Padding(
@@ -310,11 +315,13 @@ class _TransferAccountRow extends ConsumerWidget {
             account: toAccount,
             label: 'To',
             showDropdown: showToDropdown,
-            onToggle: autoSelectEnabled ? null : onToggleToDropdown,
+            onToggle: (autoSelectEnabled || isToAccountLocked)
+                ? null
+                : onToggleToDropdown,
             indicatorKey: toIndicatorKey,
             error: toAccountError,
             isDark: isDark,
-            disabled: autoSelectEnabled,
+            disabled: autoSelectEnabled || isToAccountLocked,
           ),
         ),
       ],
