@@ -136,7 +136,7 @@ class AccountDropdownOverlay extends ConsumerWidget {
 
     double top = 76;
     double left = 20;
-    double triggerWidth = 200; 
+    double triggerWidth = 200;
 
     if (triggerKey?.currentContext != null) {
       final triggerBox =
@@ -188,17 +188,10 @@ class AccountDropdownOverlay extends ConsumerWidget {
               final txAccountId = ref
                   .read(addTransactionProvider(initial))
                   .selectedAccountId;
-              final toAccountId = ref
-                  .read(addTransactionProvider(initial))
-                  .toAccountId;
-
-              final availableAccounts = accounts
-                  .where((a) => toAccountId == null || a.id != toAccountId)
-                  .toList();
 
               return Column(
                 mainAxisSize: MainAxisSize.min,
-                children: availableAccounts.map((account) {
+                children: accounts.map((account) {
                   final isSelected =
                       txAccountId != null && account.id == txAccountId;
                   return InkWell(
