@@ -377,7 +377,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (!dash.isAddingAccount &&
-                        (ref.watch(accountsProvider).valueOrNull?.length ?? 0) >
+                        (ref.watch(accountsProvider).value?.length ?? 0) >
                             1) ...[
                       GestureDetector(
                         onTap: () => setState(() => _showDeleteDialog = true),

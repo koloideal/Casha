@@ -80,13 +80,22 @@ class AddTransactionState {
   bool get isEditing => editingId != null;
 }
 
-class AddTransactionNotifier extends StateNotifier<AddTransactionState> {
-  AddTransactionNotifier(Transaction? initial)
-    : super(
-        initial != null
-            ? AddTransactionState.fromTransaction(initial)
-            : AddTransactionState.empty(),
-      );
+final addTransactionProvider = NotifierProvider.autoDispose
+    .family<AddTransactionNotifier, AddTransactionState, Transaction?>(
+      (initial) => AddTransactionNotifier(initial),
+    );
+
+class AddTransactionNotifier extends Notifier<AddTransactionState> {
+  AddTransactionNotifier(this._initial);
+
+  final Transaction? _initial;
+
+  @override
+  AddTransactionState build() {
+    return _initial != null
+        ? AddTransactionState.fromTransaction(_initial!)
+        : AddTransactionState.empty();
+  }
 
   void setAmount(double? v) => state = state.copyWith(amount: v);
 
@@ -123,11 +132,6 @@ class AddTransactionNotifier extends StateNotifier<AddTransactionState> {
   void reset() => state = AddTransactionState.empty();
 }
 
-final addTransactionProvider = StateNotifierProvider.autoDispose
-    .family<AddTransactionNotifier, AddTransactionState, Transaction?>(
-      (ref, initial) => AddTransactionNotifier(initial),
-    );
-
 final availableCategoriesProvider = Provider.autoDispose
     .family<List<String>, Transaction?>((ref, initial) {
       final type = ref.watch(
@@ -135,3 +139,4 @@ final availableCategoriesProvider = Provider.autoDispose
       );
       return AppCategories.forType(type);
     });
+

@@ -35,77 +35,75 @@ final storageServiceProvider = Provider<StorageService>((ref) {
 });
 
 final transactionsProvider =
-    StateNotifierProvider<TransactionsNotifier, AsyncValue<List<Transaction>>>((
-      ref,
-    ) {
-      final repository = ref.watch(transactionRepositoryProvider);
-      return TransactionsNotifier(repository);
-    });
+    AsyncNotifierProvider<TransactionsNotifier, List<Transaction>>(
+      TransactionsNotifier.new,
+    );
 
-class TransactionsNotifier
-    extends StateNotifier<AsyncValue<List<Transaction>>> {
-  final TransactionRepository _repository;
+class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
+  @override
+  Future<List<Transaction>> build() async {
+    final repository = ref.watch(transactionRepositoryProvider);
+    final result = await repository.getAll();
 
-  TransactionsNotifier(this._repository) : super(const AsyncValue.loading()) {
-    _load();
-  }
-
-  Future<void> _load() async {
-    state = const AsyncValue.loading();
-    final result = await _repository.getAll();
-
-    state = result.isSuccess
-        ? AsyncValue.data(result.dataOrNull!)
-        : AsyncValue.error(result.errorOrNull!, StackTrace.current);
+    if (result.isSuccess) {
+      return result.dataOrNull!;
+    } else {
+      throw result.errorOrNull!;
+    }
   }
 
   Future<Result<void>> add(Transaction transaction) async {
-    final result = await _repository.add(transaction);
+    final repository = ref.read(transactionRepositoryProvider);
+    final result = await repository.add(transaction);
 
     if (result.isSuccess) {
-      await _load();
+      ref.invalidateSelf();
     }
 
     return result;
   }
 
-  Future<Result<void>> update(Transaction transaction) async {
-    final result = await _repository.update(transaction);
+  Future<Result<void>> updateTransaction(Transaction transaction) async {
+    final repository = ref.read(transactionRepositoryProvider);
+    final result = await repository.update(transaction);
 
     if (result.isSuccess) {
-      await _load();
+      ref.invalidateSelf();
     }
 
     return result;
   }
 
   Future<Result<void>> delete(String id) async {
-    final result = await _repository.delete(id);
+    final repository = ref.read(transactionRepositoryProvider);
+    final result = await repository.delete(id);
 
     if (result.isSuccess) {
-      await _load();
+      ref.invalidateSelf();
     }
 
     return result;
   }
 
   Future<void> restore(Transaction transaction) async {
-    await _repository.add(transaction);
-    await _load();
+    final repository = ref.read(transactionRepositoryProvider);
+    await repository.add(transaction);
+    ref.invalidateSelf();
   }
 
   Future<void> clearAll() async {
-    await _repository.deleteAll();
+    final repository = ref.read(transactionRepositoryProvider);
+    await repository.deleteAll();
     state = const AsyncValue.data([]);
   }
 
   Future<void> refresh() async {
-    await _load();
+    ref.invalidateSelf();
   }
 }
 
 final transferPairsProvider = Provider<Map<String, Transaction>>((ref) {
-  final txs = ref.watch(transactionsProvider).valueOrNull ?? [];
+  final txs = ref.watch(transactionsProvider).value ?? [];
   final transfers = txs.where((t) => t.category == 'Transfer').toList();
   final Map<String, Transaction> pairs = {};
 
@@ -131,23 +129,46 @@ final transferPairsProvider = Provider<Map<String, Transaction>>((ref) {
   return pairs;
 });
 
-final searchQueryProvider = StateProvider<String>((ref) => '');
+final searchQueryProvider = NotifierProvider<_SearchQueryNotifier, String>(
+  _SearchQueryNotifier.new,
+);
+
+class _SearchQueryNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+  
+  void set(String v) => state = v;
+}
 
 enum TransactionFilter { all, income, expense, transfer }
 
 enum TimeFilter { allTime, lastMonth }
 
-final transactionFilterProvider = StateProvider<TransactionFilter>(
-  (ref) => TransactionFilter.all,
+final transactionFilterProvider = NotifierProvider<_TransactionFilterNotifier, TransactionFilter>(
+  _TransactionFilterNotifier.new,
 );
 
-final timeFilterProvider = StateProvider<TimeFilter>(
-  (ref) => TimeFilter.lastMonth,
+class _TransactionFilterNotifier extends Notifier<TransactionFilter> {
+  @override
+  TransactionFilter build() => TransactionFilter.all;
+  
+  void set(TransactionFilter v) => state = v;
+}
+
+final timeFilterProvider = NotifierProvider<_TimeFilterNotifier, TimeFilter>(
+  _TimeFilterNotifier.new,
 );
+
+class _TimeFilterNotifier extends Notifier<TimeFilter> {
+  @override
+  TimeFilter build() => TimeFilter.lastMonth;
+  
+  void set(TimeFilter v) => state = v;
+}
 
 final accountFilteredTransactionsProvider = Provider<List<Transaction>>((ref) {
   final txsAsync = ref.watch(transactionsProvider);
-  final txs = txsAsync.valueOrNull ?? [];
+  final txs = txsAsync.value ?? [];
   final activeAccount = ref.watch(activeAccountProvider);
 
   if (activeAccount == null) {
@@ -158,7 +179,7 @@ final accountFilteredTransactionsProvider = Provider<List<Transaction>>((ref) {
 });
 
 final globalTotalBalanceProvider = Provider<double>((ref) {
-  final txs = ref.watch(transactionsProvider).valueOrNull ?? [];
+  final txs = ref.watch(transactionsProvider).value ?? [];
   final exchangeService = ref.watch(exchangeRateServiceProvider);
   final targetCurrency = ref.watch(currencyProvider).code;
 
@@ -181,7 +202,7 @@ final totalBalanceProvider = Provider<double>((ref) {
 
   String targetCurrency = globalCurrency;
   if (index > 0) {
-    final accounts = accountsAsync.valueOrNull ?? [];
+    final accounts = accountsAsync.value ?? [];
     if (index <= accounts.length) {
       targetCurrency = accounts[index - 1].currency;
     }
@@ -211,7 +232,7 @@ final totalIncomeProvider = Provider<double>((ref) {
 
   String targetCurrency = globalCurrency;
   if (index > 0) {
-    final accounts = accountsAsync.valueOrNull ?? [];
+    final accounts = accountsAsync.value ?? [];
     if (index <= accounts.length) {
       targetCurrency = accounts[index - 1].currency;
     }
@@ -237,7 +258,7 @@ final totalExpenseProvider = Provider<double>((ref) {
 
   String targetCurrency = globalCurrency;
   if (index > 0) {
-    final accounts = accountsAsync.valueOrNull ?? [];
+    final accounts = accountsAsync.value ?? [];
     if (index <= accounts.length) {
       targetCurrency = accounts[index - 1].currency;
     }
@@ -267,7 +288,7 @@ final currentMonthExpenseProvider = Provider<double>((ref) {
 
   String targetCurrency = globalCurrency;
   if (index > 0) {
-    final accounts = accountsAsync.valueOrNull ?? [];
+    final accounts = accountsAsync.value ?? [];
     if (index <= accounts.length) {
       targetCurrency = accounts[index - 1].currency;
     }
@@ -349,7 +370,16 @@ final accountsProvider = StreamProvider<List<Account>>((ref) async* {
   }
 });
 
-final activeAccountIndexProvider = StateProvider<int>((ref) => 0);
+final activeAccountIndexProvider = NotifierProvider<_ActiveAccountIndexNotifier, int>(
+  _ActiveAccountIndexNotifier.new,
+);
+
+class _ActiveAccountIndexNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  
+  void set(int v) => state = v;
+}
 
 final activeAccountProvider = Provider<Account?>((ref) {
   final index = ref.watch(activeAccountIndexProvider);
@@ -387,52 +417,37 @@ class CardColors {
 }
 
 final cardColorsProvider =
-    StateNotifierProvider<CardColorsNotifier, CardColors>((ref) {
-      final notifier = CardColorsNotifier();
-      notifier.setupThemeListener(ref);
-      return notifier;
-    });
+    NotifierProvider<CardColorsNotifier, CardColors>(
+      CardColorsNotifier.new,
+    );
 
 final accountCardColorsProvider =
-    StateNotifierProvider.family<CardColorsNotifier, CardColors, int>((
-      ref,
-      accountId,
-    ) {
-      final notifier = CardColorsNotifier(accountId: accountId);
-      notifier.setupThemeListener(ref);
-      return notifier;
-    });
+    NotifierProvider.family<AccountCardColorsNotifier, CardColors, int>(
+      (accountId) => AccountCardColorsNotifier(accountId),
+    );
 
-class CardColorsNotifier extends StateNotifier<CardColors> {
-  final int? accountId;
-
-  CardColorsNotifier({this.accountId})
-    : super(
-        const CardColors(
-          CardColorService.defaultPrimary,
-          CardColorService.defaultSecondary,
-          CardColorService.defaultGradientLight,
-          CardColorService.defaultGradientDark,
-        ),
-      ) {
-    _load();
-  }
-
+class CardColorsNotifier extends Notifier<CardColors> {
   int _loadGeneration = 0;
 
-  void setupThemeListener(Ref ref) {
+  @override
+  CardColors build() {
     ref.listen<ThemeMode>(themeProvider, (previous, next) {
       if (previous != null) {
         _onThemeChanged(previous, next);
       }
     });
+    _load();
+    return const CardColors(
+      CardColorService.defaultPrimary,
+      CardColorService.defaultSecondary,
+      CardColorService.defaultGradientLight,
+      CardColorService.defaultGradientDark,
+    );
   }
 
   Future<void> _load() async {
     final currentGeneration = ++_loadGeneration;
-    final (c1, c2, lightG, darkG) = await CardColorService.load(
-      accountId: accountId,
-    );
+    final (c1, c2, lightG, darkG) = await CardColorService.load();
     if (currentGeneration != _loadGeneration) return; 
     state = CardColors(c1, c2, lightG, darkG);
   }
@@ -450,7 +465,6 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
       secondary,
       lightGradient,
       darkGradient,
-      accountId: accountId,
     );
   }
 
@@ -473,7 +487,127 @@ class CardColorsNotifier extends StateNotifier<CardColors> {
       secondary,
       CardColorService.defaultGradientLight,
       CardColorService.defaultGradientDark,
+    );
+  }
+
+  void _onThemeChanged(ThemeMode previous, ThemeMode next) {
+    final previousBrightness = _resolve(previous);
+    final nextBrightness = _resolve(next);
+
+    if (previousBrightness == nextBrightness) return;
+
+    final oldDefaults = _defaultsFor(previousBrightness);
+    final newDefaults = _defaultsFor(nextBrightness);
+
+    final isUsingOldDefaults =
+        state.primary == oldDefaults.primary &&
+        state.secondary == oldDefaults.secondary &&
+        state.gradientTypeForBrightness(previousBrightness) ==
+            oldDefaults.gradient;
+
+    if (isUsingOldDefaults) {
+      _loadGeneration++;
+      state = CardColors(
+        newDefaults.primary,
+        newDefaults.secondary,
+        state.lightGradientType,
+        state.darkGradientType,
+      );
+    }
+  }
+
+  Brightness _resolve(ThemeMode mode) {
+    if (mode == ThemeMode.system) {
+      return WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    }
+    return mode == ThemeMode.dark ? Brightness.dark : Brightness.light;
+  }
+
+  ({Color primary, Color secondary, GradientType gradient}) _defaultsFor(
+    Brightness brightness,
+  ) {
+    return brightness == Brightness.dark
+        ? (
+            primary: CardColorService.defaultPrimary,
+            secondary: CardColorService.defaultSecondary,
+            gradient: CardColorService.defaultGradientDark,
+          )
+        : (
+            primary: CardColorService.defaultPrimaryLight,
+            secondary: CardColorService.defaultSecondaryLight,
+            gradient: CardColorService.defaultGradientLight,
+          );
+  }
+}
+
+class AccountCardColorsNotifier extends Notifier<CardColors> {
+  AccountCardColorsNotifier(this._accountId);
+
+  final int _accountId;
+  int _loadGeneration = 0;
+
+  @override
+  CardColors build() {
+    ref.listen<ThemeMode>(themeProvider, (previous, next) {
+      if (previous != null) {
+        _onThemeChanged(previous, next);
+      }
+    });
+    _load(_accountId);
+    return const CardColors(
+      CardColorService.defaultPrimary,
+      CardColorService.defaultSecondary,
+      CardColorService.defaultGradientLight,
+      CardColorService.defaultGradientDark,
+    );
+  }
+
+  Future<void> _load(int accountId) async {
+    final currentGeneration = ++_loadGeneration;
+    final (c1, c2, lightG, darkG) = await CardColorService.load(
       accountId: accountId,
+    );
+    if (currentGeneration != _loadGeneration) return;
+    state = CardColors(c1, c2, lightG, darkG);
+  }
+
+  Future<void> save(
+    Color primary,
+    Color secondary,
+    GradientType lightGradient,
+    GradientType darkGradient,
+  ) async {
+    _loadGeneration++;
+    state = CardColors(primary, secondary, lightGradient, darkGradient);
+    await CardColorService.save(
+      primary,
+      secondary,
+      lightGradient,
+      darkGradient,
+      accountId: _accountId,
+    );
+  }
+
+  Future<void> reset(bool isDark) async {
+    final primary = isDark
+        ? CardColorService.defaultPrimary
+        : CardColorService.defaultPrimaryLight;
+    final secondary = isDark
+        ? CardColorService.defaultSecondary
+        : CardColorService.defaultSecondaryLight;
+    _loadGeneration++;
+    state = CardColors(
+      primary,
+      secondary,
+      CardColorService.defaultGradientLight,
+      CardColorService.defaultGradientDark,
+    );
+    await CardColorService.save(
+      primary,
+      secondary,
+      CardColorService.defaultGradientLight,
+      CardColorService.defaultGradientDark,
+      accountId: _accountId,
     );
   }
 

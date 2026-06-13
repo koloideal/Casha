@@ -280,7 +280,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     final activeIndex = ref.watch(activeAccountIndexProvider);
     final accountsAsync = ref.watch(accountsProvider);
-    final accountCount = accountsAsync.valueOrNull?.length ?? 0;
+    final accountCount = accountsAsync.value?.length ?? 0;
     final isOnAddAccountPage =
         accountCount < 5 && activeIndex == accountCount + 1;
 

@@ -4,7 +4,7 @@ import '../dashboard/provider.dart';
 
 final categoryExpenseProvider = Provider<Map<String, double>>((ref) {
   final txsAsync = ref.watch(transactionsProvider);
-  final txs = txsAsync.valueOrNull ?? [];
+  final txs = txsAsync.value ?? [];
   final filtered = txs.where((t) => t.type == TransactionType.expense);
 
   final map = <String, double>{};
@@ -16,7 +16,7 @@ final categoryExpenseProvider = Provider<Map<String, double>>((ref) {
 
 final categoryIncomeProvider = Provider<Map<String, double>>((ref) {
   final txsAsync = ref.watch(transactionsProvider);
-  final txs = txsAsync.valueOrNull ?? [];
+  final txs = txsAsync.value ?? [];
   final filtered = txs.where((t) => t.type == TransactionType.income);
 
   final map = <String, double>{};
@@ -28,7 +28,7 @@ final categoryIncomeProvider = Provider<Map<String, double>>((ref) {
 
 final monthlyBreakdownProvider = Provider<List<MonthlyData>>((ref) {
   final txsAsync = ref.watch(transactionsProvider);
-  final txs = txsAsync.valueOrNull ?? [];
+  final txs = txsAsync.value ?? [];
   final filtered = txs.where((t) => t.type == TransactionType.expense);
 
   final now = DateTime.now();

@@ -145,15 +145,12 @@ class BalanceCardState extends ConsumerState<BalanceCard>
         .toList();
 
     final textColorMode = ref.watch(cardTextColorProvider);
-    final Color onCard;
-    switch (textColorMode) {
-      case CardTextColorMode.white:
-        onCard = Colors.white;
-      case CardTextColorMode.black:
-        onCard = Colors.black;
-      case CardTextColorMode.adaptive:
-        onCard = primary.computeLuminance() > 0.3 ? Colors.black : Colors.white;
-    }
+    final Color onCard = switch (textColorMode) {
+      CardTextColorMode.white => Colors.white,
+      CardTextColorMode.black => Colors.black,
+      CardTextColorMode.adaptive => primary.computeLuminance() > 0.3 ? Colors.black : Colors.white,
+      _ => Colors.white,
+    };
 
     return GestureDetector(
       onLongPress: () {

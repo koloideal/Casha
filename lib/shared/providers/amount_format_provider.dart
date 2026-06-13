@@ -2,9 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants.dart';
 
-class AmountFormatNotifier extends StateNotifier<AmountFormat> {
-  AmountFormatNotifier() : super(AmountFormat.commasDot) {
+class AmountFormatNotifier extends Notifier<AmountFormat> {
+  @override
+  AmountFormat build() {
     _load();
+    return AmountFormat.commasDot;
   }
 
   void _load() async {
@@ -20,6 +22,6 @@ class AmountFormatNotifier extends StateNotifier<AmountFormat> {
   }
 }
 
-final amountFormatProvider = StateNotifierProvider<AmountFormatNotifier, AmountFormat>(
-  (ref) => AmountFormatNotifier(),
+final amountFormatProvider = NotifierProvider<AmountFormatNotifier, AmountFormat>(
+  AmountFormatNotifier.new,
 );

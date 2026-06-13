@@ -56,7 +56,7 @@ class AccountDeleteDialog extends ConsumerWidget {
 
                   onConfirm();
 
-                  final txs = ref.read(transactionsProvider).valueOrNull ?? [];
+                  final txs = ref.read(transactionsProvider).value ?? [];
                   final accountTxs = txs
                       .where((t) => t.accountId == accountId)
                       .toList();

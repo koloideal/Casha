@@ -37,7 +37,7 @@ class SearchBar extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 onPressed: () {
                   controller.clear();
-                  ref.read(searchQueryProvider.notifier).state = '';
+                  ref.read(searchQueryProvider.notifier).set('');
                 },
               )
             : null,
@@ -63,7 +63,7 @@ class SearchBar extends StatelessWidget {
           vertical: 12,
         ),
       ),
-      onChanged: (v) => ref.read(searchQueryProvider.notifier).state = v,
+      onChanged: (v) => ref.read(searchQueryProvider.notifier).set(v),
     );
   }
 }

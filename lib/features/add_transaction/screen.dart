@@ -82,7 +82,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
 
       if (widget.initial!.category == 'Transfer') {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          final allTxs = ref.read(transactionsProvider).valueOrNull ?? [];
+          final allTxs = ref.read(transactionsProvider).value ?? [];
 
           if (widget.initial!.type == TransactionType.expense) {
             final counterpart = allTxs.firstWhereOrNull(
@@ -271,7 +271,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
             currencyCode: currencyCode,
             accountId: state.selectedAccountId!,
           );
-          await ref.read(transactionsProvider.notifier).update(updatedExpense);
+          await ref.read(transactionsProvider.notifier).updateTransaction(updatedExpense);
 
           if (_transferIncomeRecordId != null) {
             final updatedIncome = Transaction(
@@ -285,7 +285,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
               currencyCode: currencyCode,
               accountId: state.toAccountId!,
             );
-            await ref.read(transactionsProvider.notifier).update(updatedIncome);
+            await ref.read(transactionsProvider.notifier).updateTransaction(updatedIncome);
           }
 
           if (mounted) context.pop();
@@ -349,7 +349,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         );
 
         if (state.isEditing) {
-          await ref.read(transactionsProvider.notifier).update(tx);
+          await ref.read(transactionsProvider.notifier).updateTransaction(tx);
         } else {
           final res = await ref.read(transactionsProvider.notifier).add(tx);
 
@@ -486,7 +486,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
                                   .delete(counterpartId);
                             } else {
                               final allTxs =
-                                  ref.read(transactionsProvider).valueOrNull ??
+                                  ref.read(transactionsProvider).value ??
                                   [];
                               final oppositeType =
                                   widget.initial!.type ==

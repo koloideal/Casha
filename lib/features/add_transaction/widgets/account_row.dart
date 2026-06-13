@@ -41,7 +41,7 @@ class AccountRow extends ConsumerWidget {
     final s = ref.watch(stringsProvider);
     final state = ref.watch(addTransactionProvider(initial));
     final accountsAsync = ref.watch(accountsProvider);
-    final accounts = accountsAsync.valueOrNull ?? [];
+    final accounts = accountsAsync.value ?? [];
     final isTransfer = state.type == TransactionType.transfer;
 
     if (isTransfer && accounts.length == 2 && state.selectedAccountId != null) {

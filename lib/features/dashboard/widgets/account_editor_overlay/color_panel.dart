@@ -588,7 +588,7 @@ class AccountColorPanel extends StatelessWidget {
                                     final accounts =
                                         ProviderScope.containerOf(
                                           dashboardContext,
-                                        ).read(accountsProvider).valueOrNull ??
+                                        ).read(accountsProvider).value ??
                                         [];
 
                                     if (isDuplicateName(

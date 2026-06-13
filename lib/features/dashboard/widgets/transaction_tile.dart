@@ -56,7 +56,7 @@ class TransactionTile extends ConsumerWidget {
         : 0.0;
     final displaySymbol = currencyMap[displayCurrency]?.symbol ?? '';
 
-    final accounts = ref.watch(accountsProvider).valueOrNull ?? [];
+    final accounts = ref.watch(accountsProvider).value ?? [];
     final txAccount = accounts.firstWhereOrNull(
       (a) => a.id == transaction.accountId,
     );

@@ -25,10 +25,6 @@ class BiometricService {
     try {
       return await _auth.authenticate(
         localizedReason: 'Confirm your identity to open Casha',
-        options: const AuthenticationOptions(
-          biometricOnly: false,
-          stickyAuth: true,
-        ),
       );
     } catch (_) {
       return false;

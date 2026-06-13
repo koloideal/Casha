@@ -11,18 +11,20 @@ import '../../shared/utils/currency_utils.dart';
 import '../../shared/providers/amount_format_provider.dart';
 import '../dashboard/provider.dart';
 
-final budgetProvider = StateNotifierProvider<BudgetNotifier, double?>((ref) {
-  final storage = ref.watch(storageServiceProvider);
-  return BudgetNotifier(storage.loadBudget(), storage);
-});
+final budgetProvider = NotifierProvider<BudgetNotifier, double?>(
+  BudgetNotifier.new,
+);
 
-class BudgetNotifier extends StateNotifier<double?> {
-  final dynamic _storage;
-
-  BudgetNotifier(super.initialBudget, this._storage);
+class BudgetNotifier extends Notifier<double?> {
+  @override
+  double? build() {
+    final storage = ref.watch(storageServiceProvider);
+    return storage.loadBudget();
+  }
 
   Future<void> setBudget(double? budget) async {
-    await _storage.saveBudget(budget);
+    final storage = ref.read(storageServiceProvider);
+    await storage.saveBudget(budget);
     state = budget;
   }
 
@@ -50,70 +52,60 @@ const Map<String, CurrencyInfo> currencyMap = {
   'RUB': CurrencyInfo('₽', 'RUB'),
 };
 
-class CurrencyNotifier extends StateNotifier<CurrencyInfo> {
-  final SharedPreferences _prefs;
-
-  CurrencyNotifier(this._prefs) : super(currencyMap['USD']!) {
-    _load();
-  }
-
-  void _load() {
-    final code = _prefs.getString('currency_code') ?? 'USD';
-    state = currencyMap[code] ?? currencyMap['USD']!;
+class CurrencyNotifier extends Notifier<CurrencyInfo> {
+  @override
+  CurrencyInfo build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final code = prefs.getString('currency_code') ?? 'USD';
+    return currencyMap[code] ?? currencyMap['USD']!;
   }
 
   Future<void> setCurrency(String code) async {
+    final prefs = ref.read(sharedPreferencesProvider);
     state = currencyMap[code] ?? currencyMap['USD']!;
-    await _prefs.setString('currency_code', code);
+    await prefs.setString('currency_code', code);
   }
 }
 
-final currencyProvider = StateNotifierProvider<CurrencyNotifier, CurrencyInfo>((
-  ref,
-) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return CurrencyNotifier(prefs);
-});
+final currencyProvider = NotifierProvider<CurrencyNotifier, CurrencyInfo>(
+  CurrencyNotifier.new,
+);
 
-class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  final SharedPreferences _prefs;
-
-  ThemeModeNotifier(this._prefs) : super(ThemeMode.system) {
-    _load();
-  }
-
-  void _load() {
-    final saved = _prefs.getString('theme_mode');
+class ThemeModeNotifier extends Notifier<ThemeMode> {
+  @override
+  ThemeMode build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final saved = prefs.getString('theme_mode');
     if (saved == 'dark') {
-      state = ThemeMode.dark;
+      return ThemeMode.dark;
     } else if (saved == 'light') {
-      state = ThemeMode.light;
+      return ThemeMode.light;
     } else {
-      state = ThemeMode.system;
+      return ThemeMode.system;
     }
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
+    final prefs = ref.read(sharedPreferencesProvider);
     state = mode;
-    await _prefs.setString('theme_mode', mode.name);
+    await prefs.setString('theme_mode', mode.name);
   }
 }
 
-final themeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((
-  ref,
-) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return ThemeModeNotifier(prefs);
-});
+final themeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
+  ThemeModeNotifier.new,
+);
 
 enum CardTextColorMode { white, adaptive, black }
 
-class CardTextColorNotifier extends StateNotifier<CardTextColorMode> {
+class CardTextColorNotifier extends Notifier<CardTextColorMode> {
   static const _key = 'card_text_color';
-  final SharedPreferences _prefs;
 
-  CardTextColorNotifier(this._prefs)
-    : super(_fromString(_prefs.getString(_key)));
+  @override
+  CardTextColorMode build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    return _fromString(prefs.getString(_key));
+  }
 
   static CardTextColorMode _fromString(String? value) {
     return CardTextColorMode.values.firstWhere(
@@ -123,16 +115,16 @@ class CardTextColorNotifier extends StateNotifier<CardTextColorMode> {
   }
 
   void set(CardTextColorMode mode) {
+    final prefs = ref.read(sharedPreferencesProvider);
     state = mode;
-    _prefs.setString(_key, mode.name);
+    prefs.setString(_key, mode.name);
   }
 }
 
 final cardTextColorProvider =
-    StateNotifierProvider<CardTextColorNotifier, CardTextColorMode>((ref) {
-      final prefs = ref.watch(sharedPreferencesProvider);
-      return CardTextColorNotifier(prefs);
-    });
+    NotifierProvider<CardTextColorNotifier, CardTextColorMode>(
+      CardTextColorNotifier.new,
+    );
 
 final exchangeRateServiceProvider = Provider<ExchangeRateService>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
@@ -143,15 +135,15 @@ final ratesInitProvider = FutureProvider<void>((ref) async {
   await ref.read(exchangeRateServiceProvider).fetchRates();
 });
 
-final hapticEnabledProvider = StateNotifierProvider<HapticNotifier, bool>((
-  ref,
-) {
-  return HapticNotifier();
-});
+final hapticEnabledProvider = NotifierProvider<HapticNotifier, bool>(
+  HapticNotifier.new,
+);
 
-class HapticNotifier extends StateNotifier<bool> {
-  HapticNotifier() : super(true) {
+class HapticNotifier extends Notifier<bool> {
+  @override
+  bool build() {
     _load();
+    return true;
   }
 
   Future<void> _load() async {
@@ -166,13 +158,15 @@ class HapticNotifier extends StateNotifier<bool> {
 }
 
 final showCurrencyConversionsProvider =
-    StateNotifierProvider<ShowCurrencyConversionsNotifier, bool>((ref) {
-      return ShowCurrencyConversionsNotifier();
-    });
+    NotifierProvider<ShowCurrencyConversionsNotifier, bool>(
+      ShowCurrencyConversionsNotifier.new,
+    );
 
-class ShowCurrencyConversionsNotifier extends StateNotifier<bool> {
-  ShowCurrencyConversionsNotifier() : super(true) {
+class ShowCurrencyConversionsNotifier extends Notifier<bool> {
+  @override
+  bool build() {
     _load();
+    return true;
   }
 
   Future<void> _load() async {
@@ -198,7 +192,7 @@ class ExportService {
 
   Future<String> exportToCSV() async {
     final transactionsAsync = _ref.read(transactionsProvider);
-    final transactions = transactionsAsync.valueOrNull ?? [];
+    final transactions = transactionsAsync.value ?? [];
     final fmt = _ref.read(amountFormatProvider);
 
     final buffer = StringBuffer();

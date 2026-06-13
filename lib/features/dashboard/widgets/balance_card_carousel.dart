@@ -75,7 +75,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                       Clip.none, 
                   itemCount: totalPages,
                   onPageChanged: (index) {
-                    ref.read(activeAccountIndexProvider.notifier).state = index;
+                    ref.read(activeAccountIndexProvider.notifier).set(index);
                     if (ref.read(hapticEnabledProvider)) {
                       HapticService.light();
                     }
@@ -103,7 +103,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                       );
 
                       final txs =
-                          ref.watch(transactionsProvider).valueOrNull ?? [];
+                          ref.watch(transactionsProvider).value ?? [];
                       final accountTxs = txs
                           .where((t) => t.accountId == account.id)
                           .toList();

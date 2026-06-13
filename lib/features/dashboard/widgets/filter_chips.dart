@@ -23,15 +23,15 @@ class FilterChips extends ConsumerWidget {
           _FilterChip(
             label: strings.filterAllTime,
             isSelected: timeFilter == TimeFilter.allTime,
-            onTap: () => ref.read(timeFilterProvider.notifier).state =
-                TimeFilter.allTime,
+            onTap: () => ref.read(timeFilterProvider.notifier).set(
+                TimeFilter.allTime),
           ),
           const SizedBox(width: 6),
           _FilterChip(
             label: strings.filterMonth,
             isSelected: timeFilter == TimeFilter.lastMonth,
-            onTap: () => ref.read(timeFilterProvider.notifier).state =
-                TimeFilter.lastMonth,
+            onTap: () => ref.read(timeFilterProvider.notifier).set(
+                TimeFilter.lastMonth),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -46,32 +46,32 @@ class FilterChips extends ConsumerWidget {
           _FilterChip(
             label: strings.filterAll,
             isSelected: typeFilter == TransactionFilter.all,
-            onTap: () => ref.read(transactionFilterProvider.notifier).state =
-                TransactionFilter.all,
+            onTap: () => ref.read(transactionFilterProvider.notifier).set(
+                TransactionFilter.all),
           ),
           const SizedBox(width: 6),
           _FilterChip(
             label: strings.filterIncome,
             isSelected: typeFilter == TransactionFilter.income,
             color: AppColors.income,
-            onTap: () => ref.read(transactionFilterProvider.notifier).state =
-                TransactionFilter.income,
+            onTap: () => ref.read(transactionFilterProvider.notifier).set(
+                TransactionFilter.income),
           ),
           const SizedBox(width: 6),
           _FilterChip(
             label: strings.filterExpense,
             isSelected: typeFilter == TransactionFilter.expense,
             color: AppColors.expense,
-            onTap: () => ref.read(transactionFilterProvider.notifier).state =
-                TransactionFilter.expense,
+            onTap: () => ref.read(transactionFilterProvider.notifier).set(
+                TransactionFilter.expense),
           ),
           const SizedBox(width: 6),
           _FilterChip(
             label: strings.filterTransfer,
             isSelected: typeFilter == TransactionFilter.transfer,
             color: Colors.blueAccent,
-            onTap: () => ref.read(transactionFilterProvider.notifier).state =
-                TransactionFilter.transfer,
+            onTap: () => ref.read(transactionFilterProvider.notifier).set(
+                TransactionFilter.transfer),
           ),
         ],
       ),
