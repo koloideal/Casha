@@ -85,7 +85,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(widget.context);
     final cardTop = mq.padding.top + kToolbarHeight + 16;
-    const cardHeight = 230.0;
+    const cardHeight = 190.0;
     const editorPanelHeight = 102.0;
     final editorPanelTop = cardTop + cardHeight + 20;
     final colorPanelTop = editorPanelTop + editorPanelHeight + 12;

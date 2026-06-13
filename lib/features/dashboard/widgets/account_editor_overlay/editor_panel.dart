@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants.dart';
 import '../../../../shared/widgets/byn_sign.dart';
 
-class AccountEditorPanel extends ConsumerWidget {
+class AccountEditorPanel extends ConsumerStatefulWidget {
   final TextEditingController nameController;
   final String selectedCurrency;
   final bool showCurrencyDropdown;
@@ -26,15 +26,29 @@ class AccountEditorPanel extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AccountEditorPanel> createState() => _AccountEditorPanelState();
+}
+
+class _AccountEditorPanelState extends ConsumerState<AccountEditorPanel> {
+  bool _showNameError = false;
+
+  void _triggerNameError() {
+    setState(() => _showNameError = true);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _showNameError = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      height: panelHeight,
+      height: widget.panelHeight,
       decoration: BoxDecoration(
-        color: Theme.of(dashboardContext).colorScheme.surface,
+        color: Theme.of(widget.dashboardContext).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: Theme.of(
-            dashboardContext,
+            widget.dashboardContext,
           ).colorScheme.onSurface.withOpacity(0.1),
           width: 1.5,
         ),
@@ -58,7 +72,7 @@ class AccountEditorPanel extends ConsumerWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(
-                  dashboardContext,
+                  widget.dashboardContext,
                 ).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
@@ -70,7 +84,7 @@ class AccountEditorPanel extends ConsumerWidget {
                   Expanded(
                     flex: 3,
                     child: TextField(
-                      controller: nameController,
+                      controller: widget.nameController,
                       buildCounter:
                           (
                             context, {
@@ -84,23 +98,23 @@ class AccountEditorPanel extends ConsumerWidget {
                         hintStyle: TextStyle(
                           fontSize: 13,
                           color: Theme.of(
-                            dashboardContext,
+                            widget.dashboardContext,
                           ).colorScheme.onSurface.withOpacity(0.4),
                         ),
                         filled: true,
                         fillColor: Theme.of(
-                          dashboardContext,
+                          widget.dashboardContext,
                         ).colorScheme.onSurface.withOpacity(0.05),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
                             color:
-                                (showLimitError ||
-                                    showDuplicateError ||
-                                    nameController.text.trim().isEmpty)
+                                (widget.showLimitError ||
+                                    widget.showDuplicateError ||
+                                    _showNameError)
                                 ? Colors.red
                                 : Theme.of(
-                                    dashboardContext,
+                                    widget.dashboardContext,
                                   ).colorScheme.onSurface.withOpacity(0.15),
                             width: 1.5,
                           ),
@@ -109,12 +123,12 @@ class AccountEditorPanel extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
                             color:
-                                (showLimitError ||
-                                    showDuplicateError ||
-                                    nameController.text.trim().isEmpty)
+                                (widget.showLimitError ||
+                                    widget.showDuplicateError ||
+                                    _showNameError)
                                 ? Colors.red
                                 : Theme.of(
-                                    dashboardContext,
+                                    widget.dashboardContext,
                                   ).colorScheme.onSurface.withOpacity(0.15),
                             width: 1.5,
                           ),
@@ -123,9 +137,9 @@ class AccountEditorPanel extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
                             color:
-                                (showLimitError ||
-                                    showDuplicateError ||
-                                    nameController.text.trim().isEmpty)
+                                (widget.showLimitError ||
+                                    widget.showDuplicateError ||
+                                    _showNameError)
                                 ? Colors.red
                                 : const Color(0xFF7C6DED),
                             width: 1.5,
@@ -141,19 +155,19 @@ class AccountEditorPanel extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: GestureDetector(
-                      onTap: onCurrencyDropdownToggle,
+                      onTap: widget.onCurrencyDropdownToggle,
                       child: Container(
                         height: double.infinity,
                         decoration: BoxDecoration(
                           color: Theme.of(
-                            dashboardContext,
+                            widget.dashboardContext,
                           ).colorScheme.onSurface.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: showCurrencyDropdown
+                            color: widget.showCurrencyDropdown
                                 ? const Color(0xFF7C6DED)
                                 : Theme.of(
-                                    dashboardContext,
+                                    widget.dashboardContext,
                                   ).colorScheme.onSurface.withOpacity(0.15),
                             width: 1.5,
                           ),
@@ -162,17 +176,17 @@ class AccountEditorPanel extends ConsumerWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            selectedCurrency == 'BYN'
+                            widget.selectedCurrency == 'BYN'
                                 ? BynSign(
                                     fontSize: 15,
                                     color: Theme.of(
-                                      dashboardContext,
+                                      widget.dashboardContext,
                                     ).colorScheme.onSurface,
                                   )
                                 : Text(
                                     kDisplayCurrencies
                                         .firstWhere(
-                                          (c) => c.$1 == selectedCurrency,
+                                          (c) => c.$1 == widget.selectedCurrency,
                                         )
                                         .$2,
                                     style: const TextStyle(
@@ -182,12 +196,12 @@ class AccountEditorPanel extends ConsumerWidget {
                                   ),
                             const SizedBox(width: 4),
                             Icon(
-                              showCurrencyDropdown
+                              widget.showCurrencyDropdown
                                   ? Icons.arrow_drop_up
                                   : Icons.arrow_drop_down,
                               size: 20,
                               color: Theme.of(
-                                dashboardContext,
+                                widget.dashboardContext,
                               ).colorScheme.onSurface.withOpacity(0.6),
                             ),
                           ],

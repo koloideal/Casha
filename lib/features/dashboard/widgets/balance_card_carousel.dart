@@ -66,7 +66,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
         return Column(
           children: [
             SizedBox(
-              height: 230,
+              height: 190,
               child: OverflowBox(
                 maxWidth: MediaQuery.of(context).size.width,
                 child: PageView.builder(
@@ -154,14 +154,14 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
         );
       },
       loading: () => const SizedBox(
-        height: 220,
+        height: 180,
         child: Center(child: CircularProgressIndicator()),
       ),
       error: (error, stack) {
         return Column(
           children: [
             SizedBox(
-              height: 220,
+              height: 180,
               child: BalanceCard(
                 balance: widget.balance,
                 currencyInfo: widget.currencyInfo,
@@ -198,7 +198,7 @@ class AddAccountCard extends StatelessWidget {
           painter: _DashedBorderPainter(),
           child: Container(
             width: double.infinity,
-            height: 205, 
+            height: 165,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
               borderRadius: BorderRadius.circular(20),

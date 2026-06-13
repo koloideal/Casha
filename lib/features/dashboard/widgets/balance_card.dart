@@ -171,7 +171,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
               ..rotateY(_tiltY * 0.42),
             child: Container(
               width: double.infinity,
-              height: 220,
+              height: 180,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 gradient: _buildGradient(primary, secondary, gradientType),
