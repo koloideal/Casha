@@ -115,9 +115,11 @@ class AppStrings {
   String get dangerZone => _ru ? 'Опасная зона' : 'Danger Zone';
 
   String get navDashboard => _ru ? 'Главная' : 'Dashboard';
-  String get navCategories => _ru ? 'Категории' : 'Categories';
+  String get navCategories => _ru ? 'Статистика' : 'Statistics';
   String get navSettings => _ru ? 'Настройки' : 'Settings';
 
+  String get statistics => _ru ? 'Статистика' : 'Statistics';
+  String get allAccounts => _ru ? 'Все счета' : 'All accounts';
   String get categories => _ru ? 'Категории' : 'Categories';
   String get rankedByAmount => _ru ? 'По сумме' : 'Ranked by Amount';
   String get addCategory => _ru ? 'Добавить категорию' : 'Add Category';

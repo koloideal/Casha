@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/card_color_service.dart';
+import '../../../core/utils/card_layout.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../shared/models/account.dart';
 import '../../../shared/models/transaction.dart';
@@ -66,7 +67,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
         return Column(
           children: [
             SizedBox(
-              height: 190,
+              height: kBalanceCardCarouselHeight,
               child: OverflowBox(
                 maxWidth: MediaQuery.of(context).size.width,
                 child: PageView.builder(
@@ -154,14 +155,14 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
         );
       },
       loading: () => const SizedBox(
-        height: 180,
+        height: kBalanceCardCarouselHeight,
         child: Center(child: CircularProgressIndicator()),
       ),
       error: (error, stack) {
         return Column(
           children: [
             SizedBox(
-              height: 180,
+              height: kBalanceCardCarouselHeight,
               child: BalanceCard(
                 balance: widget.balance,
                 currencyInfo: widget.currencyInfo,
@@ -192,13 +193,13 @@ class AddAccountCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(
           horizontal: 10,
-          vertical: 10,
+          vertical: 5,
         ),  
         child: CustomPaint(
           painter: _DashedBorderPainter(),
           child: Container(
             width: double.infinity,
-            height: 165,
+            height: kAddAccountCardHeight,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
               borderRadius: BorderRadius.circular(20),

@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants.dart';
+import '../../../../core/utils/card_layout.dart';
 import '../../../../shared/models/account.dart';
 import '../../../../shared/models/transaction.dart';
 import '../../../../shared/widgets/byn_sign.dart';
@@ -84,12 +85,13 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(widget.context);
-    final cardTop = mq.padding.top + kToolbarHeight + 16;
-    const cardHeight = 190.0;
-    const editorPanelHeight = 102.0;
-    final editorPanelTop = cardTop + cardHeight + 20;
-    final colorPanelTop = editorPanelTop + editorPanelHeight + 12;
-    const colorPanelHeight = 410.0;
+    final layout = CardOverlayLayout.fromMediaQuery(mq);
+    final cardTop = layout.cardTop;
+    final cardHeight = layout.cardHeight;
+    final editorPanelHeight = layout.editorPanelHeight;
+    final editorPanelTop = cardTop + cardHeight + layout.sectionGap;
+    final colorPanelTop = editorPanelTop + editorPanelHeight + layout.sectionGap;
+    final colorPanelHeight = layout.colorPanelHeight(mq, colorPanelTop);
 
     return Consumer(
       builder: (context, ref, _) {
@@ -263,6 +265,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                     dashboardState: dash,
                     dashboardContext: widget.context,
                     panelHeight: colorPanelHeight,
+                    layout: layout,
                     isDuplicateName: _isDuplicateName,
                     onDuplicateError: () {
                       setState(() => _showDuplicateError = true);

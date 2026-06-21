@@ -5,6 +5,7 @@ import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/l10n/locale_provider.dart';
 import '../../../../core/services/card_color_service.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/utils/card_layout.dart';
 import '../../../../shared/models/account.dart';
 import '../../provider.dart';
 import './panel_tab.dart';
@@ -14,6 +15,7 @@ class AccountColorPanel extends StatelessWidget {
   final dynamic dashboardState;
   final BuildContext dashboardContext;
   final double panelHeight;
+  final CardOverlayLayout layout;
   final bool Function(List<Account>, String) isDuplicateName;
   final VoidCallback onDuplicateError;
 
@@ -22,6 +24,7 @@ class AccountColorPanel extends StatelessWidget {
     required this.dashboardState,
     required this.dashboardContext,
     required this.panelHeight,
+    required this.layout,
     required this.isDuplicateName,
     required this.onDuplicateError,
   });
@@ -77,7 +80,12 @@ class AccountColorPanel extends StatelessWidget {
               : dashboardState.tempSecondaryHSV;
 
           return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              layout.panelPaddingTop,
+              16,
+              layout.panelPaddingBottom,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,12 +247,12 @@ class AccountColorPanel extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: layout.tabSpacing),
                 Expanded(
                   child: LayoutBuilder(
                     builder: (lbCtx, constraints) {
-                      const reservedBelow = 78.0;
-                      final spectrumH = (constraints.maxHeight - reservedBelow)
+                      final spectrumH = (constraints.maxHeight -
+                              layout.reservedBelowControls)
                           .clamp(40.0, double.infinity);
 
                       return Column(
@@ -262,9 +270,9 @@ class AccountColorPanel extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: layout.controlSpacing),
                           SizedBox(
-                            height: 36,
+                            height: layout.hueSliderHeight,
                             child: ColorPickerSlider(
                               TrackType.hue,
                               currentHSV,
@@ -272,14 +280,14 @@ class AccountColorPanel extends StatelessWidget {
                               displayThumbColor: true,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: layout.controlSpacing),
                           IgnorePointer(
                             ignoring: isSolid,
                             child: AnimatedOpacity(
                               duration: const Duration(milliseconds: 200),
                               opacity: isSolid ? 0.4 : 1.0,
                               child: SizedBox(
-                                height: 26,
+                                height: layout.hexRowHeight,
                                 child: Row(
                                   children: [
                                     GestureDetector(
@@ -411,7 +419,7 @@ class AccountColorPanel extends StatelessWidget {
                     },
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: layout.controlSpacing),
                 IgnorePointer(
                   ignoring: isSolid,
                   child: AnimatedOpacity(
@@ -463,8 +471,8 @@ class AccountColorPanel extends StatelessWidget {
                                   },
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 150),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 5,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: layout.compact ? 3 : 5,
                                     ),
                                     decoration: BoxDecoration(
                                       color: isSelected
@@ -523,7 +531,7 @@ class AccountColorPanel extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: layout.controlSpacing),
                 Row(
                   children: [
                     Expanded(
@@ -554,10 +562,13 @@ class AccountColorPanel extends StatelessWidget {
                           setPanelState(() {});
                           dashboardState.overlayEntry?.markNeedsBuild();
                         },
-                        icon: const Icon(Icons.restart_alt_rounded, size: 15),
+                        icon: Icon(
+                          Icons.restart_alt_rounded,
+                          size: layout.compact ? 14 : 15,
+                        ),
                         label: Text(
                           s.reset,
-                          style: const TextStyle(fontSize: 13),
+                          style: TextStyle(fontSize: layout.compact ? 12 : 13),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Theme.of(
@@ -568,7 +579,9 @@ class AccountColorPanel extends StatelessWidget {
                               dashboardContext,
                             ).colorScheme.onSurface.withOpacity(0.2),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          padding: EdgeInsets.symmetric(
+                            vertical: layout.buttonVerticalPadding,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -613,7 +626,9 @@ class AccountColorPanel extends StatelessWidget {
                               disabledForegroundColor: Theme.of(
                                 dashboardContext,
                               ).colorScheme.onSurface.withOpacity(0.38),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              padding: EdgeInsets.symmetric(
+                                vertical: layout.buttonVerticalPadding,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -622,9 +637,9 @@ class AccountColorPanel extends StatelessWidget {
                               dashboardState.isAddingAccount
                                   ? s.addAccount
                                   : s.apply,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 14,
+                                fontSize: layout.compact ? 13 : 14,
                               ),
                             ),
                           );

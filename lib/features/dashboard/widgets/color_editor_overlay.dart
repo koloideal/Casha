@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/services/card_color_service.dart';
+import '../../../core/utils/card_layout.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
 import 'balance_card.dart';
@@ -34,10 +35,11 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(widget.context);
-    final cardTop = mq.padding.top + kToolbarHeight + 16;
-    const cardHeight = 230.0;
-    final panelTop = cardTop + cardHeight + 65;
-    const panelHeight = 410.0;
+    final layout = CardOverlayLayout.fromMediaQuery(mq);
+    final cardTop = layout.cardTop;
+    final cardHeight = layout.cardHeight;
+    final panelTop = cardTop + cardHeight + layout.cardPreviewGap;
+    final panelHeight = layout.colorPanelHeight(mq, panelTop);
 
     return Material(
       color: Colors.transparent,
@@ -91,7 +93,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
             child: GestureDetector(
               onTap: () {},
               behavior: HitTestBehavior.opaque,
-              child: _buildPanel(panelHeight),
+              child: _buildPanel(panelHeight, layout),
             ),
           ),
           Positioned(
@@ -132,7 +134,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
     );
   }
 
-  Widget _buildPanel(double panelHeight) {
+  Widget _buildPanel(double panelHeight, CardOverlayLayout layout) {
     return Container(
       height: panelHeight,
       decoration: BoxDecoration(
@@ -182,7 +184,12 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
               : dash.tempSecondaryHSV;
 
           return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              layout.panelPaddingTop,
+              16,
+              layout.panelPaddingBottom,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,12 +348,12 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: layout.tabSpacing),
                 Expanded(
                   child: LayoutBuilder(
                     builder: (lbCtx, constraints) {
-                      const reservedBelow = 78.0;
-                      final spectrumH = (constraints.maxHeight - reservedBelow)
+                      final spectrumH = (constraints.maxHeight -
+                              layout.reservedBelowControls)
                           .clamp(40.0, double.infinity);
 
                       return Column(
@@ -364,9 +371,9 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: layout.controlSpacing),
                           SizedBox(
-                            height: 36,
+                            height: layout.hueSliderHeight,
                             child: ColorPickerSlider(
                               TrackType.hue,
                               currentHSV,
@@ -374,14 +381,14 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                               displayThumbColor: true,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: layout.controlSpacing),
                           IgnorePointer(
                             ignoring: isSolid,
                             child: AnimatedOpacity(
                               duration: const Duration(milliseconds: 200),
                               opacity: isSolid ? 0.4 : 1.0,
                               child: SizedBox(
-                                height: 26,
+                                height: layout.hexRowHeight,
                                 child: Row(
                                   children: [
                                     GestureDetector(
@@ -499,7 +506,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                     },
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: layout.controlSpacing),
                 IgnorePointer(
                   ignoring: isSolid,
                   child: AnimatedOpacity(
@@ -545,8 +552,8 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                                   },
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 150),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 5,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: layout.compact ? 3 : 5,
                                     ),
                                     decoration: BoxDecoration(
                                       color: isSelected
@@ -605,7 +612,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: layout.controlSpacing),
                 Row(
                   children: [
                     Expanded(
@@ -633,10 +640,13 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           setPanelState(() {});
                           dash.overlayEntry?.markNeedsBuild();
                         },
-                        icon: const Icon(Icons.restart_alt_rounded, size: 15),
+                        icon: Icon(
+                          Icons.restart_alt_rounded,
+                          size: layout.compact ? 14 : 15,
+                        ),
                         label: Text(
                           s.reset,
-                          style: const TextStyle(fontSize: 13),
+                          style: TextStyle(fontSize: layout.compact ? 12 : 13),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Theme.of(
@@ -647,7 +657,9 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                               widget.context,
                             ).colorScheme.onSurface.withOpacity(0.2),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          padding: EdgeInsets.symmetric(
+                            vertical: layout.buttonVerticalPadding,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -662,16 +674,18 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF7C6DED),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          padding: EdgeInsets.symmetric(
+                            vertical: layout.buttonVerticalPadding,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: Text(
                           s.apply,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            fontSize: 14,
+                            fontSize: layout.compact ? 13 : 14,
                           ),
                         ),
                       ),

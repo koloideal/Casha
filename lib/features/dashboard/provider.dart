@@ -362,12 +362,9 @@ final recentTransactionsProvider = Provider<List<Transaction>>((ref) {
   return ref.watch(filteredTransactionsProvider).take(20).toList();
 });
 
-final accountsProvider = StreamProvider<List<Account>>((ref) async* {
+final accountsProvider = StreamProvider<List<Account>>((ref) {
   final repository = ref.watch(accountRepositoryProvider);
-  while (true) {
-    yield await repository.getAll();
-    await Future.delayed(const Duration(milliseconds: 100));
-  }
+  return repository.watchAll();
 });
 
 final activeAccountIndexProvider = NotifierProvider<_ActiveAccountIndexNotifier, int>(
