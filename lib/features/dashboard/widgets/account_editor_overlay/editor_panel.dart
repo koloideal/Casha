@@ -61,7 +61,7 @@ class _AccountEditorPanelState extends ConsumerState<AccountEditorPanel> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -76,7 +76,7 @@ class _AccountEditorPanelState extends ConsumerState<AccountEditorPanel> {
                 ).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

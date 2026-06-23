@@ -103,7 +103,8 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
 }
 
 final transferPairsProvider = Provider<Map<String, Transaction>>((ref) {
-  final txs = ref.watch(transactionsProvider).value ?? [];
+  final txsAsync = ref.watch(transactionsProvider);
+  final txs = txsAsync.value ?? [];
   final transfers = txs.where((t) => t.category == 'Transfer').toList();
   final Map<String, Transaction> pairs = {};
 
@@ -167,9 +168,9 @@ class _TimeFilterNotifier extends Notifier<TimeFilter> {
 }
 
 final accountFilteredTransactionsProvider = Provider<List<Transaction>>((ref) {
+  final activeAccount = ref.watch(activeAccountProvider);
   final txsAsync = ref.watch(transactionsProvider);
   final txs = txsAsync.value ?? [];
-  final activeAccount = ref.watch(activeAccountProvider);
 
   if (activeAccount == null) {
     return txs;
