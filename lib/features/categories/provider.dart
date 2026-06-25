@@ -3,6 +3,24 @@ import '../../shared/models/transaction.dart';
 import '../dashboard/provider.dart';
 import '../settings/provider.dart';
 
+ class StatsSummary {
+  final double income;
+  final double expense;
+  final double balance;
+  final int transactionCount;
+  final double averageIncome;
+  final double averageExpense;
+
+  const StatsSummary({
+    required this.income,
+    required this.expense,
+    required this.balance,
+    required this.transactionCount,
+    required this.averageIncome,
+    required this.averageExpense,
+  });
+ }
+
 String _statsTargetCurrency(Ref ref) {
   final index = ref.watch(activeAccountIndexProvider);
   final accountsAsync = ref.watch(accountsProvider);
@@ -51,21 +69,56 @@ final statsCurrencyProvider = Provider<CurrencyInfo>((ref) {
   return _statsCurrencyInfo(ref);
 });
 
+ final statsScopedTransactionsProvider = Provider<List<Transaction>>((ref) {
+  return _statsScopedTransactions(ref);
+ });
+
 final statsIncomeTotalProvider = Provider<double>((ref) {
-  return _statsScopedTransactions(ref)
+  return ref
+      .watch(statsScopedTransactionsProvider)
       .where((t) => t.type == TransactionType.income)
       .fold(0.0, (sum, t) => sum + _convertAmount(ref, t));
 });
 
 final statsExpenseTotalProvider = Provider<double>((ref) {
-  return _statsScopedTransactions(ref)
+  return ref
+      .watch(statsScopedTransactionsProvider)
       .where((t) => t.type == TransactionType.expense)
       .fold(0.0, (sum, t) => sum + _convertAmount(ref, t));
 });
 
+ final statsSummaryProvider = Provider<StatsSummary>((ref) {
+  final transactions = ref.watch(statsScopedTransactionsProvider);
+  var income = 0.0;
+  var expense = 0.0;
+  var incomeCount = 0;
+  var expenseCount = 0;
+
+  for (final transaction in transactions) {
+    final amount = _convertAmount(ref, transaction);
+    if (transaction.type == TransactionType.income) {
+      income += amount;
+      incomeCount++;
+    }
+    if (transaction.type == TransactionType.expense) {
+      expense += amount;
+      expenseCount++;
+    }
+  }
+
+  return StatsSummary(
+    income: income,
+    expense: expense,
+    balance: income - expense,
+    transactionCount: transactions.length,
+    averageIncome: incomeCount == 0 ? 0 : income / incomeCount,
+    averageExpense: expenseCount == 0 ? 0 : expense / expenseCount,
+  );
+ });
+
 final categoryExpenseProvider = Provider<Map<String, double>>((ref) {
   final map = <String, double>{};
-  for (final t in _statsScopedTransactions(ref)) {
+  for (final t in ref.watch(statsScopedTransactionsProvider)) {
     if (t.type != TransactionType.expense) continue;
     map[t.category] = (map[t.category] ?? 0) + _convertAmount(ref, t);
   }
@@ -74,7 +127,7 @@ final categoryExpenseProvider = Provider<Map<String, double>>((ref) {
 
 final categoryIncomeProvider = Provider<Map<String, double>>((ref) {
   final map = <String, double>{};
-  for (final t in _statsScopedTransactions(ref)) {
+  for (final t in ref.watch(statsScopedTransactionsProvider)) {
     if (t.type != TransactionType.income) continue;
     map[t.category] = (map[t.category] ?? 0) + _convertAmount(ref, t);
   }
