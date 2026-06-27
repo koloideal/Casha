@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
+import '../../core/l10n/app_strings.dart';
 import '../../core/l10n/locale_provider.dart';
+import '../../core/services/haptic_service.dart';
 import '../../shared/providers/amount_format_provider.dart';
+import '../../shared/providers/category_provider.dart';
 import '../../shared/utils/currency_utils.dart';
 import '../../shared/widgets/byn_sign.dart';
 import '../settings/provider.dart';
@@ -20,11 +23,13 @@ class CategoriesScreen extends ConsumerStatefulWidget {
 
 class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   int _touchedIndex = -1;
-  final bool _showIncome = false;
+  bool _showIncome = false;
 
   @override
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
+    final isRu = s.locale == AppLocale.ru;
+    final catalog = ref.watch(categoryCatalogProvider);
     final summary = ref.watch(statsSummaryProvider);
     final data = _showIncome
         ? ref.watch(categoryIncomeProvider)
@@ -56,6 +61,17 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
           children: [
             const AccountScopeChips(),
+            const SizedBox(height: 16),
+            _IncomeExpenseToggle(
+              isIncome: _showIncome,
+              onChanged: (val) {
+                HapticService.selection();
+                setState(() {
+                  _showIncome = val;
+                  _touchedIndex = -1;
+                });
+              },
+            ),
             const SizedBox(height: 16),
             _InsightCard(
               title: s.overview,
@@ -128,7 +144,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                 title: s.topCategories,
                 subtitle: topEntry == null
                     ? s.rankedByAmount
-                    : '${s.topCategory}: ${s.categoryLabel(topEntry.key)}',
+                    : '${s.topCategory}: ${catalog.labelFor(topEntry.key, isRu)}',
                 child: Column(
                   children: [
                     _SummaryBadgeRow(
@@ -231,6 +247,8 @@ class _PieChartSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
+    final isRu = s.locale == AppLocale.ru;
+    final catalog = ref.watch(categoryCatalogProvider);
     final fmt = ref.watch(amountFormatProvider);
     final entries = data.entries.toList();
     final accent = isIncome ? AppColors.income : AppColors.expense;
@@ -264,7 +282,7 @@ class _PieChartSection extends ConsumerWidget {
                     final isTouched = i == touchedIndex;
                     final cat = entries[i].key;
                     final val = entries[i].value;
-                    final color = AppCategories.colors[cat] ?? AppColors.accent;
+                    final color = catalog.colorFor(cat, accent);
                     return PieChartSectionData(
                       color: color,
                       value: val,
@@ -319,7 +337,7 @@ class _PieChartSection extends ConsumerWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: (AppCategories.colors[selectedEntry.key] ?? accent).withOpacity(0.10),
+            color: catalog.colorFor(selectedEntry.key, accent).withOpacity(0.10),
             borderRadius: BorderRadius.circular(18),
           ),
           child: Row(
@@ -328,14 +346,14 @@ class _PieChartSection extends ConsumerWidget {
                 width: 12,
                 height: 12,
                 decoration: BoxDecoration(
-                  color: AppCategories.colors[selectedEntry.key] ?? accent,
+                  color: catalog.colorFor(selectedEntry.key, accent),
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  s.categoryLabel(selectedEntry.key),
+                  catalog.labelFor(selectedEntry.key, isRu),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -457,9 +475,11 @@ class _CategoryItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
+    final isRu = s.locale == AppLocale.ru;
+    final catalog = ref.watch(categoryCatalogProvider);
     final fmt = ref.watch(amountFormatProvider);
-    final color = AppCategories.colors[category] ?? AppColors.accent;
-    final icon = AppCategories.icons[category] ?? Icons.category_rounded;
+    final color = catalog.colorFor(category, AppColors.accent);
+    final icon = catalog.iconFor(category);
     final pct = total > 0 ? amount / total : 0.0;
 
     return Container(
@@ -486,7 +506,7 @@ class _CategoryItem extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      s.categoryLabel(category),
+                      catalog.labelFor(category, isRu),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: Theme.of(context).colorScheme.onSurface,
@@ -844,5 +864,92 @@ class _EmptyState extends ConsumerWidget {
 
   bool _isIncomeColor(bool isIncome) {
     return isIncome;
+  }
+}
+
+class _IncomeExpenseToggle extends ConsumerWidget {
+  final bool isIncome;
+  final ValueChanged<bool> onChanged;
+
+  const _IncomeExpenseToggle({
+    required this.isIncome,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withOpacity(0.06),
+        ),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: [
+          Expanded(
+            child: _ToggleChip(
+              label: s.expenses,
+              isSelected: !isIncome,
+              color: AppColors.expense,
+              onTap: () => onChanged(false),
+            ),
+          ),
+          Expanded(
+            child: _ToggleChip(
+              label: s.income,
+              isSelected: isIncome,
+              color: AppColors.income,
+              onTap: () => onChanged(true),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ToggleChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ToggleChip({
+    required this.label,
+    required this.isSelected,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected
+                ? color
+                : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+          ),
+        ),
+      ),
+    );
   }
 }

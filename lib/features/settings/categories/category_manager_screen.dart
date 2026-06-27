@@ -133,7 +133,7 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class _CategoryRow extends StatelessWidget {
+class _CategoryRow extends ConsumerWidget {
   final AppCategory category;
   final bool isRu;
   final VoidCallback? onTap;
@@ -147,7 +147,8 @@ class _CategoryRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isIncome = category.type == TransactionType.income;
@@ -188,9 +189,7 @@ class _CategoryRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    isIncome
-                        ? (isRu ? 'Доход' : 'Income')
-                        : (isRu ? 'Расход' : 'Expense'),
+                    isIncome ? s.income : s.expenses,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: (isIncome ? AppColors.income : AppColors.expense)
                           .withOpacity(0.9),

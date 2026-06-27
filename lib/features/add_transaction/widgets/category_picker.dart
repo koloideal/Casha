@@ -64,17 +64,19 @@ class CategoryPicker extends ConsumerWidget {
                     size: 16,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    cat.label(isRu),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isSelected
-                          ? color
-                          : Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.6),
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.normal,
+                  Flexible(
+                    child: Text(
+                      cat.label(isRu),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: isSelected
+                            ? color
+                            : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
                     ),
                   ),
                 ],

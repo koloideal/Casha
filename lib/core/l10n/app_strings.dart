@@ -24,9 +24,6 @@ class AppStrings {
   String get filterMonth => _ru ? 'Месяц' : 'Month';
   String get income => _ru ? 'Доход' : 'Income';
   String get expenses => _ru ? 'Расходы' : 'Expenses';
-  String get monthlyBudget => _ru ? 'Бюджет на месяц' : 'Monthly Budget';
-  String get spent => _ru ? 'Потрачено' : 'Spent';
-  String get limit => _ru ? 'Лимит' : 'Limit';
   String get noTransactions =>
       _ru ? 'Транзакции не найдены' : 'No transactions found';
   String get addFirstTx => _ru
@@ -80,18 +77,6 @@ class AppStrings {
   String get language => _ru ? 'Язык' : 'Language';
   String get langRu => _ru ? 'Русский' : 'Russian';
   String get langEn => _ru ? 'Английский' : 'English';
-  String get budget => _ru ? 'Бюджет' : 'Budget';
-  String get budgetHint => _ru ? 'Месячный лимит' : 'Monthly limit';
-  String get budgetNone => _ru ? 'Не установлен' : 'Not set';
-  String get monthlyBudgetSetting => _ru ? 'Месячный бюджет' : 'Monthly Budget';
-  String get yourMonthlySpendingLimit =>
-      _ru ? 'Ваш лимит расходов на месяц' : 'Your monthly spending limit';
-  String get setMonthlySpendingLimit => _ru
-      ? 'Контролируйте свои расходы за месяц'
-      : 'Track your monthly spending';
-  String get leaveEmptyToRemove => _ru
-      ? 'Оставьте пустым для удаления лимита'
-      : 'Leave empty to remove budget limit';
   String get data => _ru ? 'Данные' : 'Data';
   String get exportData => _ru ? 'Экспорт данных' : 'Export data';
   String get clearData => _ru ? 'Очистить данные' : 'Clear all data';

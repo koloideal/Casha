@@ -143,6 +143,8 @@ class SettingsScreen extends ConsumerWidget {
           const CurrencySection(),
           const SizedBox(height: 16),
           const AmountFormatSection(),
+          const SizedBox(height: 16),
+          const CategoriesSection(),
           const SizedBox(height: 24),
           Text(
             s.dangerZone,
