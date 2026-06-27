@@ -11,34 +11,6 @@ import '../../shared/utils/currency_utils.dart';
 import '../../shared/providers/amount_format_provider.dart';
 import '../dashboard/provider.dart';
 
-final budgetProvider = NotifierProvider<BudgetNotifier, double?>(
-  BudgetNotifier.new,
-);
-
-class BudgetNotifier extends Notifier<double?> {
-  @override
-  double? build() {
-    final storage = ref.watch(storageServiceProvider);
-    return storage.loadBudget();
-  }
-
-  Future<void> setBudget(double? budget) async {
-    final storage = ref.read(storageServiceProvider);
-    await storage.saveBudget(budget);
-    state = budget;
-  }
-
-  void onCurrencyChanged(
-    String oldCode,
-    String newCode,
-    ExchangeRateService rates,
-  ) {
-    if (state == null) return;
-    final converted = rates.convert(state!, oldCode, newCode);
-    setBudget(converted);
-  }
-}
-
 class CurrencyInfo {
   final String symbol;
   final String code;

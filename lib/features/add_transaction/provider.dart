@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants.dart';
+import '../../shared/models/app_category.dart';
 import '../../shared/models/transaction.dart';
+import '../../shared/providers/category_provider.dart';
 
 class AddTransactionState {
   final double? amount;
@@ -133,10 +135,11 @@ class AddTransactionNotifier extends Notifier<AddTransactionState> {
 }
 
 final availableCategoriesProvider = Provider.autoDispose
-    .family<List<String>, Transaction?>((ref, initial) {
+    .family<List<AppCategory>, Transaction?>((ref, initial) {
       final type = ref.watch(
         addTransactionProvider(initial).select((s) => s.type),
       );
-      return AppCategories.forType(type);
+      if (type == TransactionType.transfer) return const [];
+      return ref.watch(categoryCatalogProvider).forType(type);
     });
 

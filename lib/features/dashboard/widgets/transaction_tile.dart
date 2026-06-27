@@ -9,6 +9,7 @@ import '../../../core/l10n/locale_provider.dart';
 import '../../../shared/models/transaction.dart';
 import '../../../shared/models/account.dart';
 import '../../../shared/providers/amount_format_provider.dart';
+import '../../../shared/providers/category_provider.dart';
 import '../../../shared/utils/currency_utils.dart';
 import '../../../shared/widgets/byn_sign.dart';
 import '../../settings/provider.dart';
@@ -29,7 +30,9 @@ class TransactionTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
+    final isRu = s.locale == AppLocale.ru;
     final fmt = ref.watch(amountFormatProvider);
+    final catalog = ref.watch(categoryCatalogProvider);
     final isTransfer = transaction.category == 'Transfer';
     final isIncome = transaction.type == TransactionType.income;
     final color = isTransfer
@@ -37,10 +40,11 @@ class TransactionTile extends ConsumerWidget {
         : (isIncome ? AppColors.income : AppColors.expense);
     final catColor = isTransfer
         ? const Color(0xFF7C6DED)
-        : (AppCategories.colors[transaction.category] ?? AppColors.accent);
+        : catalog.colorFor(transaction.category);
     final catIcon = isTransfer
         ? Icons.swap_horiz_rounded
-        : (AppCategories.icons[transaction.category] ?? Icons.category_rounded);
+        : catalog.iconFor(transaction.category);
+    final catLabel = catalog.labelFor(transaction.category, isRu);
 
     final activeAccount = ref.watch(activeAccountProvider);
     final displayCurrency =
@@ -105,7 +109,7 @@ class TransactionTile extends ConsumerWidget {
                                 activeAccount,
                               )
                             : Text(
-                                s.categoryLabel(transaction.category),
+                                catLabel,
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
                                       fontWeight: FontWeight.w600,

@@ -10,7 +10,6 @@ import '../settings/provider.dart';
 import 'provider.dart';
 import 'widgets/account_editor_overlay/account_editor_overlay.dart';
 import 'widgets/balance_card_carousel.dart';
-import 'widgets/budget_progress.dart';
 import 'widgets/color_editor_overlay.dart';
 import 'widgets/filter_chips.dart';
 import 'widgets/search_bar.dart' as custom;
@@ -266,8 +265,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final balance = ref.watch(totalBalanceProvider);
     final income = ref.watch(totalIncomeProvider);
     final expense = ref.watch(totalExpenseProvider);
-    final monthExpense = ref.watch(currentMonthExpenseProvider);
-    final budget = ref.watch(budgetProvider);
     final recent = ref.watch(recentTransactionsProvider);
     final activeAccount = ref.watch(activeAccountProvider);
     final globalCurrencyInfo = ref.watch(currencyProvider);
@@ -376,15 +373,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         currencyInfo: currencyInfo,
                         strings: s,
                       ),
-                      if (budget != null) ...[
-                        const SizedBox(height: 16),
-                        BudgetProgress(
-                          spent: monthExpense,
-                          budget: budget,
-                          currencyInfo: currencyInfo,
-                          strings: s,
-                        ),
-                      ],
                       const SizedBox(height: 24),
                       custom.SearchBar(
                         controller: _searchController,

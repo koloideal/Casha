@@ -8,12 +8,12 @@ import 'tables.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [Transactions, Categories, Budgets, ExchangeRates, Accounts])
+@DriftDatabase(tables: [Transactions, Categories, ExchangeRates, Accounts])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -48,6 +48,28 @@ class AppDatabase extends _$AppDatabase {
           } 
         } catch (e) {
           print('Migration: Error adding account_id column: $e');
+        }
+      }
+
+      if (from < 6) {
+        await customStatement('DROP TABLE IF EXISTS budgets');
+        try {
+          final columns = await customSelect(
+            'PRAGMA table_info(categories)',
+          ).get();
+          final names = columns.map((row) => row.data['name']).toSet();
+          if (!names.contains('label_en')) {
+            await customStatement(
+              'ALTER TABLE categories ADD COLUMN label_en TEXT',
+            );
+          }
+          if (!names.contains('label_ru')) {
+            await customStatement(
+              'ALTER TABLE categories ADD COLUMN label_ru TEXT',
+            );
+          }
+        } catch (e) {
+          print('Migration: Error updating categories table: $e');
         }
       }
     },
@@ -149,6 +171,12 @@ class AppDatabase extends _$AppDatabase {
     return select(categories).get();
   }
 
+  Stream<List<Category>> watchAllCategories() {
+    return (select(categories)
+          ..orderBy([(c) => OrderingTerm.asc(c.createdAt)]))
+        .watch();
+  }
+
   Future<List<Category>> getCategoriesByType(String type) {
     return (select(categories)..where((c) => c.type.equals(type))).get();
   }
@@ -163,20 +191,6 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> deleteCategory(int id) {
     return (delete(categories)..where((c) => c.id.equals(id))).go();
-  }
-
-  Future<Budget?> getBudget(int month, int year) {
-    return (select(budgets)
-          ..where((b) => b.month.equals(month) & b.year.equals(year)))
-        .getSingleOrNull();
-  }
-
-  Future<void> upsertBudget(BudgetsCompanion budget) {
-    return into(budgets).insertOnConflictUpdate(budget);
-  }
-
-  Future<int> deleteBudget(int id) {
-    return (delete(budgets)..where((b) => b.id.equals(id))).go();
   }
 
   Future<ExchangeRate?> getExchangeRate(String from, String to) {

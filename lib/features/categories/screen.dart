@@ -3,17 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
-import '../../core/l10n/app_strings.dart';
 import '../../core/l10n/locale_provider.dart';
-import '../../core/services/haptic_service.dart';
 import '../../shared/providers/amount_format_provider.dart';
 import '../../shared/utils/currency_utils.dart';
 import '../../shared/widgets/byn_sign.dart';
-import '../dashboard/provider.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
 import 'widgets/account_scope_chips.dart';
-import 'widgets/stats_hero_card.dart';
 
 class CategoriesScreen extends ConsumerStatefulWidget {
   const CategoriesScreen({super.key});
@@ -24,7 +20,7 @@ class CategoriesScreen extends ConsumerStatefulWidget {
 
 class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   int _touchedIndex = -1;
-  bool _showIncome = false;
+  final bool _showIncome = false;
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +31,9 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
         : ref.watch(categoryExpenseProvider);
     final total = data.values.fold(0.0, (a, b) => a + b);
     final currencyInfo = ref.watch(statsCurrencyProvider);
-    final timeFilter = ref.watch(timeFilterProvider);
     final monthlyData = _showIncome
         ? ref.watch(monthlyIncomeBreakdownProvider)
         : ref.watch(monthlyBreakdownProvider);
-    final scopeLabel = _scopeLabel(s);
 
     final sortedEntries = data.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -63,79 +57,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
           children: [
             const AccountScopeChips(),
             const SizedBox(height: 16),
-            _FilterCard(
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _TimeFilterChip(
-                          label: s.filterAllTime,
-                          isSelected: timeFilter == TimeFilter.allTime,
-                          onTap: () {
-                            HapticService.selection();
-                            ref.read(timeFilterProvider.notifier).set(TimeFilter.allTime);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _TimeFilterChip(
-                          label: s.filterMonth,
-                          isSelected: timeFilter == TimeFilter.lastMonth,
-                          onTap: () {
-                            HapticService.selection();
-                            ref.read(timeFilterProvider.notifier).set(TimeFilter.lastMonth);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _TypeSegment(
-                          label: s.expenses,
-                          isSelected: !_showIncome,
-                          color: AppColors.expense,
-                          onTap: () {
-                            HapticService.selection();
-                            setState(() {
-                              _showIncome = false;
-                              _touchedIndex = -1;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _TypeSegment(
-                          label: s.income,
-                          isSelected: _showIncome,
-                          color: AppColors.income,
-                          onTap: () {
-                            HapticService.selection();
-                            setState(() {
-                              _showIncome = true;
-                              _touchedIndex = -1;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-            StatsHeroCard(
-              amount: _showIncome ? summary.income : summary.expense,
-              label: _showIncome ? s.income.toUpperCase() : s.expenses.toUpperCase(),
-              accentColor: _showIncome ? AppColors.income : AppColors.expense,
-              scopeLabel: scopeLabel,
-            ),
-            const SizedBox(height: 16),
             _InsightCard(
               title: s.overview,
               subtitle: s.analyticsInsight,
@@ -145,7 +66,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
-                childAspectRatio: 1.55,
+                childAspectRatio: 1.22,
                 children: [
                   _MetricTile(
                     label: s.income,
@@ -240,32 +161,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
       ),
     );
   }
-
-  String _scopeLabel(AppStrings s) {
-    final activeAccount = ref.watch(activeAccountProvider);
-    return activeAccount?.name ?? s.allAccounts;
-  }
-}
-
-class _FilterCard extends StatelessWidget {
-  final Widget child;
-
-  const _FilterCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
-        ),
-      ),
-      child: child,
-    );
-  }
 }
 
 class _InsightCard extends StatelessWidget {
@@ -311,96 +206,6 @@ class _InsightCard extends StatelessWidget {
           const SizedBox(height: 16),
           child,
         ],
-      ),
-    );
-  }
-}
-
-class _TimeFilterChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _TimeFilterChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.accent
-              : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.accent
-                : Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
-          ),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: isSelected
-                ? Colors.white
-                : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TypeSegment extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _TypeSegment({
-    required this.label,
-    required this.isSelected,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? color : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? color
-                : Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
-          ),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: isSelected
-                ? Colors.white
-                : Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
-          ),
-        ),
       ),
     );
   }

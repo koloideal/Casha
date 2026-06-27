@@ -21,19 +21,12 @@ class Transactions extends Table {
 class Categories extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().withLength(min: 1, max: 50)();
-  TextColumn get type => text()(); 
+  TextColumn get type => text()();
+  TextColumn get labelEn => text().nullable()();
+  TextColumn get labelRu => text().nullable()();
   TextColumn get icon => text().nullable()();
   TextColumn get color => text().nullable()();
   BoolColumn get isDefault => boolean().withDefault(const Constant(false))();
-  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
-}
-
-class Budgets extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  RealColumn get amount => real()();
-  TextColumn get categoryId => text().nullable()();
-  IntColumn get month => integer()();
-  IntColumn get year => integer()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 

@@ -745,6 +745,28 @@ class $CategoriesTable extends Categories
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _labelEnMeta = const VerificationMeta(
+    'labelEn',
+  );
+  @override
+  late final GeneratedColumn<String> labelEn = GeneratedColumn<String>(
+    'label_en',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _labelRuMeta = const VerificationMeta(
+    'labelRu',
+  );
+  @override
+  late final GeneratedColumn<String> labelRu = GeneratedColumn<String>(
+    'label_ru',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _iconMeta = const VerificationMeta('icon');
   @override
   late final GeneratedColumn<String> icon = GeneratedColumn<String>(
@@ -795,6 +817,8 @@ class $CategoriesTable extends Categories
     id,
     name,
     type,
+    labelEn,
+    labelRu,
     icon,
     color,
     isDefault,
@@ -830,6 +854,18 @@ class $CategoriesTable extends Categories
       );
     } else if (isInserting) {
       context.missing(_typeMeta);
+    }
+    if (data.containsKey('label_en')) {
+      context.handle(
+        _labelEnMeta,
+        labelEn.isAcceptableOrUnknown(data['label_en']!, _labelEnMeta),
+      );
+    }
+    if (data.containsKey('label_ru')) {
+      context.handle(
+        _labelRuMeta,
+        labelRu.isAcceptableOrUnknown(data['label_ru']!, _labelRuMeta),
+      );
     }
     if (data.containsKey('icon')) {
       context.handle(
@@ -876,6 +912,14 @@ class $CategoriesTable extends Categories
         DriftSqlType.string,
         data['${effectivePrefix}type'],
       )!,
+      labelEn: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label_en'],
+      ),
+      labelRu: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label_ru'],
+      ),
       icon: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}icon'],
@@ -905,6 +949,8 @@ class Category extends DataClass implements Insertable<Category> {
   final int id;
   final String name;
   final String type;
+  final String? labelEn;
+  final String? labelRu;
   final String? icon;
   final String? color;
   final bool isDefault;
@@ -913,6 +959,8 @@ class Category extends DataClass implements Insertable<Category> {
     required this.id,
     required this.name,
     required this.type,
+    this.labelEn,
+    this.labelRu,
     this.icon,
     this.color,
     required this.isDefault,
@@ -924,6 +972,12 @@ class Category extends DataClass implements Insertable<Category> {
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
     map['type'] = Variable<String>(type);
+    if (!nullToAbsent || labelEn != null) {
+      map['label_en'] = Variable<String>(labelEn);
+    }
+    if (!nullToAbsent || labelRu != null) {
+      map['label_ru'] = Variable<String>(labelRu);
+    }
     if (!nullToAbsent || icon != null) {
       map['icon'] = Variable<String>(icon);
     }
@@ -940,6 +994,12 @@ class Category extends DataClass implements Insertable<Category> {
       id: Value(id),
       name: Value(name),
       type: Value(type),
+      labelEn: labelEn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(labelEn),
+      labelRu: labelRu == null && nullToAbsent
+          ? const Value.absent()
+          : Value(labelRu),
       icon: icon == null && nullToAbsent ? const Value.absent() : Value(icon),
       color: color == null && nullToAbsent
           ? const Value.absent()
@@ -958,6 +1018,8 @@ class Category extends DataClass implements Insertable<Category> {
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       type: serializer.fromJson<String>(json['type']),
+      labelEn: serializer.fromJson<String?>(json['labelEn']),
+      labelRu: serializer.fromJson<String?>(json['labelRu']),
       icon: serializer.fromJson<String?>(json['icon']),
       color: serializer.fromJson<String?>(json['color']),
       isDefault: serializer.fromJson<bool>(json['isDefault']),
@@ -971,6 +1033,8 @@ class Category extends DataClass implements Insertable<Category> {
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
       'type': serializer.toJson<String>(type),
+      'labelEn': serializer.toJson<String?>(labelEn),
+      'labelRu': serializer.toJson<String?>(labelRu),
       'icon': serializer.toJson<String?>(icon),
       'color': serializer.toJson<String?>(color),
       'isDefault': serializer.toJson<bool>(isDefault),
@@ -982,6 +1046,8 @@ class Category extends DataClass implements Insertable<Category> {
     int? id,
     String? name,
     String? type,
+    Value<String?> labelEn = const Value.absent(),
+    Value<String?> labelRu = const Value.absent(),
     Value<String?> icon = const Value.absent(),
     Value<String?> color = const Value.absent(),
     bool? isDefault,
@@ -990,6 +1056,8 @@ class Category extends DataClass implements Insertable<Category> {
     id: id ?? this.id,
     name: name ?? this.name,
     type: type ?? this.type,
+    labelEn: labelEn.present ? labelEn.value : this.labelEn,
+    labelRu: labelRu.present ? labelRu.value : this.labelRu,
     icon: icon.present ? icon.value : this.icon,
     color: color.present ? color.value : this.color,
     isDefault: isDefault ?? this.isDefault,
@@ -1000,6 +1068,8 @@ class Category extends DataClass implements Insertable<Category> {
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       type: data.type.present ? data.type.value : this.type,
+      labelEn: data.labelEn.present ? data.labelEn.value : this.labelEn,
+      labelRu: data.labelRu.present ? data.labelRu.value : this.labelRu,
       icon: data.icon.present ? data.icon.value : this.icon,
       color: data.color.present ? data.color.value : this.color,
       isDefault: data.isDefault.present ? data.isDefault.value : this.isDefault,
@@ -1013,6 +1083,8 @@ class Category extends DataClass implements Insertable<Category> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('type: $type, ')
+          ..write('labelEn: $labelEn, ')
+          ..write('labelRu: $labelRu, ')
           ..write('icon: $icon, ')
           ..write('color: $color, ')
           ..write('isDefault: $isDefault, ')
@@ -1022,8 +1094,17 @@ class Category extends DataClass implements Insertable<Category> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, type, icon, color, isDefault, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    type,
+    labelEn,
+    labelRu,
+    icon,
+    color,
+    isDefault,
+    createdAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1031,6 +1112,8 @@ class Category extends DataClass implements Insertable<Category> {
           other.id == this.id &&
           other.name == this.name &&
           other.type == this.type &&
+          other.labelEn == this.labelEn &&
+          other.labelRu == this.labelRu &&
           other.icon == this.icon &&
           other.color == this.color &&
           other.isDefault == this.isDefault &&
@@ -1041,6 +1124,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<int> id;
   final Value<String> name;
   final Value<String> type;
+  final Value<String?> labelEn;
+  final Value<String?> labelRu;
   final Value<String?> icon;
   final Value<String?> color;
   final Value<bool> isDefault;
@@ -1049,6 +1134,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.type = const Value.absent(),
+    this.labelEn = const Value.absent(),
+    this.labelRu = const Value.absent(),
     this.icon = const Value.absent(),
     this.color = const Value.absent(),
     this.isDefault = const Value.absent(),
@@ -1058,6 +1145,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.id = const Value.absent(),
     required String name,
     required String type,
+    this.labelEn = const Value.absent(),
+    this.labelRu = const Value.absent(),
     this.icon = const Value.absent(),
     this.color = const Value.absent(),
     this.isDefault = const Value.absent(),
@@ -1068,6 +1157,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Expression<int>? id,
     Expression<String>? name,
     Expression<String>? type,
+    Expression<String>? labelEn,
+    Expression<String>? labelRu,
     Expression<String>? icon,
     Expression<String>? color,
     Expression<bool>? isDefault,
@@ -1077,6 +1168,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (type != null) 'type': type,
+      if (labelEn != null) 'label_en': labelEn,
+      if (labelRu != null) 'label_ru': labelRu,
       if (icon != null) 'icon': icon,
       if (color != null) 'color': color,
       if (isDefault != null) 'is_default': isDefault,
@@ -1088,6 +1181,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Value<int>? id,
     Value<String>? name,
     Value<String>? type,
+    Value<String?>? labelEn,
+    Value<String?>? labelRu,
     Value<String?>? icon,
     Value<String?>? color,
     Value<bool>? isDefault,
@@ -1097,6 +1192,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       id: id ?? this.id,
       name: name ?? this.name,
       type: type ?? this.type,
+      labelEn: labelEn ?? this.labelEn,
+      labelRu: labelRu ?? this.labelRu,
       icon: icon ?? this.icon,
       color: color ?? this.color,
       isDefault: isDefault ?? this.isDefault,
@@ -1115,6 +1212,12 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     }
     if (type.present) {
       map['type'] = Variable<String>(type.value);
+    }
+    if (labelEn.present) {
+      map['label_en'] = Variable<String>(labelEn.value);
+    }
+    if (labelRu.present) {
+      map['label_ru'] = Variable<String>(labelRu.value);
     }
     if (icon.present) {
       map['icon'] = Variable<String>(icon.value);
@@ -1137,403 +1240,11 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('type: $type, ')
+          ..write('labelEn: $labelEn, ')
+          ..write('labelRu: $labelRu, ')
           ..write('icon: $icon, ')
           ..write('color: $color, ')
           ..write('isDefault: $isDefault, ')
-          ..write('createdAt: $createdAt')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $BudgetsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
-  @override
-  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
-    'amount',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _categoryIdMeta = const VerificationMeta(
-    'categoryId',
-  );
-  @override
-  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
-    'category_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _monthMeta = const VerificationMeta('month');
-  @override
-  late final GeneratedColumn<int> month = GeneratedColumn<int>(
-    'month',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _yearMeta = const VerificationMeta('year');
-  @override
-  late final GeneratedColumn<int> year = GeneratedColumn<int>(
-    'year',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    defaultValue: currentDateAndTime,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    amount,
-    categoryId,
-    month,
-    year,
-    createdAt,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'budgets';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<Budget> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('amount')) {
-      context.handle(
-        _amountMeta,
-        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_amountMeta);
-    }
-    if (data.containsKey('category_id')) {
-      context.handle(
-        _categoryIdMeta,
-        categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
-      );
-    }
-    if (data.containsKey('month')) {
-      context.handle(
-        _monthMeta,
-        month.isAcceptableOrUnknown(data['month']!, _monthMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_monthMeta);
-    }
-    if (data.containsKey('year')) {
-      context.handle(
-        _yearMeta,
-        year.isAcceptableOrUnknown(data['year']!, _yearMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_yearMeta);
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  Budget map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Budget(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      amount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}amount'],
-      )!,
-      categoryId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}category_id'],
-      ),
-      month: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}month'],
-      )!,
-      year: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}year'],
-      )!,
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      )!,
-    );
-  }
-
-  @override
-  $BudgetsTable createAlias(String alias) {
-    return $BudgetsTable(attachedDatabase, alias);
-  }
-}
-
-class Budget extends DataClass implements Insertable<Budget> {
-  final int id;
-  final double amount;
-  final String? categoryId;
-  final int month;
-  final int year;
-  final DateTime createdAt;
-  const Budget({
-    required this.id,
-    required this.amount,
-    this.categoryId,
-    required this.month,
-    required this.year,
-    required this.createdAt,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['amount'] = Variable<double>(amount);
-    if (!nullToAbsent || categoryId != null) {
-      map['category_id'] = Variable<String>(categoryId);
-    }
-    map['month'] = Variable<int>(month);
-    map['year'] = Variable<int>(year);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    return map;
-  }
-
-  BudgetsCompanion toCompanion(bool nullToAbsent) {
-    return BudgetsCompanion(
-      id: Value(id),
-      amount: Value(amount),
-      categoryId: categoryId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(categoryId),
-      month: Value(month),
-      year: Value(year),
-      createdAt: Value(createdAt),
-    );
-  }
-
-  factory Budget.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Budget(
-      id: serializer.fromJson<int>(json['id']),
-      amount: serializer.fromJson<double>(json['amount']),
-      categoryId: serializer.fromJson<String?>(json['categoryId']),
-      month: serializer.fromJson<int>(json['month']),
-      year: serializer.fromJson<int>(json['year']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'amount': serializer.toJson<double>(amount),
-      'categoryId': serializer.toJson<String?>(categoryId),
-      'month': serializer.toJson<int>(month),
-      'year': serializer.toJson<int>(year),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-    };
-  }
-
-  Budget copyWith({
-    int? id,
-    double? amount,
-    Value<String?> categoryId = const Value.absent(),
-    int? month,
-    int? year,
-    DateTime? createdAt,
-  }) => Budget(
-    id: id ?? this.id,
-    amount: amount ?? this.amount,
-    categoryId: categoryId.present ? categoryId.value : this.categoryId,
-    month: month ?? this.month,
-    year: year ?? this.year,
-    createdAt: createdAt ?? this.createdAt,
-  );
-  Budget copyWithCompanion(BudgetsCompanion data) {
-    return Budget(
-      id: data.id.present ? data.id.value : this.id,
-      amount: data.amount.present ? data.amount.value : this.amount,
-      categoryId: data.categoryId.present
-          ? data.categoryId.value
-          : this.categoryId,
-      month: data.month.present ? data.month.value : this.month,
-      year: data.year.present ? data.year.value : this.year,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('Budget(')
-          ..write('id: $id, ')
-          ..write('amount: $amount, ')
-          ..write('categoryId: $categoryId, ')
-          ..write('month: $month, ')
-          ..write('year: $year, ')
-          ..write('createdAt: $createdAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(id, amount, categoryId, month, year, createdAt);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Budget &&
-          other.id == this.id &&
-          other.amount == this.amount &&
-          other.categoryId == this.categoryId &&
-          other.month == this.month &&
-          other.year == this.year &&
-          other.createdAt == this.createdAt);
-}
-
-class BudgetsCompanion extends UpdateCompanion<Budget> {
-  final Value<int> id;
-  final Value<double> amount;
-  final Value<String?> categoryId;
-  final Value<int> month;
-  final Value<int> year;
-  final Value<DateTime> createdAt;
-  const BudgetsCompanion({
-    this.id = const Value.absent(),
-    this.amount = const Value.absent(),
-    this.categoryId = const Value.absent(),
-    this.month = const Value.absent(),
-    this.year = const Value.absent(),
-    this.createdAt = const Value.absent(),
-  });
-  BudgetsCompanion.insert({
-    this.id = const Value.absent(),
-    required double amount,
-    this.categoryId = const Value.absent(),
-    required int month,
-    required int year,
-    this.createdAt = const Value.absent(),
-  }) : amount = Value(amount),
-       month = Value(month),
-       year = Value(year);
-  static Insertable<Budget> custom({
-    Expression<int>? id,
-    Expression<double>? amount,
-    Expression<String>? categoryId,
-    Expression<int>? month,
-    Expression<int>? year,
-    Expression<DateTime>? createdAt,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (amount != null) 'amount': amount,
-      if (categoryId != null) 'category_id': categoryId,
-      if (month != null) 'month': month,
-      if (year != null) 'year': year,
-      if (createdAt != null) 'created_at': createdAt,
-    });
-  }
-
-  BudgetsCompanion copyWith({
-    Value<int>? id,
-    Value<double>? amount,
-    Value<String?>? categoryId,
-    Value<int>? month,
-    Value<int>? year,
-    Value<DateTime>? createdAt,
-  }) {
-    return BudgetsCompanion(
-      id: id ?? this.id,
-      amount: amount ?? this.amount,
-      categoryId: categoryId ?? this.categoryId,
-      month: month ?? this.month,
-      year: year ?? this.year,
-      createdAt: createdAt ?? this.createdAt,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (amount.present) {
-      map['amount'] = Variable<double>(amount.value);
-    }
-    if (categoryId.present) {
-      map['category_id'] = Variable<String>(categoryId.value);
-    }
-    if (month.present) {
-      map['month'] = Variable<int>(month.value);
-    }
-    if (year.present) {
-      map['year'] = Variable<int>(year.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('BudgetsCompanion(')
-          ..write('id: $id, ')
-          ..write('amount: $amount, ')
-          ..write('categoryId: $categoryId, ')
-          ..write('month: $month, ')
-          ..write('year: $year, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -2291,7 +2002,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TransactionsTable transactions = $TransactionsTable(this);
   late final $CategoriesTable categories = $CategoriesTable(this);
-  late final $BudgetsTable budgets = $BudgetsTable(this);
   late final $ExchangeRatesTable exchangeRates = $ExchangeRatesTable(this);
   late final $AccountsTable accounts = $AccountsTable(this);
   @override
@@ -2301,7 +2011,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     transactions,
     categories,
-    budgets,
     exchangeRates,
     accounts,
   ];
@@ -2654,6 +2363,8 @@ typedef $$CategoriesTableCreateCompanionBuilder =
       Value<int> id,
       required String name,
       required String type,
+      Value<String?> labelEn,
+      Value<String?> labelRu,
       Value<String?> icon,
       Value<String?> color,
       Value<bool> isDefault,
@@ -2664,6 +2375,8 @@ typedef $$CategoriesTableUpdateCompanionBuilder =
       Value<int> id,
       Value<String> name,
       Value<String> type,
+      Value<String?> labelEn,
+      Value<String?> labelRu,
       Value<String?> icon,
       Value<String?> color,
       Value<bool> isDefault,
@@ -2691,6 +2404,16 @@ class $$CategoriesTableFilterComposer
 
   ColumnFilters<String> get type => $composableBuilder(
     column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get labelEn => $composableBuilder(
+    column: $table.labelEn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get labelRu => $composableBuilder(
+    column: $table.labelRu,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2739,6 +2462,16 @@ class $$CategoriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get labelEn => $composableBuilder(
+    column: $table.labelEn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get labelRu => $composableBuilder(
+    column: $table.labelRu,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get icon => $composableBuilder(
     column: $table.icon,
     builder: (column) => ColumnOrderings(column),
@@ -2777,6 +2510,12 @@ class $$CategoriesTableAnnotationComposer
 
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get labelEn =>
+      $composableBuilder(column: $table.labelEn, builder: (column) => column);
+
+  GeneratedColumn<String> get labelRu =>
+      $composableBuilder(column: $table.labelRu, builder: (column) => column);
 
   GeneratedColumn<String> get icon =>
       $composableBuilder(column: $table.icon, builder: (column) => column);
@@ -2822,6 +2561,8 @@ class $$CategoriesTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String> type = const Value.absent(),
+                Value<String?> labelEn = const Value.absent(),
+                Value<String?> labelRu = const Value.absent(),
                 Value<String?> icon = const Value.absent(),
                 Value<String?> color = const Value.absent(),
                 Value<bool> isDefault = const Value.absent(),
@@ -2830,6 +2571,8 @@ class $$CategoriesTableTableManager
                 id: id,
                 name: name,
                 type: type,
+                labelEn: labelEn,
+                labelRu: labelRu,
                 icon: icon,
                 color: color,
                 isDefault: isDefault,
@@ -2840,6 +2583,8 @@ class $$CategoriesTableTableManager
                 Value<int> id = const Value.absent(),
                 required String name,
                 required String type,
+                Value<String?> labelEn = const Value.absent(),
+                Value<String?> labelRu = const Value.absent(),
                 Value<String?> icon = const Value.absent(),
                 Value<String?> color = const Value.absent(),
                 Value<bool> isDefault = const Value.absent(),
@@ -2848,6 +2593,8 @@ class $$CategoriesTableTableManager
                 id: id,
                 name: name,
                 type: type,
+                labelEn: labelEn,
+                labelRu: labelRu,
                 icon: icon,
                 color: color,
                 isDefault: isDefault,
@@ -2873,215 +2620,6 @@ typedef $$CategoriesTableProcessedTableManager =
       $$CategoriesTableUpdateCompanionBuilder,
       (Category, BaseReferences<_$AppDatabase, $CategoriesTable, Category>),
       Category,
-      PrefetchHooks Function()
-    >;
-typedef $$BudgetsTableCreateCompanionBuilder =
-    BudgetsCompanion Function({
-      Value<int> id,
-      required double amount,
-      Value<String?> categoryId,
-      required int month,
-      required int year,
-      Value<DateTime> createdAt,
-    });
-typedef $$BudgetsTableUpdateCompanionBuilder =
-    BudgetsCompanion Function({
-      Value<int> id,
-      Value<double> amount,
-      Value<String?> categoryId,
-      Value<int> month,
-      Value<int> year,
-      Value<DateTime> createdAt,
-    });
-
-class $$BudgetsTableFilterComposer
-    extends Composer<_$AppDatabase, $BudgetsTable> {
-  $$BudgetsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get categoryId => $composableBuilder(
-    column: $table.categoryId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get month => $composableBuilder(
-    column: $table.month,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get year => $composableBuilder(
-    column: $table.year,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$BudgetsTableOrderingComposer
-    extends Composer<_$AppDatabase, $BudgetsTable> {
-  $$BudgetsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get categoryId => $composableBuilder(
-    column: $table.categoryId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get month => $composableBuilder(
-    column: $table.month,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get year => $composableBuilder(
-    column: $table.year,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$BudgetsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $BudgetsTable> {
-  $$BudgetsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<double> get amount =>
-      $composableBuilder(column: $table.amount, builder: (column) => column);
-
-  GeneratedColumn<String> get categoryId => $composableBuilder(
-    column: $table.categoryId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get month =>
-      $composableBuilder(column: $table.month, builder: (column) => column);
-
-  GeneratedColumn<int> get year =>
-      $composableBuilder(column: $table.year, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-}
-
-class $$BudgetsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $BudgetsTable,
-          Budget,
-          $$BudgetsTableFilterComposer,
-          $$BudgetsTableOrderingComposer,
-          $$BudgetsTableAnnotationComposer,
-          $$BudgetsTableCreateCompanionBuilder,
-          $$BudgetsTableUpdateCompanionBuilder,
-          (Budget, BaseReferences<_$AppDatabase, $BudgetsTable, Budget>),
-          Budget,
-          PrefetchHooks Function()
-        > {
-  $$BudgetsTableTableManager(_$AppDatabase db, $BudgetsTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$BudgetsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$BudgetsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$BudgetsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<double> amount = const Value.absent(),
-                Value<String?> categoryId = const Value.absent(),
-                Value<int> month = const Value.absent(),
-                Value<int> year = const Value.absent(),
-                Value<DateTime> createdAt = const Value.absent(),
-              }) => BudgetsCompanion(
-                id: id,
-                amount: amount,
-                categoryId: categoryId,
-                month: month,
-                year: year,
-                createdAt: createdAt,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required double amount,
-                Value<String?> categoryId = const Value.absent(),
-                required int month,
-                required int year,
-                Value<DateTime> createdAt = const Value.absent(),
-              }) => BudgetsCompanion.insert(
-                id: id,
-                amount: amount,
-                categoryId: categoryId,
-                month: month,
-                year: year,
-                createdAt: createdAt,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$BudgetsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $BudgetsTable,
-      Budget,
-      $$BudgetsTableFilterComposer,
-      $$BudgetsTableOrderingComposer,
-      $$BudgetsTableAnnotationComposer,
-      $$BudgetsTableCreateCompanionBuilder,
-      $$BudgetsTableUpdateCompanionBuilder,
-      (Budget, BaseReferences<_$AppDatabase, $BudgetsTable, Budget>),
-      Budget,
       PrefetchHooks Function()
     >;
 typedef $$ExchangeRatesTableCreateCompanionBuilder =
@@ -3497,8 +3035,6 @@ class $AppDatabaseManager {
       $$TransactionsTableTableManager(_db, _db.transactions);
   $$CategoriesTableTableManager get categories =>
       $$CategoriesTableTableManager(_db, _db.categories);
-  $$BudgetsTableTableManager get budgets =>
-      $$BudgetsTableTableManager(_db, _db.budgets);
   $$ExchangeRatesTableTableManager get exchangeRates =>
       $$ExchangeRatesTableTableManager(_db, _db.exchangeRates);
   $$AccountsTableTableManager get accounts =>

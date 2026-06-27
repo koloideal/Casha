@@ -62,11 +62,6 @@ class CurrencySection extends ConsumerWidget {
                   padding: const EdgeInsets.only(right: 8),
                   child: GestureDetector(
                     onTap: () {
-                      final oldCode = ref.read(currencyProvider).code;
-                      final rates = ref.read(exchangeRateServiceProvider);
-                      ref
-                          .read(budgetProvider.notifier)
-                          .onCurrencyChanged(oldCode, code, rates);
                       ref.read(currencyProvider.notifier).setCurrency(code);
                     },
                     child: Container(

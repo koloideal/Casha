@@ -273,36 +273,6 @@ final totalExpenseProvider = Provider<double>((ref) {
   });
 });
 
-final currentMonthExpenseProvider = Provider<double>((ref) {
-  final now = DateTime.now();
-  final txs = ref.watch(accountFilteredTransactionsProvider);
-  final filtered = txs.where(
-    (t) =>
-        t.type == TransactionType.expense &&
-        t.date.year == now.year &&
-        t.date.month == now.month,
-  );
-
-  final index = ref.watch(activeAccountIndexProvider);
-  final accountsAsync = ref.watch(accountsProvider);
-  final globalCurrency = ref.watch(currencyProvider).code;
-
-  String targetCurrency = globalCurrency;
-  if (index > 0) {
-    final accounts = accountsAsync.value ?? [];
-    if (index <= accounts.length) {
-      targetCurrency = accounts[index - 1].currency;
-    }
-  }
-
-  final exchangeService = ref.watch(exchangeRateServiceProvider);
-
-  return filtered.fold(0.0, (sum, t) {
-    return sum +
-        exchangeService.convert(t.amount, t.currencyCode, targetCurrency);
-  });
-});
-
 final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
   final txs = ref.watch(accountFilteredTransactionsProvider);
   final query = ref.watch(searchQueryProvider).toLowerCase();

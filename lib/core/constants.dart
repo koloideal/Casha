@@ -71,7 +71,97 @@ class AppCategories {
     'Refund': Color(0xFFB4FF69),
     'Other': Color(0xFFB469FF),
   };
+
+  static const iconNames = {
+    'Food': 'restaurant',
+    'Transport': 'car',
+    'Shopping': 'shopping_bag',
+    'Health': 'heart',
+    'Entertainment': 'movie',
+    'Salary': 'work',
+    'Freelance': 'laptop',
+    'Gift': 'gift',
+    'Investment': 'trending_up',
+    'Refund': 'money',
+    'Other': 'category',
+  };
+
+  static const ruLabels = {
+    'Food': 'Еда',
+    'Transport': 'Транспорт',
+    'Shopping': 'Покупки',
+    'Entertainment': 'Развлечения',
+    'Health': 'Здоровье',
+    'Housing': 'Жильё',
+    'Education': 'Образование',
+    'Travel': 'Путешествия',
+    'Salary': 'Зарплата',
+    'Freelance': 'Фриланс',
+    'Investment': 'Инвестиции',
+    'Gift': 'Подарок',
+    'Refund': 'Возврат',
+    'Other': 'Другое',
+    'Utilities': 'Коммунальные',
+    'Clothing': 'Одежда',
+    'Sports': 'Спорт',
+    'Beauty': 'Красота',
+    'Pets': 'Питомцы',
+    'Business': 'Бизнес',
+    'Savings': 'Накопления',
+  };
 }
+
+const Map<String, IconData> kCategoryIcons = {
+  'restaurant': Icons.restaurant_rounded,
+  'car': Icons.directions_car_rounded,
+  'shopping_bag': Icons.shopping_bag_rounded,
+  'heart': Icons.favorite_rounded,
+  'movie': Icons.movie_rounded,
+  'work': Icons.work_rounded,
+  'laptop': Icons.laptop_rounded,
+  'gift': Icons.card_giftcard_rounded,
+  'trending_up': Icons.trending_up_rounded,
+  'money': Icons.payments_rounded,
+  'category': Icons.category_rounded,
+  'home': Icons.home_rounded,
+  'school': Icons.school_rounded,
+  'flight': Icons.flight_rounded,
+  'fitness': Icons.fitness_center_rounded,
+  'pets': Icons.pets_rounded,
+  'coffee': Icons.local_cafe_rounded,
+  'grocery': Icons.local_grocery_store_rounded,
+  'phone': Icons.smartphone_rounded,
+  'bolt': Icons.bolt_rounded,
+  'water': Icons.water_drop_rounded,
+  'savings': Icons.savings_rounded,
+  'card': Icons.credit_card_rounded,
+  'games': Icons.sports_esports_rounded,
+  'music': Icons.music_note_rounded,
+  'book': Icons.menu_book_rounded,
+  'medical': Icons.medical_services_rounded,
+  'child': Icons.child_care_rounded,
+  'build': Icons.build_rounded,
+  'beauty': Icons.spa_rounded,
+};
+
+IconData categoryIconByName(String? name) {
+  return kCategoryIcons[name] ?? Icons.category_rounded;
+}
+
+const List<Color> kCategoryColors = [
+  Color(0xFFFF8C69),
+  Color(0xFF69B4FF),
+  Color(0xFFFFD369),
+  Color(0xFF69FFB4),
+  Color(0xFFFF69B4),
+  Color(0xFF4CAF8C),
+  Color(0xFFFFB469),
+  Color(0xFFB4FF69),
+  Color(0xFFB469FF),
+  Color(0xFF7C6DED),
+  Color(0xFFE05C6B),
+  Color(0xFF4DD0E1),
+];
 
 enum AmountFormat { commasDot, spacesDot, plain }
 

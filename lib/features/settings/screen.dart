@@ -13,7 +13,7 @@ import 'widgets/currency_conversions_section.dart';
 import 'widgets/language_section.dart';
 import 'widgets/currency_section.dart';
 import 'widgets/amount_format_section.dart';
-import 'widgets/budget_section.dart';
+import 'widgets/categories_section.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -112,11 +112,16 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
         title: Text(
-          s.settings,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
+          'Casha',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w800,
             color: Theme.of(context).colorScheme.onSurface,
+            letterSpacing: -0.5,
           ),
         ),
       ),
@@ -138,8 +143,6 @@ class SettingsScreen extends ConsumerWidget {
           const CurrencySection(),
           const SizedBox(height: 16),
           const AmountFormatSection(),
-          const SizedBox(height: 16),
-          const BudgetSection(),
           const SizedBox(height: 24),
           Text(
             s.dangerZone,

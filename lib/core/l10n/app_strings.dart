@@ -169,6 +169,7 @@ class AppStrings {
       'Freelance': 'Фриланс',
       'Investment': 'Инвестиции',
       'Gift': 'Подарок',
+      'Refund': 'Возврат',
       'Other': 'Другое',
       'Utilities': 'Коммунальные',
       'Clothing': 'Одежда',
@@ -219,6 +220,38 @@ class AppStrings {
   String get selectAccount => _ru ? 'Выберите счёт' : 'Select account';
   String get accountPlaceholder => _ru ? 'Счёт' : 'Account';
   String get saveError => _ru ? 'Ошибка сохранения' : 'Save error';
+
+  String get manageCategories => _ru ? 'Категории' : 'Categories';
+  String get manageCategoriesSubtitle => _ru
+      ? 'Создавайте и редактируйте свои категории'
+      : 'Create and edit your own categories';
+  String get customCategories => _ru ? 'Свои категории' : 'Custom categories';
+  String get defaultCategories =>
+      _ru ? 'Стандартные категории' : 'Default categories';
+  String get newCategory => _ru ? 'Новая категория' : 'New category';
+  String get nameEn => _ru ? 'Название (EN)' : 'Name (EN)';
+  String get nameRu => _ru ? 'Название (RU)' : 'Name (RU)';
+  String get nameEnHint => _ru ? 'Например, Coffee' : 'e.g. Coffee';
+  String get nameRuHint => _ru ? 'Например, Кофе' : 'e.g. Кофе';
+  String get autoTranslate => _ru ? 'Автоперевод' : 'Auto-translate';
+  String get applyTranslation => _ru ? 'Применить' : 'Apply';
+  String get translating => _ru ? 'Перевод...' : 'Translating...';
+  String get translationFailed =>
+      _ru ? 'Не удалось перевести' : 'Translation failed';
+  String get categoryNameRequired =>
+      _ru ? 'Введите название' : 'Enter a name';
+  String get deleteCategoryConfirm =>
+      _ru ? 'Удалить эту категорию?' : 'Delete this category?';
+  String get deleteCategoryWarning => _ru
+      ? 'Категория будет удалена. Прошлые транзакции сохранятся.'
+      : 'The category will be removed. Past transactions are kept.';
+  String get noCustomCategories =>
+      _ru ? 'Вы ещё не добавили категории' : 'No custom categories yet';
+  String get noCustomCategoriesHint => _ru
+      ? 'Нажмите +, чтобы создать свою категорию'
+      : 'Tap + to create your own category';
+  String get categoryType => _ru ? 'Тип' : 'Type';
+  String get categorySaved => _ru ? 'Категория сохранена' : 'Category saved';
 
   String get dateLocale => _ru ? 'ru_RU' : 'en_US';
 }

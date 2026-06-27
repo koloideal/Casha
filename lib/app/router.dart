@@ -6,6 +6,7 @@ import '../features/dashboard/screen.dart';
 import '../features/add_transaction/screen.dart';
 import '../features/categories/screen.dart';
 import '../features/settings/screen.dart';
+import '../features/settings/categories/category_manager_screen.dart';
 import '../shared/models/transaction.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
@@ -43,6 +44,10 @@ final appRouter = GoRouter(
         final transaction = state.extra as Transaction?;
         return AddTransactionScreen(initial: transaction);
       },
+    ),
+    GoRoute(
+      path: '/settings/categories',
+      builder: (context, state) => const CategoryManagerScreen(),
     ),
   ],
 );

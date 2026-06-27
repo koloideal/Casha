@@ -8,7 +8,6 @@ const _uuid = Uuid();
 
 class StorageService {
   static const _transactionsKey = 'transactions';
-  static const _budgetKey = 'monthly_budget';
   static const _currencyKey = 'currency_symbol';
   static const _themeKey = 'is_dark_mode';
 
@@ -86,23 +85,6 @@ class StorageService {
       final saveResult = await saveTransactions(list);
       if (saveResult.isFailure) {
         throw Exception(saveResult.errorOrNull);
-      }
-    });
-  }
-
-  double? loadBudget() {
-    return _prefs.getDouble(_budgetKey);
-  }
-
-  Future<Result<void>> saveBudget(double? budget) async {
-    return asyncResultOf(() async {
-      if (budget == null) {
-        await _prefs.remove(_budgetKey);
-      } else {
-        if (budget < 0) {
-          throw Exception('Budget cannot be negative');
-        }
-        await _prefs.setDouble(_budgetKey, budget);
       }
     });
   }
