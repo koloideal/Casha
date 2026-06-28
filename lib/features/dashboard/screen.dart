@@ -303,13 +303,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         titleSpacing: 20,
-        title: Text(
-          'Casha',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: Theme.of(context).colorScheme.onSurface,
-            letterSpacing: -0.5,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Casha',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).colorScheme.onSurface,
+                letterSpacing: -0.5,
+              ),
+            ),
+            if (ref.watch(featureFlagsProvider).canEditCardColors) ...[
+              const SizedBox(width: 6),
+              Text(
+                'Pro',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withOpacity(0.4),
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
+          ],
         ),
         actions: [
           Padding(
