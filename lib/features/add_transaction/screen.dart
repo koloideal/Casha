@@ -396,7 +396,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         child: child!,
       ),
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() => _selectedDate = picked);
     }
   }
@@ -423,7 +423,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         child: child!,
       ),
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() => _selectedTime = picked);
     }
   }

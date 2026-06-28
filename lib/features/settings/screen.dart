@@ -111,78 +111,62 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: true,
-        toolbarHeight: 80,
-        title: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Text(
-            'Casha',
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: Theme.of(context).colorScheme.onSurface,
-              letterSpacing: -0.5,
+      body: SafeArea(
+        child: ListView(
+          physics: const ClampingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+          children: [
+            const ThemeSection(),
+            const SizedBox(height: 16),
+            const CardTextColorSection(),
+            const SizedBox(height: 16),
+            const HapticSection(),
+            const SizedBox(height: 16),
+            const CurrencyConversionsSection(),
+            const SizedBox(height: 16),
+            const _BiometricSection(),
+            const LanguageSection(),
+            const SizedBox(height: 16),
+            const CurrencySection(),
+            const SizedBox(height: 16),
+            const AmountFormatSection(),
+            const SizedBox(height: 16),
+            const CategoriesSection(),
+            const SizedBox(height: 24),
+            Text(
+              s.dangerZone,
+              style: TextStyle(
+                fontSize: 12,
+                letterSpacing: 1.2,
+                color: const Color(0xFFE05C6B).withOpacity(0.8),
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _confirmClearData(context, ref),
+                icon: const Icon(Icons.delete_forever, color: Color(0xFFE05C6B)),
+                label: Text(
+                  s.clearAllTransactions,
+                  style: const TextStyle(color: Color(0xFFE05C6B)),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: const Color(0xFFE05C6B).withOpacity(0.5),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            const _FooterWidget(),
+          ],
         ),
-      ),
-      body: ListView(
-        physics: const ClampingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
-        children: [
-          const ThemeSection(),
-          const SizedBox(height: 16),
-          const CardTextColorSection(),
-          const SizedBox(height: 16),
-          const HapticSection(),
-          const SizedBox(height: 16),
-          const CurrencyConversionsSection(),
-          const SizedBox(height: 16),
-          const _BiometricSection(),
-          const LanguageSection(),
-          const SizedBox(height: 16),
-          const CurrencySection(),
-          const SizedBox(height: 16),
-          const AmountFormatSection(),
-          const SizedBox(height: 16),
-          const CategoriesSection(),
-          const SizedBox(height: 24),
-          Text(
-            s.dangerZone,
-            style: TextStyle(
-              fontSize: 12,
-              letterSpacing: 1.2,
-              color: const Color(0xFFE05C6B).withOpacity(0.8),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => _confirmClearData(context, ref),
-              icon: const Icon(Icons.delete_forever, color: Color(0xFFE05C6B)),
-              label: Text(
-                s.clearAllTransactions,
-                style: const TextStyle(color: Color(0xFFE05C6B)),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(
-                  color: const Color(0xFFE05C6B).withOpacity(0.5),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 40),
-          const _FooterWidget(),
-        ],
       ),
     );
   }

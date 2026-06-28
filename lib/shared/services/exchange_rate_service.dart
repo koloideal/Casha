@@ -97,6 +97,7 @@ class ExchangeRateService {
 
     final fromRate = currentRates[from] ?? 1.0;
     final toRate = currentRates[to] ?? 1.0;
+    if (fromRate == 0) return amount;
 
     final amountInUsd = amount / fromRate;
     return amountInUsd * toRate;

@@ -222,6 +222,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       });
     }
 
+    if (!mounted) return;
     overlayEntry?.remove();
     overlayEntry = null;
     setState(() {

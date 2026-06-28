@@ -45,18 +45,9 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          s.statistics,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-      ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
           children: [
             const AccountScopeChips(),
             const SizedBox(height: 16),
@@ -232,6 +223,9 @@ class _PieChartSection extends ConsumerWidget {
     final fmt = ref.watch(amountFormatProvider);
     final entries = data.entries.toList();
     final accent = isIncome ? AppColors.income : AppColors.expense;
+    if (entries.isEmpty) {
+      return const SizedBox.shrink();
+    }
     final selectedIndex = touchedIndex >= 0 ? touchedIndex : 0;
     final selectedEntry = entries[selectedIndex.clamp(0, entries.length - 1)];
     final selectedAmount = selectedEntry.value;
@@ -267,7 +261,9 @@ class _PieChartSection extends ConsumerWidget {
                       color: color,
                       value: val,
                       title: isTouched
-                          ? '${(val / total * 100).toStringAsFixed(0)}%'
+                          ? total > 0
+                              ? '${(val / total * 100).toStringAsFixed(0)}%'
+                              : '0%'
                           : '',
                       radius: isTouched ? 60 : 52,
                       titleStyle: const TextStyle(
@@ -340,7 +336,9 @@ class _PieChartSection extends ConsumerWidget {
                 ),
               ),
               Text(
-                '${(selectedAmount / total * 100).toStringAsFixed(1)}%',
+                total > 0
+                    ? '${(selectedAmount / total * 100).toStringAsFixed(1)}%'
+                    : '0%',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: accent,
@@ -869,7 +867,7 @@ class _TimePeriodToggle extends ConsumerWidget {
           color: theme.colorScheme.onSurface.withOpacity(0.06),
         ),
       ),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(2),
       child: Row(
         children: [
           Expanded(
@@ -936,14 +934,17 @@ class _OverviewCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _FormattedAmount(
-            amount: amount,
-            currencyInfo: currencyInfo,
-            color: color,
-            fontSize: 40,
-            fontWeight: FontWeight.w800,
-            format: fmt,
-            center: true,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: _FormattedAmount(
+              amount: amount,
+              currencyInfo: currencyInfo,
+              color: color,
+              fontSize: 40,
+              fontWeight: FontWeight.w800,
+              format: fmt,
+              center: true,
+            ),
           ),
           const SizedBox(height: 14),
           Text(
@@ -981,7 +982,7 @@ class _IncomeExpenseToggle extends ConsumerWidget {
           color: theme.colorScheme.onSurface.withOpacity(0.06),
         ),
       ),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(2),
       child: Row(
         children: [
           Expanded(
@@ -1025,7 +1026,7 @@ class _ToggleChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
@@ -1033,8 +1034,10 @@ class _ToggleChip extends StatelessWidget {
         child: Text(
           label,
           textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             color: isSelected
                 ? color

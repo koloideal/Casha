@@ -27,6 +27,9 @@ class AccountSelector extends ConsumerWidget {
 
     return accountsAsync.when(
       data: (accounts) {
+        if (accounts.isEmpty) {
+          return const SizedBox.shrink();
+        }
         final txAccountId = ref
             .read(addTransactionProvider(initial))
             .selectedAccountId;

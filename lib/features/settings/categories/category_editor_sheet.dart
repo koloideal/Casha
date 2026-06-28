@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
@@ -44,6 +46,11 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
   bool _translatingEn = false;
   bool _translatingRu = false;
   bool _saving = false;
+  DateTime? _lastTranslateTime;
+  bool _enOverflow = false;
+  bool _ruOverflow = false;
+  Timer? _enOverflowTimer;
+  Timer? _ruOverflowTimer;
 
   @override
   void initState() {
@@ -62,6 +69,8 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
 
   @override
   void dispose() {
+    _enOverflowTimer?.cancel();
+    _ruOverflowTimer?.cancel();
     _enController.dispose();
     _ruController.dispose();
     super.dispose();
@@ -71,21 +80,50 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
     if (_enController.text.trim().isNotEmpty && _enSuggestion != null) {
       setState(() => _enSuggestion = null);
     }
+    if (_enController.text.length >= 20) {
+      _enOverflowTimer?.cancel();
+      setState(() => _enOverflow = true);
+      _enOverflowTimer = Timer(const Duration(seconds: 1), () {
+        if (mounted) setState(() => _enOverflow = false);
+      });
+    }
   }
 
   void _onRuChanged() {
     if (_ruController.text.trim().isNotEmpty && _ruSuggestion != null) {
       setState(() => _ruSuggestion = null);
     }
+    if (_ruController.text.length >= 20) {
+      _ruOverflowTimer?.cancel();
+      setState(() => _ruOverflow = true);
+      _ruOverflowTimer = Timer(const Duration(seconds: 1), () {
+        if (mounted) setState(() => _ruOverflow = false);
+      });
+    }
+  }
+
+  bool _isThrottled() {
+    final now = DateTime.now();
+    if (_lastTranslateTime != null &&
+        now.difference(_lastTranslateTime!) < const Duration(seconds: 2)) {
+      return true;
+    }
+    _lastTranslateTime = now;
+    return false;
   }
 
   Future<void> _translateToRu() async {
     final source = _enController.text.trim();
     if (source.isEmpty) return;
     setState(() => _translatingRu = true);
-    final result = await ref
-        .read(translationServiceProvider)
-        .translate(source, TranslateDirection.enToRu);
+    final service = ref.read(translationServiceProvider);
+    TranslationResult? result;
+    if (_isThrottled()) {
+      final dict = service.dictionaryLookup(source, TranslateDirection.enToRu);
+      result = dict != null ? TranslationResult(dict, fromCache: true) : null;
+    } else {
+      result = await service.translate(source, TranslateDirection.enToRu);
+    }
     if (!mounted) return;
     setState(() {
       _translatingRu = false;
@@ -100,9 +138,14 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
     final source = _ruController.text.trim();
     if (source.isEmpty) return;
     setState(() => _translatingEn = true);
-    final result = await ref
-        .read(translationServiceProvider)
-        .translate(source, TranslateDirection.ruToEn);
+    final service = ref.read(translationServiceProvider);
+    TranslationResult? result;
+    if (_isThrottled()) {
+      final dict = service.dictionaryLookup(source, TranslateDirection.ruToEn);
+      result = dict != null ? TranslationResult(dict, fromCache: true) : null;
+    } else {
+      result = await service.translate(source, TranslateDirection.ruToEn);
+    }
     if (!mounted) return;
     setState(() {
       _translatingEn = false;
@@ -122,21 +165,45 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
     }
     setState(() => _saving = true);
     HapticService.medium();
+
+    String labelEn = _enController.text.trim();
+    String labelRu = _ruController.text.trim();
+
+    if (labelEn.isEmpty && labelRu.isNotEmpty) {
+      final result = await ref
+          .read(translationServiceProvider)
+          .translate(labelRu, TranslateDirection.ruToEn);
+      if (result != null && result.text.isNotEmpty) {
+        labelEn = result.text;
+      } else {
+        labelEn = labelRu;
+      }
+    } else if (labelRu.isEmpty && labelEn.isNotEmpty) {
+      final result = await ref
+          .read(translationServiceProvider)
+          .translate(labelEn, TranslateDirection.enToRu);
+      if (result != null && result.text.isNotEmpty) {
+        labelRu = result.text;
+      } else {
+        labelRu = labelEn;
+      }
+    }
+
     final actions = ref.read(categoryActionsProvider);
     final existing = widget.existing;
     final result = existing != null && existing.id != null
         ? await actions.edit(
             id: existing.id!,
             type: _type,
-            labelEn: _enController.text,
-            labelRu: _ruController.text,
+            labelEn: labelEn,
+            labelRu: labelRu,
             iconName: _iconName,
             colorValue: _colorValue,
           )
         : await actions.create(
             type: _type,
-            labelEn: _enController.text,
-            labelRu: _ruController.text,
+            labelEn: labelEn,
+            labelRu: labelRu,
             iconName: _iconName,
             colorValue: _colorValue,
           );
@@ -201,6 +268,7 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
                   hint: s.nameEnHint,
                   suggestion: _enSuggestion,
                   isTranslating: _translatingEn,
+                  isOverflow: _enOverflow,
                   canTranslate: _ruController.text.trim().isNotEmpty,
                   translatingLabel: s.translating,
                   applyLabel: s.applyTranslation,
@@ -217,6 +285,7 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
                   hint: s.nameRuHint,
                   suggestion: _ruSuggestion,
                   isTranslating: _translatingRu,
+                  isOverflow: _ruOverflow,
                   canTranslate: _enController.text.trim().isNotEmpty,
                   translatingLabel: s.translating,
                   applyLabel: s.applyTranslation,
@@ -384,6 +453,7 @@ class _TranslatableField extends StatelessWidget {
   final bool canTranslate;
   final String translatingLabel;
   final String applyLabel;
+  final bool isOverflow;
   final VoidCallback onTranslate;
   final VoidCallback onApply;
 
@@ -393,6 +463,7 @@ class _TranslatableField extends StatelessWidget {
     required this.hint,
     required this.suggestion,
     required this.isTranslating,
+    required this.isOverflow,
     required this.canTranslate,
     required this.translatingLabel,
     required this.applyLabel,
@@ -424,9 +495,11 @@ class _TranslatableField extends StatelessWidget {
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(14),
-                border: isDark
-                    ? null
-                    : Border.all(color: const Color(0xFFDDDDEE), width: 1),
+                border: isOverflow
+                    ? Border.all(color: AppColors.expense, width: 1.5)
+                    : isDark
+                        ? null
+                        : Border.all(color: const Color(0xFFDDDDEE), width: 1),
               ),
               child: Row(
                 children: [
@@ -457,10 +530,12 @@ class _TranslatableField extends StatelessWidget {
                         TextField(
                           controller: controller,
                           style: theme.textTheme.bodyLarge,
+                          maxLength: 20,
                           decoration: InputDecoration(
                             hintText: showGhost ? '' : hint,
                             isDense: true,
                             filled: false,
+                            counterText: '',
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,
                             border: InputBorder.none,

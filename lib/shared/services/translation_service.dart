@@ -59,7 +59,7 @@ class TranslationService {
     for (final entry in _ruToEn.entries) entry.value.toLowerCase(): entry.key,
   };
 
-  String? _dictionaryLookup(String input, TranslateDirection direction) {
+  String? dictionaryLookup(String input, TranslateDirection direction) {
     final normalized = input.trim().toLowerCase();
     if (normalized.isEmpty) return null;
     final map = direction == TranslateDirection.ruToEn ? _ruToEn : _enToRu;
@@ -75,7 +75,7 @@ class TranslationService {
     final trimmed = input.trim();
     if (trimmed.isEmpty) return null;
 
-    final cached = _dictionaryLookup(trimmed, direction);
+    final cached = dictionaryLookup(trimmed, direction);
     if (cached != null) {
       return TranslationResult(cached, fromCache: true);
     }
