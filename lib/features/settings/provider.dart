@@ -103,6 +103,31 @@ final exchangeRateServiceProvider = Provider<ExchangeRateService>((ref) {
   return ExchangeRateService(prefs);
 });
 
+final cardHeightProvider = NotifierProvider<CardHeightNotifier, double>(
+  CardHeightNotifier.new,
+);
+
+class CardHeightNotifier extends Notifier<double> {
+  static const _key = 'card_height';
+  static const _minHeight = 160.0;
+  static const _maxHeight = 280.0;
+  static const _defaultHeight = 200.0;
+
+  @override
+  double build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final saved = prefs.getDouble(_key);
+    if (saved == null) return _defaultHeight;
+    return saved.clamp(_minHeight, _maxHeight);
+  }
+
+  void set(double height) {
+    final clamped = height.clamp(_minHeight, _maxHeight);
+    state = clamped;
+    ref.read(sharedPreferencesProvider).setDouble(_key, clamped);
+  }
+}
+
 final ratesInitProvider = FutureProvider<void>((ref) async {
   await ref.read(exchangeRateServiceProvider).fetchRates();
 });

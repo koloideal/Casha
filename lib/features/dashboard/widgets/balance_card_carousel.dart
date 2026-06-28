@@ -59,6 +59,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
   Widget build(BuildContext context) {
     final accountsAsync = ref.watch(accountsProvider);
     final activeIndex = ref.watch(activeAccountIndexProvider);
+    final cardHeight = ref.watch(cardHeightProvider);
 
     return accountsAsync.when(
       data: (accounts) {
@@ -67,7 +68,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
         return Column(
           children: [
             SizedBox(
-              height: kBalanceCardCarouselHeight,
+              height: cardHeight + 10,
               child: OverflowBox(
                 maxWidth: MediaQuery.of(context).size.width,
                 child: PageView.builder(
@@ -96,6 +97,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                         previewPrimary: widget.previewPrimary,
                         previewSecondary: widget.previewSecondary,
                         previewGradientType: widget.previewGradientType,
+                        cardHeight: cardHeight,
                       );
                     } else if (index <= accounts.length) {
                       final account = accounts[index - 1];
@@ -134,10 +136,12 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                             widget.onAccountLongPress?.call(account),
                         accountName: account.name,
                         accountColors: accountColors,
+                        cardHeight: cardHeight,
                       );
                     } else {
                       cardWidget = AddAccountCard(
                         onTap: widget.onAddAccountTap,
+                        cardHeight: cardHeight,
                       );
                     }
 
@@ -154,15 +158,15 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
           ],
         );
       },
-      loading: () => const SizedBox(
-        height: kBalanceCardCarouselHeight,
-        child: Center(child: CircularProgressIndicator()),
+      loading: () => SizedBox(
+        height: cardHeight + 10,
+        child: const Center(child: CircularProgressIndicator()),
       ),
       error: (error, stack) {
         return Column(
           children: [
             SizedBox(
-              height: kBalanceCardCarouselHeight,
+              height: cardHeight + 10,
               child: BalanceCard(
                 balance: widget.balance,
                 currencyInfo: widget.currencyInfo,
@@ -170,6 +174,7 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
                 previewPrimary: widget.previewPrimary,
                 previewSecondary: widget.previewSecondary,
                 previewGradientType: widget.previewGradientType,
+                cardHeight: cardHeight,
               ),
             ),
             const SizedBox(height: 12),
@@ -183,8 +188,9 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
 
 class AddAccountCard extends StatelessWidget {
   final VoidCallback? onTap;
+  final double? cardHeight;
 
-  const AddAccountCard({super.key, this.onTap});
+  const AddAccountCard({super.key, this.onTap, this.cardHeight});
 
   @override
   Widget build(BuildContext context) {
@@ -199,7 +205,7 @@ class AddAccountCard extends StatelessWidget {
           painter: _DashedBorderPainter(),
           child: Container(
             width: double.infinity,
-            height: kAddAccountCardHeight,
+            height: cardHeight ?? kAddAccountCardHeight,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
               borderRadius: BorderRadius.circular(20),

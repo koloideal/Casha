@@ -37,6 +37,7 @@ class BalanceCard extends ConsumerStatefulWidget {
   final GradientType? previewGradientType;
   final String? accountName;
   final CardColors? accountColors;
+  final double? cardHeight;
 
   const BalanceCard({
     super.key,
@@ -48,6 +49,7 @@ class BalanceCard extends ConsumerStatefulWidget {
     this.previewGradientType,
     this.accountName,
     this.accountColors,
+    this.cardHeight,
   });
 
   @override
@@ -132,7 +134,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
               ..rotateY(_tiltY * 0.42),
             child: Container(
               width: double.infinity,
-              height: kBalanceCardHeight,
+              height: widget.cardHeight ?? kBalanceCardHeight,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 gradient: buildCardGradient(primary, secondary, gradientType),

@@ -87,15 +87,15 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
     final mq = MediaQuery.of(widget.context);
     final layout = CardOverlayLayout.fromMediaQuery(mq);
     final cardTop = layout.cardTop;
-    final cardHeight = layout.cardHeight;
     final editorPanelHeight = layout.editorPanelHeight;
-    final editorPanelTop = cardTop + cardHeight + layout.sectionGap;
-    final colorPanelTop = editorPanelTop + editorPanelHeight + layout.sectionGap;
-    final colorPanelHeight = layout.colorPanelHeight(mq, colorPanelTop);
 
     return Consumer(
       builder: (context, ref, _) {
         final exchangeService = ref.watch(exchangeRateServiceProvider);
+        final cardHeight = ref.watch(cardHeightProvider);
+        final editorPanelTop = cardTop + cardHeight + layout.sectionGap;
+        final colorPanelTop = editorPanelTop + editorPanelHeight + layout.sectionGap;
+        final colorPanelHeight = layout.colorPanelHeight(mq, colorPanelTop);
 
         double previewBalance = 0.0;
         if (!dash.isAddingAccount) {
@@ -220,8 +220,35 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                 Brightness.dark
                             ? dash.tempDarkGradientType
                             : dash.tempLightGradientType,
+                        cardHeight: cardHeight,
                       ),
                     ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: cardTop - 28,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: _HeightHandle(
+                    onDrag: (delta) {
+                      final newHeight = cardHeight - delta * 2;
+                      ref.read(cardHeightProvider.notifier).set(newHeight);
+                    },
+                  ),
+                ),
+              ),
+              Positioned(
+                top: cardTop + cardHeight + 6,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: _HeightHandle(
+                    onDrag: (delta) {
+                      final newHeight = cardHeight + delta * 2;
+                      ref.read(cardHeightProvider.notifier).set(newHeight);
+                    },
                   ),
                 ),
               ),
@@ -465,6 +492,39 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
           ),
         );
       },
+    );
+  }
+}
+
+class _HeightHandle extends StatefulWidget {
+  final ValueChanged<double> onDrag;
+
+  const _HeightHandle({required this.onDrag});
+
+  @override
+  State<_HeightHandle> createState() => _HeightHandleState();
+}
+
+class _HeightHandleState extends State<_HeightHandle> {
+  bool _active = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onVerticalDragStart: (_) => setState(() => _active = true),
+      onVerticalDragUpdate: (details) => widget.onDrag(details.delta.dy),
+      onVerticalDragEnd: (_) => setState(() => _active = false),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: _active ? 56 : 44,
+        height: _active ? 6 : 4,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.onSurface.withOpacity(_active ? 0.5 : 0.25),
+          borderRadius: BorderRadius.circular(3),
+        ),
+      ),
     );
   }
 }

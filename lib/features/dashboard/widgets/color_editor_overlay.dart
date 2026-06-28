@@ -37,9 +37,12 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
     final mq = MediaQuery.of(widget.context);
     final layout = CardOverlayLayout.fromMediaQuery(mq);
     final cardTop = layout.cardTop;
-    final cardHeight = layout.cardHeight;
-    final panelTop = cardTop + cardHeight + layout.cardPreviewGap;
-    final panelHeight = layout.colorPanelHeight(mq, panelTop);
+
+    return Consumer(
+      builder: (context, ref, _) {
+        final cardHeight = ref.watch(cardHeightProvider);
+        final panelTop = cardTop + cardHeight + layout.cardPreviewGap;
+        final panelHeight = layout.colorPanelHeight(mq, panelTop);
 
     return Material(
       color: Colors.transparent,
@@ -80,6 +83,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                           Theme.of(widget.context).brightness == Brightness.dark
                           ? dash.tempDarkGradientType
                           : dash.tempLightGradientType,
+                      cardHeight: cardHeight,
                     ),
                   ),
                 ),
@@ -131,6 +135,8 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
           ),
         ],
       ),
+    );
+      },
     );
   }
 
