@@ -239,4 +239,26 @@ class AppStrings {
   String get categorySaved => _ru ? 'Категория сохранена' : 'Category saved';
 
   String get dateLocale => _ru ? 'ru_RU' : 'en_US';
+
+  String get premium => _ru ? 'Премиум' : 'Premium';
+  String get premiumStatus => _ru ? 'Статус премиум' : 'Premium status';
+  String get premiumDescription => _ru
+      ? 'Разблокируйте цвета карточек, высоту и до 8 счетов'
+      : 'Unlock card colors, card height and up to 8 accounts';
+  String get premiumEnabled => _ru ? 'Включён' : 'Enabled';
+  String get premiumDisabled => _ru ? 'Выключен' : 'Disabled';
+  String get premiumFeatureLocked =>
+      _ru ? 'Доступно в премиум' : 'Premium feature';
+  String get accountLimitReached => _ru
+      ? 'Достигнут лиммт счетов. Обновите до премиум для большего количества.'
+      : 'Account limit reached. Upgrade to premium for more accounts.';
+  String accountsLimitLabel(int max) =>
+      _ru ? 'Максимум $max счетов.' : 'Maximum $max accounts.';
+
+  String get premiumFeatureColors =>
+      _ru ? 'Настройка цветов карточек' : 'Custom card colors';
+  String get premiumFeatureHeight =>
+      _ru ? 'Изменение высоты карточки' : 'Resizable card height';
+  String get premiumFeatureAccounts =>
+      _ru ? 'До 8 счетов' : 'Up to 8 accounts';
 }

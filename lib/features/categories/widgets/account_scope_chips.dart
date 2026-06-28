@@ -33,7 +33,15 @@ class AccountScopeChips extends ConsumerWidget {
                   HapticService.selection();
                 },
               ),
-              const SizedBox(width: 6),
+              if (accounts.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Container(
+                  width: 1,
+                  height: 16,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
+                ),
+                const SizedBox(width: 8),
+              ],
               ...accounts.asMap().entries.map((entry) {
                 final index = entry.key + 1;
                 final account = entry.value;

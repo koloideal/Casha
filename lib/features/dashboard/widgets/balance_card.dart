@@ -9,6 +9,7 @@ import '../../../core/utils/card_layout.dart';
 import '../../../shared/utils/card_gradient.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../shared/providers/amount_format_provider.dart';
+import '../../../shared/feature_flags/feature_flags_provider.dart';
 import '../../../shared/widgets/byn_sign.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
@@ -110,6 +111,7 @@ class BalanceCardState extends ConsumerState<BalanceCard>
         .toList();
 
     final textColorMode = ref.watch(cardTextColorProvider);
+    final canEditCardColors = ref.watch(featureFlagsProvider).canEditCardColors;
     final Color onCard = switch (textColorMode) {
       CardTextColorMode.white => Colors.white,
       CardTextColorMode.black => Colors.black,
@@ -324,12 +326,13 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                         ],
                       ),
                     ),
-                    Positioned(
-                      bottom: 8,
-                      left: 0,
-                      right: 0,
-                      child: Text(
-                        s.tapAndHoldToEdit,
+                    if (canEditCardColors)
+                      Positioned(
+                        bottom: 8,
+                        left: 0,
+                        right: 0,
+                        child: Text(
+                          s.tapAndHoldToEdit,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 9,

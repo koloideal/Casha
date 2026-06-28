@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/card_color_service.dart';
 import '../../core/services/haptic_service.dart';
+import '../../data/repositories/account_repository.dart';
 import '../../shared/models/account.dart';
+import '../../shared/feature_flags/feature_flags_provider.dart';
 import '../settings/provider.dart';
 import 'provider.dart';
 import 'widgets/account_editor_overlay/account_editor_overlay.dart';
@@ -56,6 +58,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool isAddingAccount = false;
 
   void _onCardLongPress() {
+    if (!ref.read(featureFlagsProvider).canEditCardColors) return;
     final colors = ref.read(cardColorsProvider);
     savedPrimary = colors.primary;
     savedSecondary = colors.secondary;
@@ -179,15 +182,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           createdAt: DateTime.now(),
         );
 
-        final newId = await ref.read(accountRepositoryProvider).add(newAccount);
+        try {
+          final newId = await ref.read(accountRepositoryProvider).add(newAccount);
 
-        await CardColorService.save(
-          tempPrimary,
-          tempSecondary,
-          tempLightGradientType,
-          tempDarkGradientType,
-          accountId: newId,
-        );
+          await CardColorService.save(
+            tempPrimary,
+            tempSecondary,
+            tempLightGradientType,
+            tempDarkGradientType,
+            accountId: newId,
+          );
+        } on FeatureLimitException {
+          if (mounted) {
+            final s = ref.read(stringsProvider);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(s.accountLimitReached)),
+            );
+          }
+          return;
+        }
       } else if (editingAccount != null) {
         await ref
             .read(accountCardColorsProvider(editingAccount!.id).notifier)
@@ -279,8 +292,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final activeIndex = ref.watch(activeAccountIndexProvider);
     final accountsAsync = ref.watch(accountsProvider);
     final accountCount = accountsAsync.value?.length ?? 0;
+    final maxAccounts = ref.watch(featureFlagsProvider).maxAccounts;
     final isOnAddAccountPage =
-        accountCount < 5 && activeIndex == accountCount + 1;
+        accountCount < maxAccounts && activeIndex == accountCount + 1;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -438,6 +452,7 @@ class _AccountsInfoBlock extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
+    final maxAccounts = ref.watch(featureFlagsProvider).maxAccounts;
     final onSurface = Theme.of(context).colorScheme.onSurface;
     return Padding(
       padding: const EdgeInsets.only(bottom: 60),
@@ -479,7 +494,7 @@ class _AccountsInfoBlock extends ConsumerWidget {
             const SizedBox(height: 8),
             _InfoRow(
               icon: Icons.lock_outline_rounded,
-              text: s.accountsInfoLimit,
+              text: s.accountsLimitLabel(maxAccounts),
             ),
           ],
         ),

@@ -20,6 +20,15 @@ lib/
 ├── data/           # Database schema, repositories
 ├── features/       # Feature modules (provider + screen + widgets)
 ├── shared/         # Cross-feature models, providers, services, widgets
+│   ├── feature_flags/
+│   │   ├── feature_flags.dart          # abstract class FeatureFlags
+│   │   ├── free_feature_flags.dart     # FreeFeatureFlags implements FeatureFlags
+│   │   ├── vip_feature_flags.dart      # VipFeatureFlags implements FeatureFlags
+│   │   └── feature_flags_provider.dart # featureFlagsProvider
+│   └── paywall/
+│       ├── paywall_guard.dart          # PaywallGuard widget
+│       ├── paywall_banner.dart         # inline upsell banner
+│       └── paywall_screen.dart         # full-screen paywall
 └── main.dart
 ```
 
@@ -46,6 +55,8 @@ lib/
 - `services/` — `ExchangeRateService`, `StorageService`
 - `utils/` — `CurrencyUtils`
 - `widgets/` — `BynSign`, `ErrorSnackbar`
+- `feature_flags/` — `FeatureFlags` abstraction and plan-specific implementations
+- `paywall/` — `PaywallGuard`, `PaywallBanner`, `PaywallScreen`
 
 ## Architecture Rules
 
@@ -56,6 +67,14 @@ lib/
 - `Result<T>` from `core/utils/result.dart` is used for fallible operations in repositories
 - Database queries are in repositories only — no raw Drift queries in providers or widgets
 - After any changes to Drift tables or DAOs, run `dart run build_runner build --delete-conflicting-outputs`
+
+### Feature Gating Rules
+
+- Never check `user.isVip` or `plan == UserPlan.vip` directly in widgets or screens
+- All access control goes through `featureFlagsProvider` — read the relevant flag, wrap with `PaywallGuard`
+- Quantity limits (e.g. max accounts) are enforced inside repositories, not in widgets — throw `FeatureLimitException` on violation
+- Routes that are entirely VIP-only use GoRouter `redirect` reading `featureFlagsProvider`
+- Adding a new gated feature means: add a getter to `FeatureFlags`, implement in `FreeFeatureFlags` and `VipFeatureFlags`, then use in UI/repo
 
 ## Code Style
 
@@ -110,6 +129,44 @@ result.when(
 
 **Colors for accounts** — use `CardColorService`, not hardcoded colors.
 
+**Feature gating** — wrap gated UI with `PaywallGuard`:
+```dart
+class ExportScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final flags = ref.watch(featureFlagsProvider);
+    return PaywallGuard(
+      canAccess: flags.canExportCsv,
+      child: ExportContent(),
+    );
+  }
+}
+```
+
+**Quantity limits in repositories**:
+```dart
+Future<Result<void>> createAccount(Account account) async {
+  final flags = ref.read(featureFlagsProvider);
+  final count = await _db.countAccounts();
+  if (flags.maxAccounts != -1 && count >= flags.maxAccounts) {
+    return Result.failure(FeatureLimitException());
+  }
+  return Result.success(await _db.insertAccount(account));
+}
+```
+
+**VIP-only routes** — use GoRouter redirect, never guard inside the screen itself:
+```dart
+GoRoute(
+  path: '/analytics',
+  redirect: (context, state) {
+    final flags = ref.read(featureFlagsProvider);
+    return flags.canSeeAnalytics ? null : '/paywall';
+  },
+  builder: (context, state) => AnalyticsScreen(),
+),
+```
+
 ## Existing Features
 
 - **dashboard** — main screen with account carousel (`BalanceCard`), transaction list, search, filter chips, budget progress, account editor overlay
@@ -126,3 +183,6 @@ result.when(
 - Do not use `BuildContext` across async gaps without checking `mounted`
 - Do not hardcode user-facing strings — use `AppStrings`
 - Do not format currency amounts manually — use `CurrencyUtils`
+- Do not check `user.isVip` or `plan == UserPlan.vip` in widgets or screens — use `featureFlagsProvider`
+- Do not enforce feature limits in widgets — put them in repositories and throw `FeatureLimitException`
+- Do not add a new gated feature without adding a corresponding getter to `FeatureFlags` and implementing it in both `FreeFeatureFlags` and `VipFeatureFlags`

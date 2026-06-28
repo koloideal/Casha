@@ -5,6 +5,7 @@ import '../../../../core/constants.dart';
 import '../../../../core/utils/card_layout.dart';
 import '../../../../shared/models/account.dart';
 import '../../../../shared/models/transaction.dart';
+import '../../../../shared/feature_flags/feature_flags_provider.dart';
 import '../../../../shared/widgets/byn_sign.dart';
 import '../../../settings/provider.dart';
 import '../../provider.dart';
@@ -93,9 +94,10 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
       builder: (context, ref, _) {
         final exchangeService = ref.watch(exchangeRateServiceProvider);
         final cardHeight = ref.watch(cardHeightProvider);
+        final isPremium = ref.watch(featureFlagsProvider).canEditCardColors;
         final editorPanelTop = cardTop + cardHeight + layout.sectionGap;
         final colorPanelTop = editorPanelTop + editorPanelHeight + layout.sectionGap;
-        final colorPanelHeight = layout.colorPanelHeight(mq, colorPanelTop);
+        final colorPanelHeight = isPremium ? layout.colorPanelHeight(mq, colorPanelTop) : 0.0;
 
         double previewBalance = 0.0;
         if (!dash.isAddingAccount) {
@@ -249,36 +251,38 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                   ),
                 ),
               ),
-              Positioned(
-                top: colorPanelTop,
-                left: 20,
-                right: 20,
-                child: GestureDetector(
-                  onTap: () {
-                    if (_showCurrencyDropdown) {
-                      setState(() {
-                        _showCurrencyDropdown = false;
-                      });
-                    }
-                  },
-                  behavior: HitTestBehavior.opaque,
-                  child: AccountColorPanel(
-                    dashboardState: dash,
-                    dashboardContext: widget.context,
-                    panelHeight: colorPanelHeight,
-                    layout: layout,
-                    isDuplicateName: _isDuplicateName,
-                    onDuplicateError: () {
-                      setState(() => _showDuplicateError = true);
-                      Future.delayed(const Duration(seconds: 3), () {
-                        if (mounted) {
-                          setState(() => _showDuplicateError = false);
-                        }
-                      });
+              if (isPremium) ...[
+                Positioned(
+                  top: colorPanelTop,
+                  left: 20,
+                  right: 20,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (_showCurrencyDropdown) {
+                        setState(() {
+                          _showCurrencyDropdown = false;
+                        });
+                      }
                     },
+                    behavior: HitTestBehavior.opaque,
+                    child: AccountColorPanel(
+                      dashboardState: dash,
+                      dashboardContext: widget.context,
+                      panelHeight: colorPanelHeight,
+                      layout: layout,
+                      isDuplicateName: _isDuplicateName,
+                      onDuplicateError: () {
+                        setState(() => _showDuplicateError = true);
+                        Future.delayed(const Duration(seconds: 3), () {
+                          if (mounted) {
+                            setState(() => _showDuplicateError = false);
+                          }
+                        });
+                      },
+                    ),
                   ),
                 ),
-              ),
+              ],
               if (_showCurrencyDropdown)
                 Positioned(
                   top: editorPanelTop + 62,

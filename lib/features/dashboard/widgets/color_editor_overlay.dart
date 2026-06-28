@@ -7,6 +7,7 @@ import '../../../core/l10n/locale_provider.dart';
 import '../../../core/services/card_color_service.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/card_layout.dart';
+import '../../../shared/feature_flags/feature_flags_provider.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
 import 'balance_card.dart';
@@ -42,6 +43,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
     return Consumer(
       builder: (context, ref, _) {
         final cardHeight = ref.watch(cardHeightProvider);
+        final isPremium = ref.watch(featureFlagsProvider).canEditCardHeight;
         final heightDelta = (kBalanceCardHeight - cardHeight) / 2;
         final adjustedCardTop = cardTop + heightDelta;
         final panelTop = adjustedCardTop + cardHeight + layout.cardPreviewGap;
@@ -90,7 +92,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                               ? dash.tempDarkGradientType
                               : dash.tempLightGradientType,
                           cardHeight: cardHeight,
-                          resizeHandle: _CornerResizeHandle(
+                          resizeHandle: isPremium ? _CornerResizeHandle(
                             cardHeight: cardHeight,
                             onHeightChanged: (newHeight) {
                               ref.read(cardHeightProvider.notifier).set(newHeight);
@@ -98,7 +100,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                                 HapticService.selection();
                               }
                             },
-                          ),
+                          ) : null,
                         ),
                       ),
                     ],

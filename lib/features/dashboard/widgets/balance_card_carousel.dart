@@ -5,6 +5,7 @@ import '../../../core/utils/card_layout.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../shared/models/account.dart';
 import '../../../shared/models/transaction.dart';
+import '../../../shared/feature_flags/feature_flags_provider.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
 import 'balance_card.dart';
@@ -60,10 +61,11 @@ class _BalanceCardCarouselState extends ConsumerState<BalanceCardCarousel> {
     final accountsAsync = ref.watch(accountsProvider);
     final activeIndex = ref.watch(activeAccountIndexProvider);
     final cardHeight = ref.watch(cardHeightProvider);
+    final maxAccounts = ref.watch(featureFlagsProvider).maxAccounts;
 
     return accountsAsync.when(
       data: (accounts) {
-        final totalPages = 1 + accounts.length + (accounts.length < 5 ? 1 : 0);
+        final totalPages = 1 + accounts.length + (accounts.length < maxAccounts ? 1 : 0);
 
         return Column(
           children: [

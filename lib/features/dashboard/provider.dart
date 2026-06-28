@@ -7,6 +7,7 @@ import '../../core/utils/result.dart';
 import '../../data/database/app_database.dart' as db;
 import '../../data/repositories/transaction_repository.dart';
 import '../../data/repositories/account_repository.dart';
+import '../../shared/feature_flags/feature_flags_provider.dart';
 import '../../shared/models/transaction.dart';
 import '../../shared/models/account.dart';
 import '../../shared/services/storage_service.dart';
@@ -27,7 +28,8 @@ final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
 
 final accountRepositoryProvider = Provider<AccountRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
-  return AccountRepository(db);
+  final flags = ref.watch(featureFlagsProvider);
+  return AccountRepository(db, flags);
 });
 
 final storageServiceProvider = Provider<StorageService>((ref) {

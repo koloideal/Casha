@@ -1,19 +1,21 @@
 import 'package:drift/drift.dart';
 import '../database/app_database.dart';
 import '../../shared/models/account.dart' as model;
+import '../../shared/feature_flags/feature_flags.dart';
 
-class AccountLimitException implements Exception {
+class FeatureLimitException implements Exception {
   final String message;
-  AccountLimitException(this.message);
+  FeatureLimitException(this.message);
 
   @override
-  String toString() => 'AccountLimitException: $message';
+  String toString() => 'FeatureLimitException: $message';
 }
 
 class AccountRepository {
   final AppDatabase _db;
+  final FeatureFlags _featureFlags;
 
-  AccountRepository(this._db);
+  AccountRepository(this._db, this._featureFlags);
 
   Stream<List<model.Account>> watchAll() {
     return (_db.select(_db.accounts)
@@ -163,6 +165,11 @@ class AccountRepository {
   }
 
   Future<int> add(model.Account account) async {
+    final existing = await getAll();
+    final nonMainCount = existing.where((a) => !a.isMain).length;
+    if (nonMainCount >= _featureFlags.maxAccounts) {
+      throw FeatureLimitException('Account limit reached (${_featureFlags.maxAccounts})');
+    }
     return await _db.into(_db.accounts).insert(
       AccountsCompanion.insert(
         name: account.name,

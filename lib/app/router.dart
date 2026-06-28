@@ -8,6 +8,7 @@ import '../features/categories/screen.dart';
 import '../features/settings/screen.dart';
 import '../features/settings/categories/category_manager_screen.dart';
 import '../shared/models/transaction.dart';
+import '../shared/paywall/paywall_screen.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
 
@@ -48,6 +49,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/settings/categories',
       builder: (context, state) => const CategoryManagerScreen(),
+    ),
+    GoRoute(
+      path: '/paywall',
+      builder: (context, state) => const PaywallScreen(),
     ),
   ],
 );
