@@ -180,14 +180,14 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 28),
                 Text(
                   widget.existing != null ? s.editCategory : s.newCategory,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 _TypeToggle(
                   type: _type,
                   onChanged: (t) => setState(() => _type = t),
@@ -461,6 +461,8 @@ class _TranslatableField extends StatelessWidget {
                             hintText: showGhost ? '' : hint,
                             isDense: true,
                             filled: false,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 14,
@@ -537,7 +539,9 @@ class _IconGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Wrap(
+    return Center(
+      child: Wrap(
+      alignment: WrapAlignment.center,
       spacing: 10,
       runSpacing: 10,
       children: kCategoryIcons.entries.map((entry) {
@@ -567,6 +571,7 @@ class _IconGrid extends StatelessWidget {
           ),
         );
       }).toList(),
+      ),
     );
   }
 }
@@ -579,7 +584,9 @@ class _ColorRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
+    return Center(
+      child: Wrap(
+      alignment: WrapAlignment.center,
       spacing: 12,
       runSpacing: 12,
       children: kCategoryColors.map((color) {
@@ -612,6 +619,7 @@ class _ColorRow extends StatelessWidget {
           ),
         );
       }).toList(),
+      ),
     );
   }
 }

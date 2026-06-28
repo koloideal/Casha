@@ -109,8 +109,15 @@ class CategoryCatalog {
   Color colorFor(String key, [Color? fallback]) =>
       byKey(key)?.color ?? fallback ?? AppColors.accent;
 
-  String labelFor(String key, bool isRu) =>
-      byKey(key)?.label(isRu) ?? key;
+  String labelFor(String key, bool isRu) {
+    final cat = byKey(key);
+    if (cat != null) return cat.label(isRu);
+    if (isRu) {
+      final ru = AppCategories.ruLabels[key];
+      if (ru != null) return ru;
+    }
+    return key;
+  }
 
   bool hasKey(String key) => byKey(key) != null;
 }

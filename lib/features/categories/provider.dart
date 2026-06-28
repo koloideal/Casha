@@ -3,6 +3,20 @@ import '../../shared/models/transaction.dart';
 import '../dashboard/provider.dart';
 import '../settings/provider.dart';
 
+enum StatsTimeFilter { allTime, month }
+
+final statsTimeFilterProvider =
+    NotifierProvider<_StatsTimeFilterNotifier, StatsTimeFilter>(
+  _StatsTimeFilterNotifier.new,
+);
+
+class _StatsTimeFilterNotifier extends Notifier<StatsTimeFilter> {
+  @override
+  StatsTimeFilter build() => StatsTimeFilter.month;
+
+  void set(StatsTimeFilter v) => state = v;
+}
+
  class StatsSummary {
   final double income;
   final double expense;
@@ -43,10 +57,10 @@ CurrencyInfo _statsCurrencyInfo(Ref ref) {
 
 List<Transaction> _statsScopedTransactions(Ref ref) {
   final txs = ref.watch(accountFilteredTransactionsProvider);
-  final timeFilter = ref.watch(timeFilterProvider);
+  final timeFilter = ref.watch(statsTimeFilterProvider);
   var filtered = txs.where((t) => t.category != 'Transfer');
 
-  if (timeFilter == TimeFilter.lastMonth) {
+  if (timeFilter == StatsTimeFilter.month) {
     final now = DateTime.now();
     filtered = filtered.where(
       (t) => t.date.year == now.year && t.date.month == now.month,

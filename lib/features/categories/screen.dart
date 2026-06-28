@@ -30,15 +30,13 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     final s = ref.watch(stringsProvider);
     final isRu = s.locale == AppLocale.ru;
     final catalog = ref.watch(categoryCatalogProvider);
+    final timeFilter = ref.watch(statsTimeFilterProvider);
     final summary = ref.watch(statsSummaryProvider);
     final data = _showIncome
         ? ref.watch(categoryIncomeProvider)
         : ref.watch(categoryExpenseProvider);
     final total = data.values.fold(0.0, (a, b) => a + b);
     final currencyInfo = ref.watch(statsCurrencyProvider);
-    final monthlyData = _showIncome
-        ? ref.watch(monthlyIncomeBreakdownProvider)
-        : ref.watch(monthlyBreakdownProvider);
 
     final sortedEntries = data.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -62,68 +60,50 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
           children: [
             const AccountScopeChips(),
             const SizedBox(height: 16),
-            _IncomeExpenseToggle(
+            Row(
+              children: [
+                Expanded(
+                  child: _IncomeExpenseToggle(
+                    isIncome: _showIncome,
+                    onChanged: (val) {
+                      HapticService.selection();
+                      setState(() {
+                        _showIncome = val;
+                        _touchedIndex = -1;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _TimePeriodToggle(
+                    filter: timeFilter,
+                    onChanged: (val) {
+                      HapticService.selection();
+                      ref.read(statsTimeFilterProvider.notifier).set(val);
+                      setState(() => _touchedIndex = -1);
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _OverviewCard(
               isIncome: _showIncome,
-              onChanged: (val) {
-                HapticService.selection();
-                setState(() {
-                  _showIncome = val;
-                  _touchedIndex = -1;
-                });
-              },
+              amount: _showIncome ? summary.income : summary.expense,
+              transactionCount: summary.transactionCount,
+              currencyInfo: currencyInfo,
             ),
             const SizedBox(height: 16),
-            _InsightCard(
-              title: s.overview,
-              subtitle: s.analyticsInsight,
-              child: GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.22,
-                children: [
-                  _MetricTile(
-                    label: s.income,
-                    value: summary.income,
-                    currencyInfo: currencyInfo,
-                    color: AppColors.income,
-                    icon: Icons.south_west_rounded,
-                  ),
-                  _MetricTile(
-                    label: s.expenses,
-                    value: summary.expense,
-                    currencyInfo: currencyInfo,
-                    color: AppColors.expense,
-                    icon: Icons.north_east_rounded,
-                  ),
-                  _MetricTile(
-                    label: s.netBalance,
-                    value: summary.balance,
-                    currencyInfo: currencyInfo,
-                    color: summary.balance >= 0 ? AppColors.accent : AppColors.warning,
-                    icon: Icons.account_balance_wallet_rounded,
-                  ),
-                  _CountTile(
-                    label: s.transactionsCount,
-                    value: summary.transactionCount,
-                    color: AppColors.accent,
-                    icon: Icons.receipt_long_rounded,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            _InsightCard(
-              title: s.monthlyTrend,
-              subtitle: s.lastSixMonths,
-              child: _MonthlyTrendSection(
-                data: monthlyData,
-                color: _showIncome ? AppColors.income : AppColors.expense,
-              ),
-            ),
-            const SizedBox(height: 16),
+            // _InsightCard(
+            //   title: s.monthlyTrend,
+            //   subtitle: s.lastSixMonths,
+            //   child: _MonthlyTrendSection(
+            //     data: monthlyData,
+            //     color: _showIncome ? AppColors.income : AppColors.expense,
+            //   ),
+            // ),
+            // const SizedBox(height: 16),
             if (data.isEmpty)
               _EmptyState(isIncome: _showIncome)
             else ...[
@@ -864,6 +844,118 @@ class _EmptyState extends ConsumerWidget {
 
   bool _isIncomeColor(bool isIncome) {
     return isIncome;
+  }
+}
+
+class _TimePeriodToggle extends ConsumerWidget {
+  final StatsTimeFilter filter;
+  final ValueChanged<StatsTimeFilter> onChanged;
+
+  const _TimePeriodToggle({
+    required this.filter,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withOpacity(0.06),
+        ),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: [
+          Expanded(
+            child: _ToggleChip(
+              label: s.filterMonth,
+              isSelected: filter == StatsTimeFilter.month,
+              color: AppColors.accent,
+              onTap: () => onChanged(StatsTimeFilter.month),
+            ),
+          ),
+          Expanded(
+            child: _ToggleChip(
+              label: s.filterAllTime,
+              isSelected: filter == StatsTimeFilter.allTime,
+              color: AppColors.accent,
+              onTap: () => onChanged(StatsTimeFilter.allTime),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OverviewCard extends ConsumerWidget {
+  final bool isIncome;
+  final double amount;
+  final int transactionCount;
+  final CurrencyInfo currencyInfo;
+
+  const _OverviewCard({
+    required this.isIncome,
+    required this.amount,
+    required this.transactionCount,
+    required this.currencyInfo,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    final fmt = ref.watch(amountFormatProvider);
+    final theme = Theme.of(context);
+    final color = isIncome ? AppColors.income : AppColors.expense;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withOpacity(0.06),
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            isIncome ? s.income : s.expenses,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _FormattedAmount(
+            amount: amount,
+            currencyInfo: currencyInfo,
+            color: color,
+            fontSize: 40,
+            fontWeight: FontWeight.w800,
+            format: fmt,
+            center: true,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            '$transactionCount ${s.transactionsCount.toLowerCase()}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.4),
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
