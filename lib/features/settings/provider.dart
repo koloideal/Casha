@@ -109,8 +109,8 @@ final cardHeightProvider = NotifierProvider<CardHeightNotifier, double>(
 
 class CardHeightNotifier extends Notifier<double> {
   static const _key = 'card_height';
-  static const _minHeight = 140.0;
-  static const _maxHeight = 200.0;
+  static const minHeight = 140.0;
+  static const maxHeight = 200.0;
   static const _defaultHeight = 200.0;
 
   @override
@@ -118,11 +118,11 @@ class CardHeightNotifier extends Notifier<double> {
     final prefs = ref.watch(sharedPreferencesProvider);
     final saved = prefs.getDouble(_key);
     if (saved == null) return _defaultHeight;
-    return saved.clamp(_minHeight, _maxHeight);
+    return saved.clamp(minHeight, maxHeight);
   }
 
   void set(double height) {
-    final clamped = height.clamp(_minHeight, _maxHeight);
+    final clamped = height.clamp(minHeight, maxHeight);
     state = clamped;
     ref.read(sharedPreferencesProvider).setDouble(_key, clamped);
   }

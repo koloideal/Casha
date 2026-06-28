@@ -95,7 +95,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                       Positioned(
                         left: 8,
                         right: 8,
-                        bottom: -20,
+                        bottom: 0,
                         child: _HeightResizeHandle(
                           cardHeight: cardHeight,
                           onHeightChanged: (newHeight) {
@@ -828,38 +828,82 @@ class _HeightResizeHandle extends StatefulWidget {
 
 class _HeightResizeHandleState extends State<_HeightResizeHandle> {
   bool _dragging = false;
+  double _lastHeight = 0;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final canShrink = widget.cardHeight > CardHeightNotifier.minHeight;
+    final canGrow = widget.cardHeight < CardHeightNotifier.maxHeight;
+
     return GestureDetector(
-      onVerticalDragStart: (_) => setState(() => _dragging = true),
+      onVerticalDragStart: (_) {
+        setState(() => _dragging = true);
+        _lastHeight = widget.cardHeight;
+      },
       onVerticalDragUpdate: (details) {
         final newHeight = widget.cardHeight + details.delta.dy * 2;
-        widget.onHeightChanged(newHeight);
+        if ((newHeight - _lastHeight).abs() > 0.5) {
+          widget.onHeightChanged(newHeight);
+          _lastHeight = newHeight;
+        }
       },
       onVerticalDragEnd: (_) => setState(() => _dragging = false),
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      child: SizedBox(
+        height: 44,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
           children: [
-            CustomPaint(
-              size: const Size(double.infinity, 1),
-              painter: _DashedLinePainter(
-                color: theme.colorScheme.onSurface.withOpacity(_dragging ? 0.4 : 0.2),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              child: CustomPaint(
+                size: const Size(double.infinity, 0),
+                painter: _DashedLinePainter(
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                ),
               ),
             ),
-            const SizedBox(height: 8),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: _dragging ? 48 : 36,
-              height: _dragging ? 5 : 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withOpacity(_dragging ? 0.5 : 0.25),
-                borderRadius: BorderRadius.circular(3),
+            Positioned(
+              top: 6,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (canGrow)
+                      Icon(
+                        Icons.keyboard_arrow_up_rounded,
+                        size: 16,
+                        color: theme.colorScheme.onSurface.withOpacity(_dragging ? 0.9 : 0.5),
+                      )
+                    else
+                      const SizedBox(height: 6),
+                    if (canShrink)
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: theme.colorScheme.onSurface.withOpacity(_dragging ? 0.9 : 0.5),
+                      )
+                    else
+                      const SizedBox(height: 6),
+                  ],
+                ),
               ),
             ),
           ],
@@ -878,11 +922,12 @@ class _DashedLinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
-    const dashWidth = 6.0;
-    const dashSpace = 4.0;
+    const dashWidth = 10.0;
+    const dashSpace = 6.0;
     double x = 0;
     while (x < size.width) {
       canvas.drawLine(
