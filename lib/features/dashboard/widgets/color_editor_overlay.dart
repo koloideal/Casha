@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/services/card_color_service.dart';
+import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/card_layout.dart';
 import '../../settings/provider.dart';
 import '../provider.dart';
@@ -41,7 +42,9 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
     return Consumer(
       builder: (context, ref, _) {
         final cardHeight = ref.watch(cardHeightProvider);
-        final panelTop = cardTop + cardHeight + layout.cardPreviewGap;
+        final heightDelta = (kBalanceCardHeight - cardHeight) / 2;
+        final adjustedCardTop = cardTop + heightDelta;
+        final panelTop = adjustedCardTop + cardHeight + layout.cardPreviewGap;
         final panelHeight = layout.colorPanelHeight(mq, panelTop);
 
     return Material(
@@ -63,7 +66,7 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
             ),
           ),
           Positioned(
-            top: cardTop,
+            top: adjustedCardTop,
             left: 0,
             right: 0,
             child: FractionallySizedBox(
@@ -72,19 +75,38 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                 height: cardHeight,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Consumer(
-                    builder: (ctx, ref, _) => BalanceCard(
-                      balance: ref.read(totalBalanceProvider),
-                      currencyInfo: ref.read(currencyProvider),
-                      onLongPress: null,
-                      previewPrimary: dash.tempPrimary,
-                      previewSecondary: dash.tempSecondary,
-                      previewGradientType:
-                          Theme.of(widget.context).brightness == Brightness.dark
-                          ? dash.tempDarkGradientType
-                          : dash.tempLightGradientType,
-                      cardHeight: cardHeight,
-                    ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Consumer(
+                        builder: (ctx, ref, _) => BalanceCard(
+                          balance: ref.read(totalBalanceProvider),
+                          currencyInfo: ref.read(currencyProvider),
+                          onLongPress: null,
+                          previewPrimary: dash.tempPrimary,
+                          previewSecondary: dash.tempSecondary,
+                          previewGradientType:
+                              Theme.of(widget.context).brightness == Brightness.dark
+                              ? dash.tempDarkGradientType
+                              : dash.tempLightGradientType,
+                          cardHeight: cardHeight,
+                        ),
+                      ),
+                      Positioned(
+                        left: 8,
+                        right: 8,
+                        bottom: -20,
+                        child: _HeightResizeHandle(
+                          cardHeight: cardHeight,
+                          onHeightChanged: (newHeight) {
+                            ref.read(cardHeightProvider.notifier).set(newHeight);
+                            if (ref.read(hapticEnabledProvider)) {
+                              HapticService.light();
+                            }
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -789,4 +811,90 @@ class PanelTab extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HeightResizeHandle extends StatefulWidget {
+  final double cardHeight;
+  final ValueChanged<double> onHeightChanged;
+
+  const _HeightResizeHandle({
+    required this.cardHeight,
+    required this.onHeightChanged,
+  });
+
+  @override
+  State<_HeightResizeHandle> createState() => _HeightResizeHandleState();
+}
+
+class _HeightResizeHandleState extends State<_HeightResizeHandle> {
+  bool _dragging = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onVerticalDragStart: (_) => setState(() => _dragging = true),
+      onVerticalDragUpdate: (details) {
+        final newHeight = widget.cardHeight + details.delta.dy * 2;
+        widget.onHeightChanged(newHeight);
+      },
+      onVerticalDragEnd: (_) => setState(() => _dragging = false),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CustomPaint(
+              size: const Size(double.infinity, 1),
+              painter: _DashedLinePainter(
+                color: theme.colorScheme.onSurface.withOpacity(_dragging ? 0.4 : 0.2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: _dragging ? 48 : 36,
+              height: _dragging ? 5 : 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurface.withOpacity(_dragging ? 0.5 : 0.25),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DashedLinePainter extends CustomPainter {
+  final Color color;
+
+  const _DashedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    const dashWidth = 6.0;
+    const dashSpace = 4.0;
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x + dashWidth, 0),
+        paint,
+      );
+      x += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
+      color != oldDelegate.color;
 }

@@ -109,8 +109,8 @@ final cardHeightProvider = NotifierProvider<CardHeightNotifier, double>(
 
 class CardHeightNotifier extends Notifier<double> {
   static const _key = 'card_height';
-  static const _minHeight = 160.0;
-  static const _maxHeight = 280.0;
+  static const _minHeight = 140.0;
+  static const _maxHeight = 200.0;
   static const _defaultHeight = 200.0;
 
   @override
