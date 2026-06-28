@@ -38,6 +38,7 @@ class BalanceCard extends ConsumerStatefulWidget {
   final String? accountName;
   final CardColors? accountColors;
   final double? cardHeight;
+  final Widget? resizeHandle;
 
   const BalanceCard({
     super.key,
@@ -50,6 +51,7 @@ class BalanceCard extends ConsumerStatefulWidget {
     this.accountName,
     this.accountColors,
     this.cardHeight,
+    this.resizeHandle,
   });
 
   @override
@@ -132,24 +134,27 @@ class BalanceCardState extends ConsumerState<BalanceCard>
               ..setEntry(3, 2, 0.001)
               ..rotateX(_tiltX * 0.42)
               ..rotateY(_tiltY * 0.42),
-            child: Container(
-              width: double.infinity,
-              height: widget.cardHeight ?? kBalanceCardHeight,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: buildCardGradient(primary, secondary, gradientType),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: widget.cardHeight ?? kBalanceCardHeight,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: buildCardGradient(primary, secondary, gradientType),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Stack(
-                  children: [
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Stack(
+                      children: [
                     if (widget.accountName != null)
                       Positioned(
                         top: 20,
@@ -336,6 +341,14 @@ class BalanceCardState extends ConsumerState<BalanceCard>
                   ],
                 ),
               ),
+            ),
+                if (widget.resizeHandle != null)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: widget.resizeHandle!,
+                  ),
+              ],
             ),
           );
         },

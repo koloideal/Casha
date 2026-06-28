@@ -168,7 +168,7 @@ class AppStrings {
   }
 
   String get colorPrimary => _ru ? 'Основной' : 'Primary';
-  String get colorSecondary => _ru ? 'Второй' : 'Secondary';
+  String get colorSecondary => _ru ? 'Второй' : 'Second';
   String get colorSecond => _ru ? 'Второй' : 'Second';
   String get colorSolid => _ru ? 'Однотон' : 'Solid';
   String get gradientLinear => _ru ? 'Линейный' : 'Linear';

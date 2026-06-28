@@ -90,20 +90,15 @@ class _FullScreenBlurOverlayState extends State<FullScreenBlurOverlay> {
                               ? dash.tempDarkGradientType
                               : dash.tempLightGradientType,
                           cardHeight: cardHeight,
-                        ),
-                      ),
-                      Positioned(
-                        left: 8,
-                        right: 8,
-                        bottom: 0,
-                        child: _HeightResizeHandle(
-                          cardHeight: cardHeight,
-                          onHeightChanged: (newHeight) {
-                            ref.read(cardHeightProvider.notifier).set(newHeight);
-                            if (ref.read(hapticEnabledProvider)) {
-                              HapticService.light();
-                            }
-                          },
+                          resizeHandle: _CornerResizeHandle(
+                            cardHeight: cardHeight,
+                            onHeightChanged: (newHeight) {
+                              ref.read(cardHeightProvider.notifier).set(newHeight);
+                              if (ref.read(hapticEnabledProvider)) {
+                                HapticService.selection();
+                              }
+                            },
+                          ),
                         ),
                       ),
                     ],
@@ -813,28 +808,26 @@ class PanelTab extends StatelessWidget {
   }
 }
 
-class _HeightResizeHandle extends StatefulWidget {
+class _CornerResizeHandle extends StatefulWidget {
   final double cardHeight;
   final ValueChanged<double> onHeightChanged;
 
-  const _HeightResizeHandle({
+  const _CornerResizeHandle({
     required this.cardHeight,
     required this.onHeightChanged,
   });
 
   @override
-  State<_HeightResizeHandle> createState() => _HeightResizeHandleState();
+  State<_CornerResizeHandle> createState() => _CornerResizeHandleState();
 }
 
-class _HeightResizeHandleState extends State<_HeightResizeHandle> {
+class _CornerResizeHandleState extends State<_CornerResizeHandle> {
   bool _dragging = false;
   double _lastHeight = 0;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final canShrink = widget.cardHeight > CardHeightNotifier.minHeight;
-    final canGrow = widget.cardHeight < CardHeightNotifier.maxHeight;
 
     return GestureDetector(
       onVerticalDragStart: (_) {
@@ -851,95 +844,66 @@ class _HeightResizeHandleState extends State<_HeightResizeHandle> {
       onVerticalDragEnd: (_) => setState(() => _dragging = false),
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        height: 44,
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 0,
-              child: CustomPaint(
-                size: const Size(double.infinity, 0),
-                painter: _DashedLinePainter(
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 6,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (canGrow)
-                      Icon(
-                        Icons.keyboard_arrow_up_rounded,
-                        size: 16,
-                        color: theme.colorScheme.onSurface.withOpacity(_dragging ? 0.9 : 0.5),
-                      )
-                    else
-                      const SizedBox(height: 6),
-                    if (canShrink)
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 16,
-                        color: theme.colorScheme.onSurface.withOpacity(_dragging ? 0.9 : 0.5),
-                      )
-                    else
-                      const SizedBox(height: 6),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        width: 48,
+        height: 48,
+        child: CustomPaint(
+          size: const Size(48, 48),
+          painter: _CornerDashedPainter(
+            color: theme.colorScheme.onSurface.withOpacity(_dragging ? 0.8 : 0.5),
+            radius: 20,
+          ),
         ),
       ),
     );
   }
 }
 
-class _DashedLinePainter extends CustomPainter {
+class _CornerDashedPainter extends CustomPainter {
   final Color color;
+  final double radius;
 
-  const _DashedLinePainter({required this.color});
+  const _CornerDashedPainter({
+    required this.color,
+    required this.radius,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 2
+      ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    const dashWidth = 10.0;
-    const dashSpace = 6.0;
-    double x = 0;
-    while (x < size.width) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x + dashWidth, 0),
-        paint,
-      );
-      x += dashWidth + dashSpace;
+    const dashLength = 6.0;
+    const dashSpace = 5.0;
+    const extraLine = 8.0;
+
+    final cornerCenter = Offset(size.width - radius, size.height - radius);
+
+    final path = Path()
+      ..moveTo(cornerCenter.dx - extraLine, size.height)
+      ..lineTo(cornerCenter.dx, size.height)
+      ..arcToPoint(
+        Offset(size.width, cornerCenter.dy),
+        radius: Radius.circular(radius),
+        clockwise: false,
+      )
+      ..lineTo(size.width, cornerCenter.dy - extraLine);
+    final metrics = path.computeMetrics();
+
+    for (final metric in metrics) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final end = (distance + dashLength).clamp(0.0, metric.length);
+        final extracted = metric.extractPath(distance, end);
+        canvas.drawPath(extracted, paint);
+        distance += dashLength + dashSpace;
+      }
     }
   }
 
   @override
-  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
+  bool shouldRepaint(covariant _CornerDashedPainter oldDelegate) =>
       color != oldDelegate.color;
 }
