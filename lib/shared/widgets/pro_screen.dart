@@ -27,9 +27,9 @@ class _ProScreenState extends ConsumerState<ProScreen>
   late final Animation<double> _successScale;
 
   static const _gradientColors = [
-    Color(0xFF1A237E),
-    Color(0xFF6A1B9A),
-    Color(0xFFE65100),
+    Color(0xFF283593),
+    Color(0xFF5E35B1),
+    Color(0xFFD81B60),
   ];
 
   @override

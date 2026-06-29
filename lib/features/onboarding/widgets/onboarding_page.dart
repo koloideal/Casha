@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'casha_shimmer_text.dart';
+import 'fade_slide_in.dart';
 
 class OnboardingPage extends StatelessWidget {
   final IconData? icon;
@@ -7,9 +8,13 @@ class OnboardingPage extends StatelessWidget {
   final String? description;
   final String? welcomeText;
   final bool isWelcomePage;
+  final bool isActive;
 
-  const OnboardingPage.welcome({required this.welcomeText, super.key})
-      : icon = null,
+  const OnboardingPage.welcome({
+    required this.welcomeText,
+    this.isActive = false,
+    super.key,
+  })  : icon = null,
         headline = null,
         description = null,
         isWelcomePage = true;
@@ -18,6 +23,7 @@ class OnboardingPage extends StatelessWidget {
     required this.icon,
     required this.headline,
     required this.description,
+    this.isActive = false,
     super.key,
   })  : welcomeText = null,
         isWelcomePage = false;
@@ -59,34 +65,45 @@ class OnboardingPage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 64,
-                color: colorScheme.primary,
+            FadeSlideIn(
+              active: isActive,
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 64,
+                  color: colorScheme.primary,
+                ),
               ),
             ),
             const SizedBox(height: 32),
-            Text(
-              headline!,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
+            FadeSlideIn(
+              active: isActive,
+              delay: const Duration(milliseconds: 150),
+              child: Text(
+                headline!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+              ),
             ),
             const SizedBox(height: 12),
-            Text(
-              description!,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.6),
-                  ),
+            FadeSlideIn(
+              active: isActive,
+              delay: const Duration(milliseconds: 300),
+              child: Text(
+                description!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.6),
+                    ),
+              ),
             ),
           ],
         ),

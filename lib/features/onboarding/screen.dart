@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/haptic_service.dart';
 import 'provider.dart';
+import 'widgets/fade_slide_in.dart';
 import 'widgets/onboarding_page.dart';
 import 'widgets/onboarding_page_indicator.dart';
 
@@ -49,67 +50,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 controller: _controller,
                 onPageChanged: _onPageChanged,
                 children: [
-                  OnboardingPage.welcome(welcomeText: s.onboardingWelcome),
+                  OnboardingPage.welcome(
+                    welcomeText: s.onboardingWelcome,
+                    isActive: currentPage == 0,
+                  ),
                   OnboardingPage.content(
                     icon: Icons.currency_exchange_rounded,
                     headline: s.onboardingMultiCurrencyTitle,
                     description: s.onboardingMultiCurrencyBody,
+                    isActive: currentPage == 1,
                   ),
                   OnboardingPage.content(
                     icon: Icons.credit_card_rounded,
                     headline: s.onboardingCardsTitle,
                     description: s.onboardingCardsBody,
+                    isActive: currentPage == 2,
                   ),
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.waving_hand_rounded,
-                            size: 72,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(height: 28),
-                          Text(
-                            s.onboardingReadyTitle,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            s.onboardingReadyBody,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                                ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                s.onboardingSwipeRight,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      color: Theme.of(context).colorScheme.primary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _ReadyPage(isActive: currentPage == 3),
                   const SizedBox.shrink(),
                 ],
               ),
@@ -119,6 +76,84 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: OnboardingPageIndicator(
                 current: currentPage,
                 count: 5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReadyPage extends ConsumerWidget {
+  final bool isActive;
+
+  const _ReadyPage({required this.isActive});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FadeSlideIn(
+              active: isActive,
+              child: Icon(
+                Icons.waving_hand_rounded,
+                size: 72,
+                color: colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 28),
+            FadeSlideIn(
+              active: isActive,
+              delay: const Duration(milliseconds: 150),
+              child: Text(
+                s.onboardingReadyTitle,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            FadeSlideIn(
+              active: isActive,
+              delay: const Duration(milliseconds: 300),
+              child: Text(
+                s.onboardingReadyBody,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.5),
+                    ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            FadeSlideIn(
+              active: isActive,
+              delay: const Duration(milliseconds: 450),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    s.onboardingSwipeRight,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    color: colorScheme.primary,
+                  ),
+                ],
               ),
             ),
           ],

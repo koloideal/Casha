@@ -10,9 +10,9 @@ class ProSubscriptionCard extends ConsumerWidget {
   const ProSubscriptionCard({super.key});
 
   static const _gradientColors = [
-    Color(0xFF1A237E),
-    Color(0xFF6A1B9A),
-    Color(0xFFE65100),
+    Color(0xFF283593),
+    Color(0xFF5E35B1),
+    Color(0xFFD81B60),
   ];
 
   @override
@@ -24,7 +24,7 @@ class ProSubscriptionCard extends ConsumerWidget {
     final googleUser = googleUserAsync.value;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -39,7 +39,7 @@ class ProSubscriptionCard extends ConsumerWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
@@ -47,10 +47,10 @@ class ProSubscriptionCard extends ConsumerWidget {
                 child: Icon(
                   isVip ? Icons.verified_rounded : Icons.workspace_premium_rounded,
                   color: Colors.white,
-                  size: 24,
+                  size: 28,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,42 +63,55 @@ class ProSubscriptionCard extends ConsumerWidget {
                           ),
                     ),
                     if (isVip) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
-                        googleUser != null
-                            ? '${s.proActive} \u2705'
-                            : s.proActive,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        s.proActive,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Colors.white.withOpacity(0.9),
                               fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        s.proSubtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.white.withOpacity(0.7),
                             ),
                       ),
                     ],
                   ],
                 ),
               ),
-              OutlinedButton(
-                onPressed: () {
-                  HapticService.light();
-                  context.push('/pro');
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withOpacity(0.4), width: 1.5),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    HapticService.light();
+                    context.push('/pro');
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(color: Colors.white.withOpacity(0.4), width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                child: Text(
-                  s.proAboutPro,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  child: Text(
+                    s.proAboutPro,
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                  ),
                 ),
               ),
             ],
           ),
           if (isVip && googleUser == null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
