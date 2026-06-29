@@ -62,7 +62,7 @@ class _CashaShimmerTextState extends State<CashaShimmerText>
         final shimmer = sin(t * 2 * pi) * 0.08;
 
         final gx = (_tiltY + shimmer).clamp(-1.0, 1.0);
-        final gy = (_tiltX + shimmer * 0.5).clamp(-1.0, 1.0);
+        final gy = (_tiltX + shimmer * 0.3).clamp(-1.0, 1.0);
 
         return Transform(
           alignment: Alignment.center,
