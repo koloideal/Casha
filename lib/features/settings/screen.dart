@@ -5,7 +5,6 @@ import '../../core/l10n/locale_provider.dart';
 import '../../core/services/biometric_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../dashboard/provider.dart';
-import 'provider.dart';
 import 'widgets/theme_section.dart';
 import 'widgets/card_text_color_section.dart';
 import 'widgets/haptic_section.dart';
@@ -14,7 +13,7 @@ import 'widgets/language_section.dart';
 import 'widgets/currency_section.dart';
 import 'widgets/amount_format_section.dart';
 import 'widgets/categories_section.dart';
-import 'widgets/premium_section.dart';
+import '../../shared/widgets/pro_subscription_card.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -117,7 +116,7 @@ class SettingsScreen extends ConsumerWidget {
           physics: const ClampingScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
           children: [
-            const PremiumSection(),
+            const ProSubscriptionCard(),
             const SizedBox(height: 16),
             const ThemeSection(),
             const SizedBox(height: 16),

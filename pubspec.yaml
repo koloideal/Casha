@@ -25,6 +25,7 @@ dependencies:
   drift: ^2.14.1
   sqlite3_flutter_libs: ^0.6.0+eol
   path: ^1.8.3
+  google_sign_in: ^6.2.1
 
 flutter_launcher_icons:
   android: true

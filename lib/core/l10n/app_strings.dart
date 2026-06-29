@@ -278,4 +278,58 @@ class AppStrings {
       ? 'Если готовы — свайпните вправо, чтобы открыть приложение'
       : "If you're ready — swipe right to open the app";
   String get onboardingSwipeRight => _ru ? 'Свайп вправо' : 'Swipe Right';
+
+  String get proTitle => _ru ? 'Casha Pro' : 'Casha Pro';
+  String get proAboutPro => _ru ? 'Подробнее' : 'About Pro';
+  String get proSubtitle => _ru
+      ? 'Раскройте весь потенциал Casha'
+      : 'Unlock the full power of Casha';
+  String get proBuy => _ru ? 'Купить Pro' : 'Buy Pro';
+  String get proFeatureCloudSync =>
+      _ru ? 'Облачная синхронизация' : 'Cloud Sync';
+  String get proFeatureCloudSyncDesc => _ru
+      ? 'Синхронизация между всеми вашими устройствами'
+      : 'Sync across all your devices';
+  String get proFeatureBiometric =>
+      _ru ? 'Биометрическая защита' : 'Biometric Protection';
+  String get proFeatureBiometricDesc => _ru
+      ? 'Защитите свои данные отпечатком пальца или Face ID'
+      : 'Secure your data with fingerprint or Face ID';
+  String get proFeatureAnalytics =>
+      _ru ? 'Детальная аналитика' : 'Detailed Analytics';
+  String get proFeatureAnalyticsDesc => _ru
+      ? 'Графики и статистика по расходам и доходам'
+      : 'Charts and stats for income and spending';
+  String get proFeatureCustomization =>
+      _ru ? 'Кастомизация карточек' : 'Card Customization';
+  String get proFeatureCustomizationDesc => _ru
+      ? 'Цвета, градиенты, высота — всё под вашим контролем'
+      : 'Colors, gradients, height — all under your control';
+  String get proFeatureAccounts =>
+      _ru ? 'До 8 счетов' : 'Up to 8 Accounts';
+  String get proFeatureAccountsDesc => _ru
+      ? 'Создавайте больше счетов для разных целей'
+      : 'Create more accounts for different goals';
+  String get proTryPro => _ru ? 'Попробовать Pro' : 'Try Pro';
+  String get proRestorePurchases =>
+      _ru ? 'Восстановить покупки' : 'Restore Purchases';
+  String get proActive => _ru ? 'Pro активна' : 'Pro Active';
+  String get proSignInForSync =>
+      _ru ? 'Войдите, чтобы включить синхронизацию' : 'Sign in to enable sync';
+  String get proSignInGoogle =>
+      _ru ? 'Войти через Google' : 'Sign in with Google';
+  String get proSyncEnabled =>
+      _ru ? 'Синхронизация включена' : 'Sync enabled';
+  String get proLastBackup => _ru ? 'Последняя резервная копия' : 'Last backup';
+  String get proSignOut => _ru ? 'Выйти' : 'Sign Out';
+  String get proPurchaseSuccess =>
+      _ru ? 'Pro успешно активирована!' : 'Pro successfully activated!';
+  String get proPurchaseFailed =>
+      _ru ? 'Не удалось оформить подписку' : 'Purchase failed';
+  String get proRestoreSuccess =>
+      _ru ? 'Покупки восстановлены!' : 'Purchases restored!';
+  String get proRestoreNotFound =>
+      _ru ? 'Предыдущие покупки не найдены' : 'No previous purchases found';
+  String get proTapToClose =>
+      _ru ? 'Нажмите чтобы закрыть' : 'Tap anywhere to close';
 }

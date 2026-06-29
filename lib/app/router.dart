@@ -11,6 +11,7 @@ import '../features/onboarding/screen.dart';
 import '../shared/models/transaction.dart';
 import '../shared/paywall/paywall_screen.dart';
 import '../shared/services/onboarding_service.dart';
+import '../shared/widgets/pro_screen.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
 
@@ -66,6 +67,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/paywall',
       builder: (context, state) => const PaywallScreen(),
+    ),
+    GoRoute(
+      path: '/pro',
+      builder: (context, state) => const ProScreen(),
     ),
   ],
 );

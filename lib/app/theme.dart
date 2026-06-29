@@ -132,10 +132,12 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     final base = ThemeData.light(useMaterial3: true);
-    final textTheme = GoogleFonts.poppinsTextTheme(base.textTheme).apply(
-      bodyColor: const Color(0xFF1A1A2E),
-      displayColor: const Color(0xFF1A1A2E),
-      fontFamilyFallback: ['Roboto'], 
+    final textTheme = _withCyrillicFallback(
+      base.textTheme.apply(
+        fontFamily: 'Poppins',
+        bodyColor: const Color(0xFF1A1A2E),
+        displayColor: const Color(0xFF1A1A2E),
+      ),
     );
 
     return base.copyWith(
