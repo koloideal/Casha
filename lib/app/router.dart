@@ -7,14 +7,29 @@ import '../features/add_transaction/screen.dart';
 import '../features/categories/screen.dart';
 import '../features/settings/screen.dart';
 import '../features/settings/categories/category_manager_screen.dart';
+import '../features/onboarding/screen.dart';
 import '../shared/models/transaction.dart';
 import '../shared/paywall/paywall_screen.dart';
+import '../shared/providers/onboarding_provider.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
   initialLocation: '/dashboard',
+  redirect: (context, state) {
+    final service = ProviderScope.containerOf(context)
+        .read(onboardingServiceProvider);
+    final location = state.uri.toString();
+    if (service.shouldShowOnboarding && location != '/onboarding') {
+      return '/onboarding';
+    }
+    return null;
+  },
   routes: [
+    GoRoute(
+      path: '/onboarding',
+      builder: (context, state) => const OnboardingScreen(),
+    ),
     ShellRoute(
       navigatorKey: _shellKey,
       builder: (context, state, child) => AppShell(child: child),

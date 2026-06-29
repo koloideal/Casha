@@ -261,4 +261,17 @@ class AppStrings {
       _ru ? 'Изменение высоты карточки' : 'Resizable card height';
   String get premiumFeatureAccounts =>
       _ru ? 'До 8 счетов' : 'Up to 8 accounts';
+
+  String get onboardingWelcome => _ru ? 'Добро пожаловать в' : 'Welcome to';
+  String get onboardingMultiCurrencyTitle =>
+      _ru ? 'Все деньги на одном экране' : 'All Your Money, One View';
+  String get onboardingMultiCurrencyBody => _ru
+      ? 'Счета в разных валютах с автоматической конвертацией по актуальным курсам'
+      : 'Accounts in different currencies, automatically converted at live exchange rates';
+  String get onboardingCardsTitle =>
+      _ru ? 'Живые карточки' : 'Cards That Come Alive';
+  String get onboardingCardsBody => _ru
+      ? 'Наклоните телефон — и карточка оживает. Градиенты, цвета и высота — всё настраивается под вас'
+      : 'Tilt your phone and watch them respond. Customize gradients, colors and height to make them yours';
+  String get onboardingGetStarted => _ru ? 'Начать' : 'Get Started';
 }
