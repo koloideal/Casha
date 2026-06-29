@@ -13,9 +13,9 @@ class FeatureLimitException implements Exception {
 
 class AccountRepository {
   final AppDatabase _db;
-  final FeatureFlags _featureFlags;
+  final FeatureFlags Function() _getFeatureFlags;
 
-  AccountRepository(this._db, this._featureFlags);
+  AccountRepository(this._db, this._getFeatureFlags);
 
   Stream<List<model.Account>> watchAll() {
     return (_db.select(_db.accounts)
@@ -167,8 +167,9 @@ class AccountRepository {
   Future<int> add(model.Account account) async {
     final existing = await getAll();
     final nonMainCount = existing.where((a) => !a.isMain).length;
-    if (nonMainCount >= _featureFlags.maxAccounts) {
-      throw FeatureLimitException('Account limit reached (${_featureFlags.maxAccounts})');
+    final flags = _getFeatureFlags();
+    if (flags.maxAccounts != -1 && nonMainCount >= flags.maxAccounts) {
+      throw FeatureLimitException('Account limit reached (${flags.maxAccounts})');
     }
     return await _db.into(_db.accounts).insert(
       AccountsCompanion.insert(

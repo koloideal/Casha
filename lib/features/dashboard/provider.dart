@@ -28,8 +28,7 @@ final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
 
 final accountRepositoryProvider = Provider<AccountRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
-  final flags = ref.watch(featureFlagsProvider);
-  return AccountRepository(db, flags);
+  return AccountRepository(db, () => ref.read(featureFlagsProvider));
 });
 
 final storageServiceProvider = Provider<StorageService>((ref) {
