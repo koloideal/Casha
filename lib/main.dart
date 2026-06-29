@@ -6,6 +6,7 @@ import 'app/app.dart';
 import 'core/services/haptic_service.dart';
 import 'data/database/app_database.dart';
 import 'features/dashboard/provider.dart';
+import 'shared/services/onboarding_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +18,7 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   await HapticService.init();
+  OnboardingService(prefs);
 
   final database = AppDatabase();
 

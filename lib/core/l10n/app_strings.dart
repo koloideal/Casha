@@ -264,7 +264,7 @@ class AppStrings {
 
   String get onboardingWelcome => _ru ? 'Добро пожаловать в' : 'Welcome to';
   String get onboardingMultiCurrencyTitle =>
-      _ru ? 'Все деньги на одном экране' : 'All Your Money, One View';
+      _ru ? 'Все деньги\nна одном экране' : 'All Your Money,\nOne View';
   String get onboardingMultiCurrencyBody => _ru
       ? 'Счета в разных валютах с автоматической конвертацией по актуальным курсам'
       : 'Accounts in different currencies, automatically converted at live exchange rates';
@@ -273,5 +273,9 @@ class AppStrings {
   String get onboardingCardsBody => _ru
       ? 'Наклоните телефон — и карточка оживает. Градиенты, цвета и высота — всё настраивается под вас'
       : 'Tilt your phone and watch them respond. Customize gradients, colors and height to make them yours';
-  String get onboardingGetStarted => _ru ? 'Начать' : 'Get Started';
+  String get onboardingReadyTitle => _ru ? 'Всё готово' : "You're All Set";
+  String get onboardingReadyBody => _ru
+      ? 'Если готовы — свайпните вправо, чтобы открыть приложение'
+      : "If you're ready — swipe right to open the app";
+  String get onboardingSwipeRight => _ru ? 'Свайп вправо' : 'Swipe Right';
 }

@@ -4,17 +4,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 class OnboardingService {
   static const _key = 'onboarding_completed';
   static bool _shownInSession = false;
+  static SharedPreferences? _staticPrefs;
 
   final SharedPreferences _prefs;
 
-  OnboardingService(this._prefs);
+  OnboardingService(this._prefs) {
+    _staticPrefs = _prefs;
+  }
 
-  bool get shouldShowOnboarding {
+  static bool get shouldShowOnboarding {
     if (kDebugMode) {
       return !_shownInSession;
     }
-    return !(_prefs.getBool(_key) ?? false);
+    return !(_staticPrefs?.getBool(_key) ?? false);
   }
+
+  static void markCompleted() {
+    _shownInSession = true;
+  }
+
+  bool get shouldShowOnboardingInstance => shouldShowOnboarding;
 
   Future<void> completeOnboarding() async {
     _shownInSession = true;

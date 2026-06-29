@@ -10,17 +10,15 @@ import '../features/settings/categories/category_manager_screen.dart';
 import '../features/onboarding/screen.dart';
 import '../shared/models/transaction.dart';
 import '../shared/paywall/paywall_screen.dart';
-import '../shared/providers/onboarding_provider.dart';
+import '../shared/services/onboarding_service.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
   initialLocation: '/dashboard',
   redirect: (context, state) {
-    final service = ProviderScope.containerOf(context)
-        .read(onboardingServiceProvider);
     final location = state.uri.toString();
-    if (service.shouldShowOnboarding && location != '/onboarding') {
+    if (OnboardingService.shouldShowOnboarding && location != '/onboarding') {
       return '/onboarding';
     }
     return null;

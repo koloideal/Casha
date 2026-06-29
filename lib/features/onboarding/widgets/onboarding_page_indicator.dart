@@ -13,10 +13,12 @@ class OnboardingPageIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.primary;
+    final outlineColor = Theme.of(context).colorScheme.secondary;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(count, (i) {
         final isActive = i == current;
+        final isLast = i == count - 1;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -25,6 +27,9 @@ class OnboardingPageIndicator extends StatelessWidget {
           decoration: BoxDecoration(
             color: isActive ? color : color.withOpacity(0.3),
             borderRadius: BorderRadius.circular(4),
+            border: isLast && !isActive
+                ? Border.all(color: outlineColor, width: 1.5)
+                : null,
           ),
         );
       }),

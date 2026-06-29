@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
@@ -19,8 +20,8 @@ class CashaShimmerText extends StatefulWidget {
 class _CashaShimmerTextState extends State<CashaShimmerText>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  double _tilt = 0.0;
-  double _targetTilt = 0.0;
+  double _tiltX = 0.0, _tiltY = 0.0;
+  double _targetTiltX = 0.0, _targetTiltY = 0.0;
   StreamSubscription<AccelerometerEvent>? _sub;
 
   @override
@@ -28,13 +29,14 @@ class _CashaShimmerTextState extends State<CashaShimmerText>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 4),
+      duration: const Duration(seconds: 5),
     )..repeat();
 
     _sub = accelerometerEventStream(
       samplingPeriod: const Duration(milliseconds: 50),
     ).listen((e) {
-      _targetTilt = (e.x / 9.8).clamp(-1.0, 1.0);
+      _targetTiltY = (e.x / 9.8).clamp(-1.0, 1.0);
+      _targetTiltX = ((e.y / 9.8) - 1.0).clamp(-1.0, 1.0);
     });
   }
 
@@ -48,33 +50,44 @@ class _CashaShimmerTextState extends State<CashaShimmerText>
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
+    final secondary = Theme.of(context).colorScheme.secondary;
 
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        _tilt += (_targetTilt - _tilt) * 0.12;
+        _tiltX += (_targetTiltX - _tiltX) * 0.15;
+        _tiltY += (_targetTiltY - _tiltY) * 0.15;
 
-        final sweep = (_controller.value * 2.0 - 1.0) + _tilt * 0.6;
+        final t = _controller.value;
+        final sweepX = sin(t * 2 * pi);
+        final sweepY = cos(t * 2 * pi);
 
-        return ShaderMask(
-          shaderCallback: (bounds) {
-            return LinearGradient(
-              begin: Alignment(sweep - 0.8, -0.3),
-              end: Alignment(sweep + 0.8, 0.3),
-              colors: [
-                primary.withValues(alpha: 0.7),
-                primary,
-                Colors.white,
-                primary.withValues(alpha: 0.9),
-                Colors.white,
-                primary,
-                primary.withValues(alpha: 0.7),
-              ],
-              stops: [0.0, 0.2, 0.35, 0.45, 0.55, 0.8, 1.0],
-            ).createShader(bounds);
-          },
-          blendMode: BlendMode.srcIn,
-          child: child,
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateX(_tiltX * 0.85)
+            ..rotateY(_tiltY * 0.85),
+          child: ShaderMask(
+            shaderCallback: (bounds) {
+              return LinearGradient(
+                begin: Alignment(sweepX - 1.2, sweepY - 0.5),
+                end: Alignment(sweepX + 1.2, sweepY + 0.5),
+                colors: [
+                  primary.withOpacity(0.7),
+                  primary,
+                  secondary,
+                  Colors.white,
+                  secondary,
+                  primary,
+                  primary.withOpacity(0.7),
+                ],
+                stops: [0.0, 0.15, 0.35, 0.5, 0.65, 0.85, 1.0],
+              ).createShader(bounds);
+            },
+            blendMode: BlendMode.srcIn,
+            child: child,
+          ),
         );
       },
       child: Text(

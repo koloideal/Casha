@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/l10n/locale_provider.dart';
+import '../../core/services/haptic_service.dart';
 import 'provider.dart';
 import 'widgets/onboarding_page.dart';
 import 'widgets/onboarding_page_indicator.dart';
@@ -22,9 +23,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     super.dispose();
   }
 
-  void _finish() {
-    ref.read(onboardingProvider.notifier).complete();
-    context.go('/dashboard');
+  void _onPageChanged(int page) {
+    ref.read(onboardingProvider.notifier).setPage(page);
+    HapticService.light();
+    if (page == 4) {
+      HapticService.medium();
+      ref.read(onboardingProvider.notifier).complete();
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (mounted) context.go('/dashboard');
+      });
+    }
   }
 
   @override
@@ -39,8 +47,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             Expanded(
               child: PageView(
                 controller: _controller,
-                onPageChanged: (page) =>
-                    ref.read(onboardingProvider.notifier).setPage(page),
+                onPageChanged: _onPageChanged,
                 children: [
                   OnboardingPage.welcome(welcomeText: s.onboardingWelcome),
                   OnboardingPage.content(
@@ -53,30 +60,65 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     headline: s.onboardingCardsTitle,
                     description: s.onboardingCardsBody,
                   ),
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.waving_hand_rounded,
+                            size: 72,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(height: 28),
+                          Text(
+                            s.onboardingReadyTitle,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            s.onboardingReadyBody,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                ),
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                s.onboardingSwipeRight,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox.shrink(),
                 ],
               ),
             ),
             Padding(
               padding: const EdgeInsets.only(bottom: 48),
-              child: Column(
-                children: [
-                  OnboardingPageIndicator(
-                    current: currentPage,
-                    count: 3,
-                  ),
-                  const SizedBox(height: 32),
-                  if (currentPage == 2)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _finish,
-                          child: Text(s.onboardingGetStarted),
-                        ),
-                      ),
-                    ),
-                ],
+              child: OnboardingPageIndicator(
+                current: currentPage,
+                count: 5,
               ),
             ),
           ],
