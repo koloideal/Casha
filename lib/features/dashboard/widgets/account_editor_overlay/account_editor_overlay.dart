@@ -2,6 +2,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/l10n/locale_provider.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../../core/utils/card_layout.dart';
 import '../../../../shared/models/account.dart';
 import '../../../../shared/models/transaction.dart';
@@ -279,6 +282,104 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                           }
                         });
                       },
+                    ),
+                  ),
+                ),
+              ] else ...[
+                Positioned(
+                  top: editorPanelTop + editorPanelHeight + layout.sectionGap,
+                  left: 20,
+                  right: 20,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (_showCurrencyDropdown) {
+                        setState(() {
+                          _showCurrencyDropdown = false;
+                        });
+                      }
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: layout.buttonVerticalPadding,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(widget.context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Theme.of(
+                            widget.context,
+                          ).colorScheme.onSurface.withOpacity(0.1),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed:
+                              dash.tempAccountName.trim().isEmpty
+                              ? null
+                              : () {
+                                  final accounts =
+                                      ref.read(accountsProvider).value ?? [];
+                                  if (_isDuplicateName(
+                                    accounts,
+                                    dash.tempAccountName,
+                                  )) {
+                                    setState(() => _showDuplicateError = true);
+                                    Future.delayed(
+                                      const Duration(seconds: 3),
+                                      () {
+                                        if (mounted) {
+                                          setState(() =>
+                                              _showDuplicateError = false);
+                                        }
+                                      },
+                                    );
+                                    return;
+                                  }
+                                  HapticService.light();
+                                  dash.closeAccountOverlay(apply: true);
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7C6DED),
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: Theme.of(
+                              widget.context,
+                            ).colorScheme.onSurface.withOpacity(0.12),
+                            disabledForegroundColor: Theme.of(
+                              widget.context,
+                            ).colorScheme.onSurface.withOpacity(0.38),
+                            padding: EdgeInsets.symmetric(
+                              vertical: layout.buttonVerticalPadding,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            dash.isAddingAccount
+                                ? AppStrings(
+                                    ref.read(localeProvider),
+                                  ).addAccount
+                                : AppStrings(
+                                    ref.read(localeProvider),
+                                  ).apply,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: layout.compact ? 13 : 14,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
