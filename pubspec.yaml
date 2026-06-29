@@ -26,6 +26,10 @@ dependencies:
   sqlite3_flutter_libs: ^0.6.0+eol
   path: ^1.8.3
   google_sign_in: ^6.2.1
+  in_app_purchase: ^3.2.0
+  googleapis: ^13.2.0
+  googleapis_auth: ^1.6.0
+  extension_google_sign_in_as_googleapis_auth: ^2.0.12
 
 flutter_launcher_icons:
   android: true

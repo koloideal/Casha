@@ -1,34 +1,192 @@
-import 'package:shared_preferences/shared_preferences.dart';
-import '../models/user_model.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
-abstract class BillingService {
-  Future<bool> purchasePro();
-  Future<bool> restorePurchases();
-  Future<UserPlan> getCurrentPlan();
+class PurchaseResult {
+  final bool success;
+  final String? purchaseToken;
+  final String? error;
+
+  const PurchaseResult({this.success = false, this.purchaseToken, this.error});
+
+  factory PurchaseResult.ok(String token) =>
+      PurchaseResult(success: true, purchaseToken: token);
+
+  factory PurchaseResult.failed([String? error]) =>
+      PurchaseResult(success: false, error: error);
 }
 
-class MockBillingService implements BillingService {
-  static const _key = 'user_plan';
-  final SharedPreferences _prefs;
+abstract class BillingService {
+  static const proProductId = 'casha_pro_lifetime';
 
-  MockBillingService(this._prefs);
+  Future<PurchaseResult> purchasePro();
+  Future<PurchaseResult> restorePurchases();
+  Future<PurchaseResult> queryPastPurchase();
+  Future<void> completePurchase(String purchaseToken);
+  Stream<List<PurchaseDetails>> get purchaseStream;
+  Future<void> dispose();
+}
 
-  @override
-  Future<bool> purchasePro() async {
-    await Future.delayed(const Duration(seconds: 1));
-    await _prefs.setString(_key, 'vip');
-    return true;
+class PlayBillingService implements BillingService {
+  final InAppPurchase _inAppPurchase = InAppPurchase.instance;
+  late final StreamSubscription<List<PurchaseDetails>> _sub;
+  final _controller = StreamController<List<PurchaseDetails>>.broadcast();
+
+  PlayBillingService() {
+    _sub = _inAppPurchase.purchaseStream.listen((purchases) {
+      _controller.add(purchases);
+    });
   }
 
   @override
-  Future<bool> restorePurchases() async {
-    await Future.delayed(const Duration(seconds: 1));
-    return false;
+  Stream<List<PurchaseDetails>> get purchaseStream => _controller.stream;
+
+  @override
+  Future<PurchaseResult> purchasePro() async {
+    final available = await _inAppPurchase.isAvailable();
+    if (!available) {
+      return PurchaseResult.failed('Billing not available');
+    }
+
+    final response = await _inAppPurchase.queryProductDetails(
+      {BillingService.proProductId},
+    );
+    if (response.productDetails.isEmpty) {
+      return PurchaseResult.failed('Product not found');
+    }
+
+    final product = response.productDetails.first;
+    final purchaseParam = PurchaseParam(productDetails: product);
+
+    final started = await _inAppPurchase.buyNonConsumable(
+      purchaseParam: purchaseParam,
+    );
+    if (!started) {
+      return PurchaseResult.failed('Could not start purchase');
+    }
+
+    final completer = Completer<PurchaseResult>();
+    late StreamSubscription sub;
+    sub = purchaseStream.timeout(
+      const Duration(seconds: 60),
+      onTimeout: (sink) {
+        if (!completer.isCompleted) {
+          completer.complete(PurchaseResult.failed('Purchase timed out'));
+        }
+        sub.cancel();
+      },
+    ).listen((purchases) {
+      for (final p in purchases) {
+        if (p.productID == BillingService.proProductId &&
+            p.status == PurchaseStatus.purchased) {
+          if (!completer.isCompleted) {
+            completer.complete(PurchaseResult.ok(p.verificationData.serverVerificationData));
+          }
+          sub.cancel();
+          return;
+        }
+        if (p.status == PurchaseStatus.error) {
+          if (!completer.isCompleted) {
+            completer.complete(PurchaseResult.failed(p.error?.message));
+          }
+          sub.cancel();
+          return;
+        }
+      }
+    });
+
+    return completer.future;
   }
 
   @override
-  Future<UserPlan> getCurrentPlan() async {
-    final value = _prefs.getString(_key);
-    return value == 'vip' ? UserPlan.vip : UserPlan.free;
+  Future<PurchaseResult> restorePurchases() async {
+    final available = await _inAppPurchase.isAvailable();
+    if (!available) {
+      return PurchaseResult.failed('Billing not available');
+    }
+
+    await _inAppPurchase.restorePurchases();
+
+    final completer = Completer<PurchaseResult>();
+    late StreamSubscription sub;
+    sub = purchaseStream.timeout(
+      const Duration(seconds: 15),
+      onTimeout: (sink) {
+        if (!completer.isCompleted) {
+          completer.complete(PurchaseResult.failed('Restore timed out'));
+        }
+        sub.cancel();
+      },
+    ).listen((purchases) {
+      for (final p in purchases) {
+        if (p.productID == BillingService.proProductId &&
+            (p.status == PurchaseStatus.restored ||
+                p.status == PurchaseStatus.purchased)) {
+          if (!completer.isCompleted) {
+            completer.complete(PurchaseResult.ok(p.verificationData.serverVerificationData));
+          }
+          sub.cancel();
+          return;
+        }
+      }
+    });
+
+    return completer.future;
+  }
+
+  @override
+  Future<PurchaseResult> queryPastPurchase() async {
+    final available = await _inAppPurchase.isAvailable();
+    if (!available) {
+      return const PurchaseResult();
+    }
+
+    final response = await _inAppPurchase.queryProductDetails(
+      {BillingService.proProductId},
+    );
+    if (response.productDetails.isEmpty) {
+      return const PurchaseResult();
+    }
+
+    final completer = Completer<PurchaseResult>();
+    late StreamSubscription sub;
+    sub = purchaseStream.timeout(
+      const Duration(seconds: 10),
+      onTimeout: (sink) {
+        if (!completer.isCompleted) {
+          completer.complete(const PurchaseResult());
+        }
+        sub.cancel();
+      },
+    ).listen((purchases) {
+      for (final p in purchases) {
+        if (p.productID == BillingService.proProductId &&
+            (p.status == PurchaseStatus.restored ||
+                p.status == PurchaseStatus.purchased)) {
+          if (!completer.isCompleted) {
+            completer.complete(PurchaseResult.ok(p.verificationData.serverVerificationData));
+          }
+          sub.cancel();
+          return;
+        }
+      }
+    });
+
+    await _inAppPurchase.restorePurchases();
+
+    return completer.future;
+  }
+
+  @override
+  Future<void> completePurchase(String purchaseToken) async {
+    if (kDebugMode) {
+      print('completePurchase: $purchaseToken');
+    }
+  }
+
+  @override
+  Future<void> dispose() async {
+    await _sub.cancel();
+    await _controller.close();
   }
 }

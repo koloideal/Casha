@@ -4,11 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/l10n/app_strings.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/haptic_service.dart';
-import '../feature_flags/feature_flags_provider.dart';
-import '../models/user_model.dart';
-import '../providers/billing_provider.dart';
 import '../providers/current_user_provider.dart';
-import '../providers/google_auth_provider.dart';
+import '../providers/google_drive_provider.dart';
+import '../providers/premium_provider.dart';
 import 'error_snackbar.dart';
 
 class ProScreen extends ConsumerStatefulWidget {
@@ -68,10 +66,9 @@ class _ProScreenState extends ConsumerState<ProScreen>
   @override
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
-    final flags = ref.watch(featureFlagsProvider);
-    final isVip = flags.maxAccounts != 3;
-    final googleUserAsync = ref.watch(googleCurrentUserProvider);
-    final googleUser = googleUserAsync.value;
+    final isPremium = ref.watch(isPremiumProvider);
+    final driveUserAsync = ref.watch(googleDriveUserProvider);
+    final driveUser = driveUserAsync.value;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Stack(
@@ -88,18 +85,18 @@ class _ProScreenState extends ConsumerState<ProScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 4),
-                        _buildHeroBanner(context, s, colorScheme, isVip),
+                        _buildHeroBanner(context, s, colorScheme, isPremium),
                         const SizedBox(height: 20),
                         _buildFeatureList(context, s, colorScheme),
                         const SizedBox(height: 16),
-                        if (isVip) ...[
-                          _buildProActiveSection(context, s, colorScheme, googleUser),
+                        if (isPremium) ...[
+                          _buildProActiveSection(context, s, colorScheme, driveUser),
                         ],
                       ],
                     ),
                   ),
                 ),
-                _buildBottomBar(context, s, colorScheme, isVip),
+                _buildBottomBar(context, s, colorScheme, isPremium),
               ],
             ),
           ),
@@ -476,17 +473,17 @@ class _ProScreenState extends ConsumerState<ProScreen>
     HapticService.light();
     setState(() => _purchasing = true);
     try {
-      final billing = ref.read(billingServiceProvider);
-      final success = await billing.purchasePro();
-      if (success) {
-        await ref.read(currentUserProvider.notifier).setPlan(UserPlan.vip);
+      final manager = ref.read(premiumManagerProvider);
+      final result = await manager.purchase();
+      if (result.success) {
+        await ref.read(currentUserProvider.notifier).refreshFromPremium();
         if (mounted) {
           _showSuccessOverlay();
           HapticService.medium();
         }
       } else {
         if (mounted) {
-          showErrorSnackbar(context, ref.read(stringsProvider).proPurchaseFailed);
+          showErrorSnackbar(context, result.error ?? ref.read(stringsProvider).proPurchaseFailed);
         }
       }
     } catch (e) {
@@ -502,10 +499,10 @@ class _ProScreenState extends ConsumerState<ProScreen>
     HapticService.light();
     setState(() => _restoring = true);
     try {
-      final billing = ref.read(billingServiceProvider);
-      final success = await billing.restorePurchases();
-      if (success) {
-        await ref.read(currentUserProvider.notifier).setPlan(UserPlan.vip);
+      final manager = ref.read(premiumManagerProvider);
+      final result = await manager.restore();
+      if (result.success) {
+        await ref.read(currentUserProvider.notifier).refreshFromPremium();
         if (mounted) {
           _showSuccessOverlay();
           HapticService.medium();
@@ -527,7 +524,7 @@ class _ProScreenState extends ConsumerState<ProScreen>
   Future<void> _handleGoogleSignIn() async {
     HapticService.light();
     try {
-      final service = ref.read(googleAuthProvider);
+      final service = ref.read(googleDriveServiceProvider);
       await service.signIn();
     } catch (e) {
       if (mounted) {
@@ -539,7 +536,7 @@ class _ProScreenState extends ConsumerState<ProScreen>
   Future<void> _handleGoogleSignOut() async {
     HapticService.light();
     try {
-      final service = ref.read(googleAuthProvider);
+      final service = ref.read(googleDriveServiceProvider);
       await service.signOut();
     } catch (e) {
       if (mounted) {

@@ -15,7 +15,7 @@ class CurrencySection extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
@@ -52,7 +52,7 @@ class CurrencySection extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             children: ['USD', 'EUR', 'BYN', 'RUB'].map((code) {
               final info = currencyMap[code]!;
@@ -65,7 +65,7 @@ class CurrencySection extends ConsumerWidget {
                       ref.read(currencyProvider.notifier).setCurrency(code);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColors.accent.withOpacity(0.2)
@@ -83,12 +83,18 @@ class CurrencySection extends ConsumerWidget {
                       child: Column(
                         children: [
                           code == 'BYN'
-                              ? BynSign(
-                                  fontSize: 28,
-                                  color: isSelected
-                                      ? AppColors.accent
-                                      : Theme.of(context).colorScheme.onSurface
-                                            .withOpacity(0.6),
+                              ? SizedBox(
+                                  height: 28,
+                                  child: Align(
+                                    alignment: Alignment.center,
+                                    child: BynSign(
+                                      fontSize: 24,
+                                      color: isSelected
+                                          ? AppColors.accent
+                                          : Theme.of(context).colorScheme.onSurface
+                                                .withOpacity(0.6),
+                                    ),
+                                  ),
                                 )
                               : Text(
                                   info.symbol,

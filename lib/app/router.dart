@@ -12,6 +12,8 @@ import '../shared/models/transaction.dart';
 import '../shared/paywall/paywall_screen.dart';
 import '../shared/services/onboarding_service.dart';
 import '../shared/widgets/pro_screen.dart';
+import '../shared/widgets/backup_screen.dart';
+import '../shared/providers/premium_provider.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
 
@@ -71,6 +73,15 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/pro',
       builder: (context, state) => const ProScreen(),
+    ),
+    GoRoute(
+      path: '/backup',
+      redirect: (context, state) {
+        final container = ProviderScope.containerOf(context);
+        final isPremium = container.read(isPremiumProvider);
+        return isPremium ? null : '/pro';
+      },
+      builder: (context, state) => const BackupScreen(),
     ),
   ],
 );

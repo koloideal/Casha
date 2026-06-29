@@ -4,7 +4,10 @@ import 'package:google_sign_in/google_sign_in.dart';
 class GoogleAuthService {
   final GoogleSignIn _googleSignIn;
 
-  GoogleAuthService() : _googleSignIn = GoogleSignIn(scopes: ['email']);
+  GoogleAuthService() : _googleSignIn = GoogleSignIn(scopes: [
+    'email',
+    'https://www.googleapis.com/auth/drive.appdata',
+  ]);
 
   GoogleSignInAccount? get currentUser => _googleSignIn.currentUser;
 

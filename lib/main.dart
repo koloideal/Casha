@@ -7,6 +7,9 @@ import 'core/services/haptic_service.dart';
 import 'data/database/app_database.dart';
 import 'features/dashboard/provider.dart';
 import 'shared/services/onboarding_service.dart';
+import 'shared/services/billing_service.dart';
+import 'shared/services/premium_manager.dart';
+import 'shared/providers/billing_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,11 +25,16 @@ void main() async {
 
   final database = AppDatabase();
 
+  final billing = PlayBillingService();
+  final premiumManager = PremiumManager(prefs, billing);
+  await premiumManager.autoRestore();
+
   runApp(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         appDatabaseProvider.overrideWithValue(database),
+        billingServiceProvider.overrideWithValue(billing),
       ],
       child: const App(),
     ),

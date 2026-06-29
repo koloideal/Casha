@@ -30,7 +30,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (page == 4) {
       HapticService.medium();
       ref.read(onboardingProvider.notifier).complete();
-      Future.delayed(const Duration(milliseconds: 400), () {
+      Future.delayed(const Duration(milliseconds: 150), () {
         if (mounted) context.go('/dashboard');
       });
     }

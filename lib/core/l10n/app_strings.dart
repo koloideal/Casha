@@ -332,4 +332,41 @@ class AppStrings {
       _ru ? 'Предыдущие покупки не найдены' : 'No previous purchases found';
   String get proTapToClose =>
       _ru ? 'Нажмите чтобы закрыть' : 'Tap anywhere to close';
+  String get backupTitle => _ru ? 'Резервная копия' : 'Backup';
+  String get backupCreate => _ru ? 'Создать резервную копию' : 'Create Backup';
+  String get backupRestore => _ru ? 'Восстановить из копии' : 'Restore Backup';
+  String get backupCreating => _ru ? 'Создание копии...' : 'Creating backup...';
+  String get backupRestoring => _ru ? 'Восстановление...' : 'Restoring...';
+  String get backupSuccess =>
+      _ru ? 'Резервная копия успешно создана!' : 'Backup created successfully!';
+  String get backupRestoreSuccess =>
+      _ru ? 'Данные успешно восстановлены!' : 'Data restored successfully!';
+  String get backupRestoreFailed =>
+      _ru ? 'Не удалось восстановить данные' : 'Failed to restore data';
+  String get backupNoFileFound =>
+      _ru ? 'Резервная копия не найдена' : 'No backup file found';
+  String get backupTokenMismatch =>
+      _ru
+          ? 'Этот файл резервной копии принадлежит другому покупателю Premium'
+          : 'This backup file belongs to another Premium purchaser';
+  String get backupInvalidFormat =>
+      _ru ? 'Неверный формат файла резервной копии' : 'Invalid backup file format';
+  String get backupNoToken =>
+      _ru
+          ? 'Файл резервной копии не содержит токен покупки'
+          : 'Backup file does not contain a purchase token';
+  String get backupRequiresPremium =>
+      _ru ? 'Резервная копия доступна только для Pro' : 'Backup is a Pro-only feature';
+  String get backupRequiresSignIn =>
+      _ru
+          ? 'Войдите в Google аккаунт для работы с резервными копиями'
+          : 'Sign in to Google to manage backups';
+  String get backupLastBackup => _ru ? 'Последняя копия' : 'Last backup';
+  String get backupNever => _ru ? 'Никогда' : 'Never';
+  String get backupSyncWithDrive =>
+      _ru ? 'Синхронизация с Google Диском' : 'Google Drive Sync';
+  String get backupSyncDesc =>
+      _ru
+          ? 'Резервное копирование данных на ваш Google Диск'
+          : 'Back up your data to your Google Drive';
 }
