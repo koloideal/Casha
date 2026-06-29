@@ -59,8 +59,10 @@ class _CashaShimmerTextState extends State<CashaShimmerText>
         _tiltY += (_targetTiltY - _tiltY) * 0.15;
 
         final t = _controller.value;
-        final sweepX = sin(t * 2 * pi);
-        final sweepY = cos(t * 2 * pi);
+        final shimmer = sin(t * 2 * pi) * 0.08;
+
+        final gx = (_tiltY + shimmer).clamp(-1.0, 1.0);
+        final gy = (_tiltX + shimmer * 0.5).clamp(-1.0, 1.0);
 
         return Transform(
           alignment: Alignment.center,
@@ -71,8 +73,8 @@ class _CashaShimmerTextState extends State<CashaShimmerText>
           child: ShaderMask(
             shaderCallback: (bounds) {
               return LinearGradient(
-                begin: Alignment(sweepX - 1.2, sweepY - 0.5),
-                end: Alignment(sweepX + 1.2, sweepY + 0.5),
+                begin: Alignment(gx - 0.8, gy - 0.4),
+                end: Alignment(gx + 0.8, gy + 0.4),
                 colors: [
                   primary.withOpacity(0.7),
                   primary,
