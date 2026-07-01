@@ -105,22 +105,22 @@ class _AddCategoryChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.accent.withOpacity(0.12),
+          color: const Color(0xFF7C6DED).withOpacity(0.12),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.accent.withOpacity(0.5),
+            color: const Color(0xFF7C6DED).withOpacity(0.5),
             width: 1,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.add_rounded, color: AppColors.accent, size: 16),
+            const Icon(Icons.add_rounded, color: const Color(0xFF7C6DED), size: 16),
             const SizedBox(width: 6),
             Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.accent,
+                color: const Color(0xFF7C6DED),
                 fontWeight: FontWeight.w600,
               ),
             ),

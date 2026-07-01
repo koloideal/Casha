@@ -32,13 +32,13 @@ class PremiumSection extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: (user.isVip ? AppColors.accent : AppColors.warning)
+                  color: (user.isVip ? const Color(0xFF7C6DED) : AppColors.warning)
                       .withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   user.isVip ? Icons.workspace_premium_rounded : Icons.lock_outline_rounded,
-                  color: user.isVip ? AppColors.accent : AppColors.warning,
+                  color: user.isVip ? const Color(0xFF7C6DED) : AppColors.warning,
                   size: 20,
                 ),
               ),

@@ -44,8 +44,8 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: const ColorScheme.dark(
         surface: AppColors.surface,
-        primary: AppColors.accent,
-        secondary: AppColors.accent,
+        primary: const Color(0xFF7C6DED),
+        secondary: const Color(0xFF7C6DED),
         onPrimary: Colors.white,
         onSurface: AppColors.textPrimary,
       ),
@@ -70,11 +70,11 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.accent.withOpacity(0.2),
+        indicatorColor: const Color(0xFF7C6DED).withOpacity(0.2),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return GoogleFonts.poppins(
-              color: AppColors.accent,
+              color: const Color(0xFF7C6DED),
               fontSize: 12,
               fontWeight: FontWeight.w600,
             );
@@ -86,7 +86,7 @@ class AppTheme {
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.accent);
+            return const IconThemeData(color: const Color(0xFF7C6DED));
           }
           return const IconThemeData(color: AppColors.textSecondary);
         }),
@@ -104,14 +104,14 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+          borderSide: const BorderSide(color: const Color(0xFF7C6DED), width: 1.5),
         ),
         labelStyle: const TextStyle(color: AppColors.textSecondary),
         hintStyle: const TextStyle(color: AppColors.textSecondary),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accent,
+          backgroundColor: const Color(0xFF7C6DED),
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
@@ -145,8 +145,8 @@ class AppTheme {
       scaffoldBackgroundColor: const Color(0xFFF0F0F7),
       colorScheme: const ColorScheme.light(
         surface: Colors.white,
-        primary: AppColors.accent,
-        secondary: AppColors.accent,
+        primary: const Color(0xFF7C6DED),
+        secondary: const Color(0xFF7C6DED),
         onPrimary: Colors.white,
         onSurface: Color(0xFF1A1A2E),
       ),
@@ -168,15 +168,15 @@ class AppTheme {
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
-        iconTheme: const IconThemeData(color: AppColors.accent),
+        iconTheme: const IconThemeData(color: const Color(0xFF7C6DED)),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.white,
-        indicatorColor: AppColors.accent.withOpacity(0.2),
+        indicatorColor: const Color(0xFF7C6DED).withOpacity(0.2),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return GoogleFonts.poppins(
-              color: AppColors.accent,
+              color: const Color(0xFF7C6DED),
               fontSize: 12,
               fontWeight: FontWeight.w600,
             );
@@ -188,7 +188,7 @@ class AppTheme {
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.accent);
+            return const IconThemeData(color: const Color(0xFF7C6DED));
           }
           return const IconThemeData(color: Color(0xFF9999BB));
         }),
@@ -206,14 +206,14 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+          borderSide: const BorderSide(color: const Color(0xFF7C6DED), width: 1.5),
         ),
         labelStyle: const TextStyle(color: Color(0xFF9999BB)),
         hintStyle: const TextStyle(color: Color(0xFF9999BB)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accent,
+          backgroundColor: const Color(0xFF7C6DED),
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
@@ -229,10 +229,10 @@ class AppTheme {
         color: Color(0xFFDDDDEE),
         thickness: 1,
       ),
-      iconTheme: const IconThemeData(color: AppColors.accent),
+      iconTheme: const IconThemeData(color: const Color(0xFF7C6DED)),
       chipTheme: ChipThemeData(
         backgroundColor: const Color(0xFFEEEEF8),
-        selectedColor: AppColors.accent,
+        selectedColor: const Color(0xFF7C6DED),
         labelStyle: GoogleFonts.poppins(
           color: const Color(0xFF1A1A2E),
         ),

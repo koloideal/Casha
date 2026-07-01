@@ -43,7 +43,7 @@ class NoteField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF7C6DED), width: 1.5),
+          borderSide: BorderSide(color: const Color(0xFF7C6DED), width: 1.5),
         ),
       ),
       onChanged: onChanged,

@@ -25,9 +25,9 @@ class _ProScreenState extends ConsumerState<ProScreen>
   late final Animation<double> _successScale;
 
   static const _gradientColors = [
-    Color(0xFF283593),
-    Color(0xFF5E35B1),
-    Color(0xFFD81B60),
+    Color(0xFF1B5E20),
+    Color(0xFF2E7D32),
+    Color(0xFF4CAF8C),
   ];
 
   @override
@@ -132,7 +132,7 @@ class _ProScreenState extends ConsumerState<ProScreen>
   ) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,

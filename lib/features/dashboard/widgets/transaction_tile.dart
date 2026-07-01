@@ -471,7 +471,7 @@ class _TransferChip extends StatelessWidget {
               label,
               style: const TextStyle(
                 fontSize: 11,
-                color: Color(0xFF7C6DED),
+                color: const Color(0xFF7C6DED),
                 fontWeight: FontWeight.w500,
               ),
               overflow: TextOverflow.ellipsis,

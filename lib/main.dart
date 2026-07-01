@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,7 +26,9 @@ void main() async {
 
   final database = AppDatabase();
 
-  final billing = PlayBillingService();
+  final billing = kDebugMode
+      ? DebugBillingService(prefs)
+      : PlayBillingService();
   final premiumManager = PremiumManager(prefs, billing);
   await premiumManager.autoRestore();
 

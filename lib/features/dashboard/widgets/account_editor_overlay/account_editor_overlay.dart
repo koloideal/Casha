@@ -467,7 +467,7 @@ class _AccountEditorOverlayState extends State<AccountEditorOverlay> {
                                     const Icon(
                                       Icons.check_rounded,
                                       size: 14,
-                                      color: Color(0xFF7C6DED),
+                                      color: const Color(0xFF7C6DED),
                                     ),
                                   ],
                                 ],

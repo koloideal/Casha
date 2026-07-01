@@ -73,7 +73,7 @@ class AccountSelector extends ConsumerWidget {
                 const Icon(
                   Icons.account_balance_wallet_rounded,
                   size: 18,
-                  color: Color(0xFF7C6DED),
+                  color: const Color(0xFF7C6DED),
                 ),
                 const SizedBox(width: 10),
                 Flexible(
@@ -244,7 +244,7 @@ class AccountDropdownOverlay extends ConsumerWidget {
                             const Icon(
                               Icons.check_rounded,
                               size: 16,
-                              color: Color(0xFF7C6DED),
+                              color: const Color(0xFF7C6DED),
                             ),
                           ],
                         ],

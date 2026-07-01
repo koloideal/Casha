@@ -10,9 +10,9 @@ class ProSubscriptionCard extends ConsumerWidget {
   const ProSubscriptionCard({super.key});
 
   static const _gradientColors = [
-    Color(0xFF283593),
-    Color(0xFF5E35B1),
-    Color(0xFFD81B60),
+    Color(0xFF1B5E20),
+    Color(0xFF2E7D32),
+    Color(0xFF4CAF8C),
   ];
 
   @override

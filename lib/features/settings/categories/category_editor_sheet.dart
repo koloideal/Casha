@@ -334,7 +334,7 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
                   child: FilledButton(
                     onPressed: _saving ? null : _save,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.accent,
+                      backgroundColor: const Color(0xFF7C6DED),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -576,7 +576,7 @@ class _TranslatableField extends StatelessWidget {
         child: TextButton(
           onPressed: onApply,
           style: TextButton.styleFrom(
-            foregroundColor: AppColors.accent,
+            foregroundColor: const Color(0xFF7C6DED),
             padding: const EdgeInsets.symmetric(horizontal: 10),
             minimumSize: const Size(0, 36),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -592,7 +592,7 @@ class _TranslatableField extends StatelessWidget {
       return IconButton(
         onPressed: onTranslate,
         icon: const Icon(Icons.translate_rounded, size: 20),
-        color: AppColors.accent,
+        color: const Color(0xFF7C6DED),
         tooltip: '',
       );
     }

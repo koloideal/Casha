@@ -37,7 +37,7 @@ class PaywallScreen extends ConsumerWidget {
                 child: const Icon(
                   Icons.workspace_premium_rounded,
                   size: 64,
-                  color: Color(0xFF7C6DED),
+                  color: const Color(0xFF7C6DED),
                 ),
               ),
               const SizedBox(height: 24),

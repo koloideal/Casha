@@ -487,7 +487,7 @@ class _AccountsInfoBlock extends ConsumerWidget {
                 const Icon(
                   Icons.account_balance_wallet_rounded,
                   size: 18,
-                  color: Color(0xFF7C6DED),
+                  color: const Color(0xFF7C6DED),
                 ),
                 const SizedBox(width: 8),
                 Text(

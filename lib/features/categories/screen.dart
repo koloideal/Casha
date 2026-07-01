@@ -456,7 +456,7 @@ class _CategoryItem extends ConsumerWidget {
     final isRu = s.locale == AppLocale.ru;
     final catalog = ref.watch(categoryCatalogProvider);
     final fmt = ref.watch(amountFormatProvider);
-    final color = catalog.colorFor(category, AppColors.accent);
+    final color = catalog.colorFor(category, const Color(0xFF7C6DED));
     final icon = catalog.iconFor(category);
     final pct = total > 0 ? amount / total : 0.0;
 
@@ -571,7 +571,7 @@ class _SummaryBadgeRow extends ConsumerWidget {
               '${(share * 100).toStringAsFixed(1)}%',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AppColors.accent,
+                color: const Color(0xFF7C6DED),
               ),
             ),
           ),
@@ -874,7 +874,7 @@ class _TimePeriodToggle extends ConsumerWidget {
             child: _ToggleChip(
               label: s.filterMonth,
               isSelected: filter == StatsTimeFilter.month,
-              color: AppColors.accent,
+              color: const Color(0xFF7C6DED),
               onTap: () => onChanged(StatsTimeFilter.month),
             ),
           ),
@@ -882,7 +882,7 @@ class _TimePeriodToggle extends ConsumerWidget {
             child: _ToggleChip(
               label: s.filterAllTime,
               isSelected: filter == StatsTimeFilter.allTime,
-              color: AppColors.accent,
+              color: const Color(0xFF7C6DED),
               onTap: () => onChanged(StatsTimeFilter.allTime),
             ),
           ),

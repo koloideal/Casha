@@ -10,14 +10,14 @@ class CardColorService {
   static const _keyGradientLight = 'gradient_type_light';
   static const _keyGradientDark = 'gradient_type_dark';
 
-  static const defaultPrimary = Color(0xFFBEF264);
-  static const defaultSecondary = Color(0xFF4D7C0F);
+  static const defaultPrimary = Color(0xFF4CAF8C);
+  static const defaultSecondary = Color(0xFF4CAF8C);
 
-  static const defaultPrimaryLight = Color(0xFF6A6482);
-  static const defaultSecondaryLight = Color(0xFF000000);
+  static const defaultPrimaryLight = Color(0xFF4CAF8C);
+  static const defaultSecondaryLight = Color(0xFF4CAF8C);
 
-  static const defaultGradientLight = GradientType.sweep;
-  static const defaultGradientDark = GradientType.radial;
+  static const defaultGradientLight = GradientType.solid;
+  static const defaultGradientDark = GradientType.solid;
 
   static Future<(Color, Color, GradientType, GradientType)> load({
     int? accountId,

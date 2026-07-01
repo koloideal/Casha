@@ -27,12 +27,12 @@ class CurrencyConversionsSection extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.15),
+              color: const Color(0xFF7C6DED).withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.currency_exchange_rounded,
-              color: AppColors.accent,
+              color: const Color(0xFF7C6DED),
               size: 20,
             ),
           ),

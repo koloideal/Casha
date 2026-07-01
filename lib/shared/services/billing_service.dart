@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PurchaseResult {
   final bool success;
@@ -187,6 +188,52 @@ class PlayBillingService implements BillingService {
   @override
   Future<void> dispose() async {
     await _sub.cancel();
+    await _controller.close();
+  }
+}
+
+class DebugBillingService implements BillingService {
+  static const _key = 'debug_purchase_token';
+  final SharedPreferences _prefs;
+  final _controller = StreamController<List<PurchaseDetails>>.broadcast();
+
+  DebugBillingService(this._prefs);
+
+  @override
+  Stream<List<PurchaseDetails>> get purchaseStream => _controller.stream;
+
+  @override
+  Future<PurchaseResult> purchasePro() async {
+    await Future.delayed(const Duration(seconds: 1));
+    final token = 'debug_token_${DateTime.now().millisecondsSinceEpoch}';
+    await _prefs.setString(_key, token);
+    return PurchaseResult.ok(token);
+  }
+
+  @override
+  Future<PurchaseResult> restorePurchases() async {
+    await Future.delayed(const Duration(seconds: 1));
+    final token = _prefs.getString(_key);
+    if (token != null) {
+      return PurchaseResult.ok(token);
+    }
+    return const PurchaseResult();
+  }
+
+  @override
+  Future<PurchaseResult> queryPastPurchase() async {
+    final token = _prefs.getString(_key);
+    if (token != null) {
+      return PurchaseResult.ok(token);
+    }
+    return const PurchaseResult();
+  }
+
+  @override
+  Future<void> completePurchase(String purchaseToken) async {}
+
+  @override
+  Future<void> dispose() async {
     await _controller.close();
   }
 }

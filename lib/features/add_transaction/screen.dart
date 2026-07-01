@@ -391,7 +391,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen>
         data: Theme.of(context).copyWith(
           colorScheme: Theme.of(
             context,
-          ).colorScheme.copyWith(primary: AppColors.accent),
+          ).colorScheme.copyWith(primary: const Color(0xFF7C6DED)),
         ),
         child: child!,
       ),
@@ -995,7 +995,7 @@ class _ToAccountDropdownOverlay extends ConsumerWidget {
                             const Icon(
                               Icons.check_rounded,
                               size: 16,
-                              color: Color(0xFF7C6DED),
+                              color: const Color(0xFF7C6DED),
                             ),
                           ],
                         ],

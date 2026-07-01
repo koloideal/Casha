@@ -30,12 +30,12 @@ class CardTextColorSection extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.15),
+                  color: const Color(0xFF7C6DED).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.text_fields_rounded,
-                  color: AppColors.accent,
+                  color: const Color(0xFF7C6DED),
                   size: 20,
                 ),
               ),
@@ -116,14 +116,14 @@ class _CardTextColorOption extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.accent.withOpacity(0.15)
+              ? const Color(0xFF7C6DED).withOpacity(0.15)
               : (isDark
                     ? Colors.white.withOpacity(0.05)
                     : Colors.black.withOpacity(0.03)),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? AppColors.accent
+                ? const Color(0xFF7C6DED)
                 : (isDark
                       ? Colors.white.withOpacity(0.1)
                       : Colors.black.withOpacity(0.08)),
@@ -136,7 +136,7 @@ class _CardTextColorOption extends StatelessWidget {
             Icon(
               icon,
               color: isSelected
-                  ? AppColors.accent
+                  ? const Color(0xFF7C6DED)
                   : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
               size: 22,
             ),
@@ -147,7 +147,7 @@ class _CardTextColorOption extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 color: isSelected
-                    ? AppColors.accent
+                    ? const Color(0xFF7C6DED)
                     : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),
               textAlign: TextAlign.center,

@@ -94,7 +94,7 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chipColor = color ?? AppColors.accent;
+    final chipColor = color ?? const Color(0xFF7C6DED);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(

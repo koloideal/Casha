@@ -28,12 +28,12 @@ class LanguageSection extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.15),
+                  color: const Color(0xFF7C6DED).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.language_rounded,
-                  color: AppColors.accent,
+                  color: const Color(0xFF7C6DED),
                   size: 20,
                 ),
               ),
@@ -59,11 +59,11 @@ class LanguageSection extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       color: currentLocale == AppLocale.en
-                          ? AppColors.accent.withOpacity(0.2)
+                          ? const Color(0xFF7C6DED).withOpacity(0.2)
                           : Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(12),
                       border: currentLocale == AppLocale.en
-                          ? Border.all(color: AppColors.accent, width: 1.5)
+                          ? Border.all(color: const Color(0xFF7C6DED), width: 1.5)
                           : (isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
                     ),
                     child: Text(
@@ -71,7 +71,7 @@ class LanguageSection extends ConsumerWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: currentLocale == AppLocale.en
-                            ? AppColors.accent
+                            ? const Color(0xFF7C6DED)
                             : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         fontWeight: currentLocale == AppLocale.en ? FontWeight.w600 : FontWeight.normal,
                       ),
@@ -87,11 +87,11 @@ class LanguageSection extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       color: currentLocale == AppLocale.ru
-                          ? AppColors.accent.withOpacity(0.2)
+                          ? const Color(0xFF7C6DED).withOpacity(0.2)
                           : Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(12),
                       border: currentLocale == AppLocale.ru
-                          ? Border.all(color: AppColors.accent, width: 1.5)
+                          ? Border.all(color: const Color(0xFF7C6DED), width: 1.5)
                           : (isDark ? null : Border.all(color: const Color(0xFFDDDDEE), width: 1)),
                     ),
                     child: Text(
@@ -99,7 +99,7 @@ class LanguageSection extends ConsumerWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: currentLocale == AppLocale.ru
-                            ? AppColors.accent
+                            ? const Color(0xFF7C6DED)
                             : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         fontWeight: currentLocale == AppLocale.ru ? FontWeight.w600 : FontWeight.normal,
                       ),

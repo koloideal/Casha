@@ -68,7 +68,7 @@ class CategoryManagerScreen extends ConsumerWidget {
           HapticService.medium();
           showCategoryEditor(context);
         },
-        backgroundColor: AppColors.accent,
+        backgroundColor: const Color(0xFF7C6DED),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: Text(

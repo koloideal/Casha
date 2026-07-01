@@ -90,11 +90,11 @@ class _ScopeChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.accent.withOpacity(0.2)
+              ? const Color(0xFF7C6DED).withOpacity(0.2)
               : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: isSelected
-              ? Border.all(color: AppColors.accent, width: 1.5)
+              ? Border.all(color: const Color(0xFF7C6DED), width: 1.5)
               : isDark
               ? null
               : Border.all(color: const Color(0xFFDDDDEE), width: 1),
@@ -105,7 +105,7 @@ class _ScopeChip extends StatelessWidget {
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             color: isSelected
-                ? AppColors.accent
+                ? const Color(0xFF7C6DED)
                 : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
           ),
         ),

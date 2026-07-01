@@ -107,7 +107,7 @@ class CategoryCatalog {
       byKey(key)?.icon ?? Icons.category_rounded;
 
   Color colorFor(String key, [Color? fallback]) =>
-      byKey(key)?.color ?? fallback ?? AppColors.accent;
+      byKey(key)?.color ?? fallback ?? const Color(0xFF7C6DED);
 
   String labelFor(String key, bool isRu) {
     final cat = byKey(key);
@@ -147,7 +147,7 @@ AppCategory _defaultCategory(String key, TransactionType type) {
     labelEn: key,
     labelRu: AppCategories.ruLabels[key] ?? key,
     icon: categoryIconByName(iconName),
-    color: AppCategories.colors[key] ?? AppColors.accent,
+    color: AppCategories.colors[key] ?? const Color(0xFF7C6DED),
     iconName: iconName,
     isCustom: false,
   );

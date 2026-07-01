@@ -33,12 +33,12 @@ class AmountFormatSection extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.15),
+                  color: const Color(0xFF7C6DED).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.format_list_numbered_rounded,
-                  color: AppColors.accent,
+                  color: const Color(0xFF7C6DED),
                   size: 20,
                 ),
               ),
@@ -69,11 +69,11 @@ class AmountFormatSection extends ConsumerWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.accent.withOpacity(0.2)
+                        ? const Color(0xFF7C6DED).withOpacity(0.2)
                         : Theme.of(context).scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(12),
                     border: isSelected
-                        ? Border.all(color: AppColors.accent, width: 1.5)
+                        ? Border.all(color: const Color(0xFF7C6DED), width: 1.5)
                         : (isDark
                               ? null
                               : Border.all(
@@ -88,7 +88,7 @@ class AmountFormatSection extends ConsumerWidget {
                         format.label,
                         style: TextStyle(
                           color: isSelected
-                              ? AppColors.accent
+                              ? const Color(0xFF7C6DED)
                               : Theme.of(context).colorScheme.onSurface,
                           fontWeight: isSelected
                               ? FontWeight.w600

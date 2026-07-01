@@ -24,6 +24,9 @@ class PremiumManager {
   }
 
   Future<PurchaseResult> purchase() async {
+    if (isPremium) {
+      return PurchaseResult.ok(purchaseToken ?? 'existing');
+    }
     final result = await _billing.purchasePro();
     if (result.success && result.purchaseToken != null) {
       await _setPremium(true, result.purchaseToken);
